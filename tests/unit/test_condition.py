@@ -1,0 +1,30 @@
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=".env_example")
+import numpy as np
+from adlearn.hyperrectanglecondition import HyperrectangleCondition
+import pytest
+
+
+@pytest.mark.parametrize(
+    "x, condition, output",
+    [
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
+            np.array([1, 0, 1]),
+        ),
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            HyperrectangleCondition([1], bmins=[3], bmaxs=[5]),
+            np.array([1, 1, 0]),
+        ),
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5]),
+            np.array([1, 0, 0]),
+        ),
+    ],
+)
+def test_evaluate(x, condition, output):
+    res = condition.evaluate(x)
+    np.testing.assert_equal(res, output)
