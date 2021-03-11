@@ -28,7 +28,7 @@ class HyperrectangleCondition(Condition):
                 self._features_names = features_names
             else:
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
-            self.sort()
+            # self.sort()
 
     @property
     def features_names(self) -> List[str]:

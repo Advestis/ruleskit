@@ -124,7 +124,7 @@ class Rule(ABC):
 
     def __str__(self) -> str:
         prediction = "<prediction unset>"
-        if hasattr(self, "_prediction"):
+        if self.prediction is not None:
             prediction = self._prediction
         if self._condition is None:
             return "empty rule"
