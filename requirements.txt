@@ -1,6 +1,5 @@
 numpy~=1.19.5
 pytest~=6.2.1
-python-dotenv~=0.15.0
 pathlib~=1.0.1
 setuptools~=51.1.2
 rule~=0.1.1

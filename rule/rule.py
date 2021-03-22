@@ -11,10 +11,7 @@ class Rule(ABC):
     SIZE_LIMIT = 0.000000139  # 0.25 / 1.8e6
     EXPECTED_LENGTH = None
 
-    def __init__(
-        self,
-        condition: Union[Condition, None] = None
-    ):
+    def __init__(self, condition: Union[Condition, None] = None):
         self.act_length = Rule.EXPECTED_LENGTH
         self._condition = condition
 
@@ -23,6 +20,13 @@ class Rule(ABC):
         self._prediction = None
         self._std = None
         self._criterion = None
+
+    def __and__(self, other: 'Rule'):
+        condition = self.condition + other.condition
+        return Rule(condition)
+
+    def __add__(self, other: 'Rule'):
+        return self & other
 
     @property
     def condition(self) -> Condition:
@@ -164,8 +168,6 @@ class Rule(ABC):
         self.criterion = functions.calc_criterion(prediction_vector, y, crit)
 
     def predict(self, xs: np.ndarray) -> np.ndarray:
-        if xs.shape[1] != len(self):
-            raise ValueError("The shape of xs is not the same as self.")
         activation = self.calc_activation(xs)
         return self._prediction * activation
     

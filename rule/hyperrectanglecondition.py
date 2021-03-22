@@ -8,8 +8,8 @@ class HyperrectangleCondition(Condition):
     def __init__(
         self,
         features_indexes: Union[List[int], None] = None,
-        bmins: Union[List[int], None] = None,
-        bmaxs: Union[List[int], None] = None,
+        bmins: Union[List[float], None] = None,
+        bmaxs: Union[List[float], None] = None,
         features_names: Union[List[str], None] = None,
         empty: bool = False,
     ):

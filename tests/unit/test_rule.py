@@ -77,3 +77,27 @@ def test_decompression(comp, exp):
     print("activation:", act)
     print("expected:", exp)
     np.testing.assert_equal(act, exp)
+
+@pytest.mark.parametrize(
+    "x, y, condition1, condition2, activation1, activation2, activation_test",
+    [
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            np.array([1, 3, 2]),
+            HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
+            HyperrectangleCondition([1], bmins=[3], bmaxs=[5]),
+            np.array([1, 0, 1]),
+            np.array([1, 1, 0]),
+            np.array([1, 0, 0]),
+        ),
+    ],
+)
+def test_add(x, y, condition1, condition2, activation1, activation2, activation_test):
+    rule1 = Rule(condition=condition1)
+    rule1.fit(xs=x, y=y)
+    rule2 = Rule(condition=condition2)
+    rule2.fit(xs=x, y=y)
+
+    new_rule = rule1 + rule2
+    new_rule.fit(xs=x, y=y)
+    np.testing.assert_equal(new_rule.activation, activation_test)

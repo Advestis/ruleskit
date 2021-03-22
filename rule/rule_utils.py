@@ -97,7 +97,7 @@ def extract_rules_from_tree(tree: Union[DecisionTreeClassifier, DecisionTreeRegr
             # corresponding condition by setting its bmaxs to be the min of the
             # current and new thresh.olds
             if condition is not None:
-                if decision_tree.feature[node] not in condition.features_index:
+                if decision_tree.feature[node] not in condition.features_indexes:
                     # Will concatenate current condition list and new conditions by their
                     # attributes (which are lists)
                     new_condition = condition + new_condition
