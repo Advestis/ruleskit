@@ -28,7 +28,18 @@ class HyperrectangleCondition(Condition):
                 self._features_names = features_names
             else:
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
-            # self.sort()
+
+    def __and__(self, other: "HyperrectangleCondition"):
+        args = [i+j for i, j in zip(self.getattr, other.getattr)]
+        return HyperrectangleCondition(features_indexes=args[0], bmins=args[1], bmaxs=args[2],
+                                       features_names=args[3], empty=False)
+
+    def __add__(self, other: "HyperrectangleCondition"):
+        return self & other
+
+    @property
+    def getattr(self):
+        return [self.features_indexes, self.bmins, self.bmaxs, self.features_names]
 
     @property
     def features_names(self) -> List[str]:
@@ -104,13 +115,6 @@ class HyperrectangleCondition(Condition):
 
     def __len__(self):
         return len(self._features_names)
-
-    def sort(self):
-        if len(self) == 1:
-            return
-        self.bmins = [x for _, x in sorted(zip(self.features_names, self.bmins))]
-        self.bmaxs = [x for _, x in sorted(zip(self.features_names, self.bmaxs))]
-        self.features_names = sorted(self.features_names)
 
     def evaluate(self, xs: np.ndarray) -> np.ndarray:
         """

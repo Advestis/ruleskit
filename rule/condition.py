@@ -13,6 +13,17 @@ class Condition(ABC):
                 raise ValueError("Must specify features_indexes")
         self._features_indexes = features_indexes
 
+    def __and__(self, other: "Condition"):
+        args = [i+j for i, j in zip(self.getattr, other.getattr)]
+        return Condition(features_indexes=args[0], empty=False)
+
+    def __add__(self, other: "Condition"):
+        return self & other
+
+    @property
+    def getattr(self):
+        return [self.features_indexes]
+
     @property
     def features_indexes(self) -> List[int]:
         return self._features_indexes

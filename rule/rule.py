@@ -2,7 +2,7 @@ from abc import ABC
 import numpy as np
 import sys
 from .condition import Condition
-from . import rule_utils as ru
+from . import rule_functions as functions
 from typing import Union
 
 
@@ -21,8 +21,8 @@ class Rule(ABC):
         self._activation = None
         self._coverage = None
         self._prediction = None
-        self.entropy = None
-        self.rel_entropy = None
+        self._std = None
+        self._criterion = None
 
     @property
     def condition(self) -> Condition:
@@ -56,6 +56,14 @@ class Rule(ABC):
     def prediction(self) -> float:
         return self._prediction
 
+    @property
+    def std(self) -> float:
+        return self._std
+
+    @property
+    def criterion(self) -> float:
+        return self._criterion
+
     @condition.setter
     def condition(self, value: Condition):
         self._condition = value
@@ -88,16 +96,10 @@ class Rule(ABC):
         """
 
         if isinstance(value, int):
-            self.entropy = len(compress(int_to_array(value, self.act_length))) - 2
-            if self.act_length is not None:
-                self.rel_entropy = self.entropy / self.act_length
             self._activation = value
         else:
             self.act_length = len(value)
             to_ret = compress(value)
-            self.entropy = len(to_ret) - 2
-            if self.act_length is not None:
-                self.rel_entropy = self.entropy / self.act_length
             sizeof = sys.getsizeof(to_ret) / 1e6
             if (sizeof / len(value)) > Rule.SIZE_LIMIT:
                 self._activation = array_to_int(value)
@@ -115,6 +117,18 @@ class Rule(ABC):
         if isinstance(value, str):
             value = float(value)
         self._prediction = value
+
+    @std.setter
+    def std(self, value: Union[float, str]):
+        if isinstance(value, str):
+            value = float(value)
+        self._std = value
+
+    @criterion.setter
+    def criterion(self, value: Union[float, str]):
+        if isinstance(value, str):
+            value = float(value)
+        self._criterion = value
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Rule):
@@ -139,12 +153,15 @@ class Rule(ABC):
     def calc_activation(self, xs: np.ndarray) -> np.ndarray:
         return self._condition.evaluate(xs)
 
-    def fit(self, xs: np.ndarray, y: np.ndarray):
+    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = 'mse'):
         activation = self.calc_activation(xs)  # returns array
         self.activation = activation  # can be int or array
-        correct_length_act, y = ru.check_lines(self.activation, y)
-        self.coverage = ru.coverage(correct_length_act)
-        self.prediction = ru.conditional_mean(correct_length_act, y)
+        correct_length_act, y = functions.check_lines(self.activation, y)
+        self.coverage = functions.coverage(correct_length_act)
+        self.prediction = functions.conditional_mean(correct_length_act, y)
+        self.std = functions.conditional_std(correct_length_act, y)
+        prediction_vector = self.prediction * correct_length_act
+        self.criterion = functions.calc_criterion(prediction_vector, y, crit)
 
     def predict(self, xs: np.ndarray) -> np.ndarray:
         if xs.shape[1] != len(self):
