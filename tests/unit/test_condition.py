@@ -1,5 +1,5 @@
 import numpy as np
-from rule.hyperrectanglecondition import HyperrectangleCondition
+from condition.hyperrectanglecondition import HyperrectangleCondition
 import pytest
 
 
@@ -25,7 +25,7 @@ import pytest
 )
 def test_evaluate(x, condition, output):
     res = condition.evaluate(x)
-    np.testing.assert_equal(res, output)
+    np.testing.assert_equal(res.get_array(), output)
 
 
 @pytest.mark.parametrize(

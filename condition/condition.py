@@ -1,6 +1,7 @@
 from abc import ABC
 from typing import List, Union
 import numpy as np
+from rule.activation import Activation
 
 
 class Condition(ABC):
@@ -37,7 +38,7 @@ class Condition(ABC):
     def __len__(self):
         return len(self._features_indexes)
 
-    def evaluate(self, xs: np.ndarray) -> np.ndarray:
+    def evaluate(self, xs: np.ndarray) -> Activation:
         """
         Evaluates where a condition if fullfilled
 
@@ -52,7 +53,7 @@ class Condition(ABC):
              Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
         """
         activation = np.ones(xs.shape[0])
-        return activation
+        return Activation(activation)
 
     def intersect_condition(self, other):
         """To be implemented in daughter class"""

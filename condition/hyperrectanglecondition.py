@@ -1,6 +1,7 @@
 from typing import List, Union
 import numpy as np
 from .condition import Condition
+from rule.activation import Activation
 
 
 class HyperrectangleCondition(Condition):
@@ -116,7 +117,7 @@ class HyperrectangleCondition(Condition):
     def __len__(self):
         return len(self._features_names)
 
-    def evaluate(self, xs: np.ndarray) -> np.ndarray:
+    def evaluate(self, xs: np.ndarray) -> Activation:
         """
         Evaluates where a condition if fullfilled
 
@@ -150,4 +151,4 @@ class HyperrectangleCondition(Condition):
             not_nan &= np.isfinite(xs[:, j])
         activation = geq_min & leq_min & not_nan
 
-        return activation.astype(int)
+        return Activation(activation.astype(int))

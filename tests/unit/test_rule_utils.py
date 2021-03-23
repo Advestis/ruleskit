@@ -1,7 +1,7 @@
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 from rule.rule_utils import extract_rules_from_tree
-from rule.hyperrectanglecondition import HyperrectangleCondition
+from condition.hyperrectanglecondition import HyperrectangleCondition
 from rule.rule import Rule
 import numpy as np
 import pytest
