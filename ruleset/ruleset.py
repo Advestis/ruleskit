@@ -1,6 +1,8 @@
 from abc import ABC
-from typing import List
+import operator
+from typing import List, Union
 from functools import reduce
+from collections import Counter
 import numpy as np
 from rule.rule import Rule
 
@@ -13,8 +15,11 @@ class RuleSet(ABC):
         else:
             self._rules = rules_list
 
-    def __add__(self, other: 'RuleSet'):
-        rules = list(set(self.rules + other.rules))
+    def __add__(self, other: Union['RuleSet', Rule]):
+        if type(other) == Rule:
+            rules = self.rules + [other]
+        else:
+            rules = list(set(self.rules + other.rules))
         return RuleSet(rules)
 
     def __len__(self):
@@ -23,21 +28,55 @@ class RuleSet(ABC):
     def __eq__(self, other: 'RuleSet'):
         return set(self.rules) == set(other.rules)
 
+    def __iter__(self):
+        return self.rules.__iter__()
+
+    def __getitem__(self, x):
+        return self.rules.__getitem__(x)
+
     @property
     def rules(self) -> List[Rule]:
         return self._rules
 
-    @rules.setter
-    def condition(self, value: List[Rule]):
-        self._rules = value
+    def get_activation(self, xs: np.ndarray = None):
+        if len(self) == 0:
+            raise ValueError('The rule set is empty!')
+        elif len(self) == 1:
+            rule = self[0]
+            if xs is None:
+                rs_activation = rule._activation
+            else:
+                rs_activation = rule.condition.evaluate(xs)
+        else:
+            if xs is None:
+                activations_list = [rule._activation for rule in self.rules]
+                rs_activation = reduce(operator.add, activations_list)
+            else:
+                activations_list = [rule.calc_activation(xs) for rule in self.rules]
+                rs_activation = reduce(operator.add, activations_list)
+
+        return rs_activation
 
     def calc_coverage_rate(self, xs: np.ndarray = None):
         if len(self) == 0:
             return 0.0
         else:
-            if xs is None:
-                rs_activation = reduce(lambda a, b: a._activation + b._activation, self.rules)
-            else:
-                rs_activation = reduce(lambda a, b: a.condition.evaluate(xs) + b.condition.evaluate(xs), self.rules)
-
+            rs_activation = self.get_activation(xs)
             return rs_activation.calc_coverage_rate()
+
+    def get_variables_count(self):
+        """
+        Get a counter of all different features in the ruleset
+        Parameters
+        ----------
+        Return
+        ------
+        count : {Counter type}
+                Counter of all different features in the ruleset
+        """
+        var_in = [rule.condition.features_names for rule in self]
+        var_in = reduce(operator.add, var_in)
+        count = Counter(var_in)
+
+        count = count.most_common()
+        return count

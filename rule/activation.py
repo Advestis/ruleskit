@@ -8,7 +8,7 @@ class Activation(ABC):
     """
     def __init__(self, activation: Union[np.ndarray, List[int]] = None, n: int = None, val: int = None):
         if activation is not None:
-            if set(activation) != {0, 1}:
+            if set(activation) not in [{0}, {1}, {0, 1}]:
                 raise ValueError('Activation vector must be a binary vector!')
             self.n = len(activation)
             self.val = int("".join(str(i) for i in activation), 2)

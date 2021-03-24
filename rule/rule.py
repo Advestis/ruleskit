@@ -24,6 +24,9 @@ class Rule(ABC):
     def __add__(self, other: 'Rule'):
         return self & other
 
+    def __len__(self):
+        return len(self.condition)
+
     @property
     def condition(self) -> Condition:
         return self._condition

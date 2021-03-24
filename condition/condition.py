@@ -6,13 +6,19 @@ from rule.activation import Activation
 
 class Condition(ABC):
 
-    def __init__(self, features_indexes: Union[List[int], None] = None, empty: bool = False):
+    def __init__(self, features_indexes: Union[List[int], None] = None,
+                 features_names: Union[List[str], None] = None,
+                 empty: bool = False):
         if empty:
             self._features_indexes = None
         else:
             if features_indexes is None:
                 raise ValueError("Must specify features_indexes")
         self._features_indexes = features_indexes
+        if features_names is not None:
+            self._features_names = features_names
+        else:
+            self._features_names = ["X_" + str(i) for i in self._features_indexes]
 
     def __and__(self, other: "Condition"):
         args = [i+j for i, j in zip(self.getattr, other.getattr)]
@@ -26,8 +32,20 @@ class Condition(ABC):
         return [self.features_indexes]
 
     @property
+    def features_names(self) -> List[str]:
+        return self._features_names
+
+    @property
     def features_indexes(self) -> List[int]:
         return self._features_indexes
+
+    @features_names.setter
+    def features_names(self, values: Union[List[str], str]):
+        if isinstance(values, str):
+            values = (
+                values.replace("[", "").replace("]", "").replace(" ", "").replace("'", "").replace('"', "").split(",")
+            )
+        self._features_names = values
 
     @features_indexes.setter
     def features_indexes(self, value: Union[List[int], str]):
