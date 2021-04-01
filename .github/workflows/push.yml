@@ -1,10 +1,9 @@
 on:
   push:
     branches:
-      - master
       - main
 
-name: master
+name: main
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -47,7 +46,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.TOKEN_CICD }}
-          branch: master
+          branch: main
           force: true
 
       - name: make doc
