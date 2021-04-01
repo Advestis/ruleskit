@@ -1,7 +1,7 @@
 import numpy as np
-from condition.hyperrectanglecondition import HyperrectangleCondition
-from rule.rule import Rule
-from ruleset.ruleset import RuleSet
+from ruleskit import HyperrectangleCondition
+from ruleskit import Rule
+from ruleskit import RuleSet
 import pytest
 
 

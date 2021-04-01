@@ -1,11 +1,10 @@
 from abc import ABC
 from typing import List, Union
 import numpy as np
-from rule.activation import Activation
+from ..activation.activation import Activation
 
 
 class Condition(ABC):
-
     def __init__(self, features_indexes: Union[List[int], None] = None, empty: bool = False):
         if empty:
             self._features_indexes = None
@@ -15,7 +14,7 @@ class Condition(ABC):
         self._features_indexes = features_indexes
 
     def __and__(self, other: "Condition"):
-        args = [i+j for i, j in zip(self.getattr, other.getattr)]
+        args = [i + j for i, j in zip(self.getattr, other.getattr)]
         return Condition(features_indexes=args[0], empty=False)
 
     def __add__(self, other: "Condition"):
@@ -49,7 +48,7 @@ class Condition(ABC):
 
         Returns
         -------
-        activation: np.ndarray
+        activation: Activation
              Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
         """
         activation = np.ones(xs.shape[0])

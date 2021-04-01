@@ -1,17 +1,21 @@
 from typing import List, Union
 import copy
 import numpy as np
-from condition.hyperrectanglecondition import HyperrectangleCondition
-from rule.rule import Rule
+from ruleskit.rule.rule import Rule
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..condition.hyperrectanglecondition import HyperrectangleCondition
+
+# noinspection PyProtectedMember
 from sklearn.tree import _tree
 
 
-def extract_rules_from_tree(tree: Union[DecisionTreeClassifier, DecisionTreeRegressor],
-                            xmins: Union[List[float], np.ndarray],
-                            xmaxs: Union[List[float], np.ndarray],
-                            features_names: List[str] = None,
-                            get_leaf: bool = False) -> List[Rule]:
+def extract_rules_from_tree(
+    tree: Union[DecisionTreeClassifier, DecisionTreeRegressor],
+    xmins: Union[List[float], np.ndarray],
+    xmaxs: Union[List[float], np.ndarray],
+    features_names: List[str] = None,
+    get_leaf: bool = False,
+) -> List[Rule]:
     """ To extract rules from a sklearn decision tree
 
     features are the list of X names.
@@ -60,16 +64,16 @@ def extract_rules_from_tree(tree: Union[DecisionTreeClassifier, DecisionTreeRegr
     tree : Union[sklearn.tree.DecisionTreeRegressor, sklearn.tree.DecisionTreeClassifier]
 
     features_names: List[str],
-                    the list of X names
+        the list of X names
 
     xmins: Union[List[int], List[float], np.ndarray]
-           min values of each xs, one entry per x
+        min values of each xs, one entry per x
 
     xmaxs: Union[List[int], List[float], np.ndarray]
         max values of each xs, one entry per x
 
     get_leaf: Boolean type
-              To return only the leaf of the tree.
+        To return only the leaf of the tree.
 
     Returns
     -------
@@ -86,10 +90,12 @@ def extract_rules_from_tree(tree: Union[DecisionTreeClassifier, DecisionTreeRegr
             rules_list = []
         if decision_tree.feature[node] != _tree.TREE_UNDEFINED:
             # If
-            new_condition = HyperrectangleCondition(features_indexes=[decision_tree.feature[node]],
-                                                    bmins=[xmins[decision_tree.feature[node]]],
-                                                    bmaxs=[decision_tree.threshold[node]],
-                                                    features_names=[features_names[decision_tree.feature[node]]])
+            new_condition = HyperrectangleCondition(
+                features_indexes=[decision_tree.feature[node]],
+                bmins=[xmins[decision_tree.feature[node]]],
+                bmaxs=[decision_tree.threshold[node]],
+                features_names=[features_names[decision_tree.feature[node]]],
+            )
 
             # If cond is not None, means we are not at the first node,
             # so need to expand the list of conditions, unless the current X is
@@ -115,8 +121,7 @@ def extract_rules_from_tree(tree: Union[DecisionTreeClassifier, DecisionTreeRegr
 
             # Execute the current function on the left of the current node
             # (the "True" side)
-            rules_list = visitor(decision_tree.children_left[node], depth + 1,
-                                 new_condition, rules_list)
+            rules_list = visitor(decision_tree.children_left[node], depth + 1, new_condition, rules_list)
 
             # At this point, any rule found on the left of the current node will be
             # in rules list and new_cond will contain the corresponding conditions.
@@ -126,10 +131,12 @@ def extract_rules_from_tree(tree: Union[DecisionTreeClassifier, DecisionTreeRegr
             # Here we do not have to alter bmins, because we explicitly want
             # node_thresh to not pass the criterion since it must have passed it
             # for the opposite condition.
-            new_condition = HyperrectangleCondition(features_indexes=[decision_tree.feature[node]],
-                                                    bmins=[decision_tree.threshold[node]],
-                                                    bmaxs=[xmaxs[decision_tree.feature[node]]],
-                                                    features_names=[features_names[decision_tree.feature[node]]])
+            new_condition = HyperrectangleCondition(
+                features_indexes=[decision_tree.feature[node]],
+                bmins=[decision_tree.threshold[node]],
+                bmaxs=[xmaxs[decision_tree.feature[node]]],
+                features_names=[features_names[decision_tree.feature[node]]],
+            )
 
             # Means we are not at first node. Same logic as previously, except this time
             # if Xi is in the list of features then the new bmins is now the threshold

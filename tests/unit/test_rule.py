@@ -1,5 +1,5 @@
-from condition.hyperrectanglecondition import HyperrectangleCondition
-from rule.rule import Rule
+from ruleskit import HyperrectangleCondition
+from ruleskit import Rule
 import numpy as np
 import pytest
 
@@ -40,7 +40,7 @@ def test_activation(x, y, condition, activation, compressed_activation, cov, pre
     rule = Rule(condition=condition)
     rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule.activation, activation)
-    np.testing.assert_equal(rule._activation.val, compressed_activation)
+    np.testing.assert_equal(rule._activation.as_int, compressed_activation)
     np.testing.assert_equal(rule.coverage, cov)
     np.testing.assert_equal(rule.prediction, pred)
 
