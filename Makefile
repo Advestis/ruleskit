@@ -1,5 +1,5 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-PACKAGE := "rule"
+PACKAGE := "ruleskit"
 
 
 help:
