@@ -85,7 +85,7 @@ try:
     version = get_version()
     with open("VERSION.txt", "w") as vfile:
         vfile.write(version)
-except FileNotFoundError as e:
+except (FileNotFoundError, subprocess.CalledProcessError) as e:
     # noinspection PyBroadException
     try:
         with open("VERSION.txt", "r") as vfile:
