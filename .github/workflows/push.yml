@@ -31,7 +31,8 @@ jobs:
 
       - name: build
         run: |
-          python setup.py install
+          python -m pip install --upgrade pip
+          make install
           python setup.py sdist
 
       - name: commit version
