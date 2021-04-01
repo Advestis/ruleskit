@@ -47,7 +47,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.ORG_TOKEN_CICD }}
-          branch: main
+          branch: "main"
           force: true
 
       - name: make doc
