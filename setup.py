@@ -91,7 +91,7 @@ except (FileNotFoundError, subprocess.CalledProcessError) as e:
         with open("VERSION.txt", "r") as vfile:
             version = vfile.readline()
     except Exception:
-        version = None
+        raise ValueError("Could not get package version")
 
 
 if __name__ == "__main__":
