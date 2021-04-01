@@ -1,13 +1,12 @@
 from abc import ABC
 import numpy as np
-from condition.condition import Condition
-from .activation import Activation
-from . import rule_functions as functions
 from typing import Union
+from ..condition.condition import Condition
+from ..activation.activation import Activation
+from . import rule_functions as functions
 
 
 class Rule(ABC):
-
     def __init__(self, condition: Union[Condition, None] = None):
         self._condition = condition
 
@@ -17,11 +16,11 @@ class Rule(ABC):
         self._std = None
         self._criterion = None
 
-    def __and__(self, other: 'Rule'):
+    def __and__(self, other: "Rule"):
         condition = self.condition + other.condition
         return Rule(condition)
 
-    def __add__(self, other: 'Rule'):
+    def __add__(self, other: "Rule"):
         return self & other
 
     @property
@@ -37,7 +36,7 @@ class Rule(ABC):
         np.ndarray
             of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]
         """
-        return self._activation.get_array()
+        return self._activation.raw
 
     @property
     def coverage(self) -> float:
@@ -133,11 +132,11 @@ class Rule(ABC):
     def calc_activation(self, xs: np.ndarray) -> Activation:
         return self._condition.evaluate(xs)
 
-    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = 'mse'):
+    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse"):
         activation = self.calc_activation(xs)  # returns Activation
         self.activation = activation  # can be int or array
-        self.coverage = activation.calc_coverage_rate()
-        activation_vector = activation.get_array()
+        self.coverage = activation.coverage_rate
+        activation_vector = activation.raw
 
         self.prediction = functions.conditional_mean(activation_vector, y)
         self.std = functions.conditional_std(activation_vector, y)
@@ -146,4 +145,4 @@ class Rule(ABC):
 
     def predict(self, xs: np.ndarray) -> np.ndarray:
         activation = self.calc_activation(xs)
-        return self._prediction * activation.get_array()
+        return self._prediction * activation.raw
