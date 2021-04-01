@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 
 name = "ruleskit"
 author = "P.Cotte & V.Margot"
-author_email = "{pcotte, vmargot}@advestis.com"
+author_email = "pythondev@advestis.com"
 description = "Generic rule package for rule-based algorithms"
 url = f"https://github.com/Advestis/ruleskit"
 

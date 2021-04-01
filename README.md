@@ -7,8 +7,9 @@ permalink: /docs/index.html
 
 ## Documentation
 
+https://advestis.github.io/ruleskit/
 
 ## Installation
 
 
-`pip install rule`
+`pip install ruleskit`
