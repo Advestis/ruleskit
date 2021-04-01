@@ -335,7 +335,7 @@ class Activation(ABC):
 
         Examples
         --------
-        >>> from rule.activation.activation import Activation
+        >>> from ruleskit.activation.activation import Activation
         >>> Activation._array_to_int(np.array([0, 1, 1, 0]))
         6  # the binary number '0110' is 6 in base 10
         """

@@ -1,7 +1,7 @@
 from typing import List, Union
 import copy
 import numpy as np
-from rule.rule.rule import Rule
+from ruleskit.rule.rule import Rule
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..condition.hyperrectanglecondition import HyperrectangleCondition
 

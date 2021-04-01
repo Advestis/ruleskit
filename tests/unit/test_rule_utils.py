@@ -1,8 +1,8 @@
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
-from rule import extract_rules_from_tree
-from rule import HyperrectangleCondition
-from rule import Rule
+from ruleskit import extract_rules_from_tree
+from ruleskit import HyperrectangleCondition
+from ruleskit import Rule
 import numpy as np
 import pytest
 

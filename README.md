@@ -10,6 +10,5 @@ permalink: /docs/index.html
 
 ## Installation
 
-### Required python packages:
 
-`pip install -r requirements.txt`
+`pip install rule`
