@@ -31,9 +31,11 @@ jobs:
 
       - name: build
         run: |
-          make install
+          python setup.py install
 
       - name: commit version
+        with:
+          continue-on-error: True
         run: |
           git add VERSION.txt
           git config --local user.email "action@github.com"
