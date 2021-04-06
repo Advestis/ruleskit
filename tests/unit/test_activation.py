@@ -1,5 +1,5 @@
 import numpy as np
-from rule.activation import Activation
+from ruleskit.activation import Activation
 import pytest
 
 

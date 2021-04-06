@@ -4,7 +4,7 @@ from typing import List, Union
 from functools import reduce
 from collections import Counter
 import numpy as np
-from rule.rule import Rule
+from ruleskit.rule import Rule
 
 
 class RuleSet(ABC):

@@ -1,8 +1,8 @@
 from typing import List, Union
 import copy
 import numpy as np
-from condition.hyperrectanglecondition import HyperrectangleCondition
-from rule.rule import Rule
+from ruleskit.condition import HyperrectangleCondition
+from ruleskit.rule import Rule
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.tree import _tree
 

@@ -1,8 +1,8 @@
 from abc import ABC
 import numpy as np
-from condition.condition import Condition
-from .activation import Activation
-from . import rule_functions as functions
+from ruleskit.condition import Condition
+from ruleskit.activation import Activation
+from ruleskit.utils import rfunctions as functions
 from typing import Union
 
 
