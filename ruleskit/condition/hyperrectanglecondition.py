@@ -118,6 +118,13 @@ class HyperrectangleCondition(Condition):
     def __len__(self):
         return len(self._features_names)
 
+    def sort(self):
+        if len(self) == 1:
+            return
+        self.bmins = [x for _, x in sorted(zip(self.features_names, self.bmins))]
+        self.bmaxs = [x for _, x in sorted(zip(self.features_names, self.bmaxs))]
+        self.features_names = sorted(self.features_names)
+
     def evaluate(self, xs: np.ndarray) -> Activation:
         """
         Evaluates where a condition if fullfilled
