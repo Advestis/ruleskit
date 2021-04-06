@@ -50,13 +50,13 @@ class Activation(ABC):
             Else, does not check and uses integer. Note that is optimize is True, entropy is computed.
         """
         self.length = None  # Will be set by init methods
-        self.__entropy = None  # Will be set if activation is not an integer or if optimize is True
+        self._entropy = None  # Will be set if activation is not an integer or if optimize is True
         self.data_format = None  # Will be set by init methods
         self.data = None  # Will be set by init methods
-        self.__ones = None  # Will be set if "activation" is the raw activation vector
-        self.__rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
-        self.__nones = None  # Will be set if activation is not an integer or if optimize is True
-        self.__coverage_rate = None
+        self._ones = None  # Will be set if "activation" is the raw activation vector
+        self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
+        self._nones = None  # Will be set if activation is not an integer or if optimize is True
+        self._coverage_rate = None
 
         if isinstance(activation, str) and "," not in activation:  # activation is actualy an integer, stored as an int
             activation = int(activation)
@@ -79,9 +79,9 @@ class Activation(ABC):
         """
         Will set
             if Optimize is True:
-              * self.__nones (number of ones in the activation)
+              * self._nones (number of ones in the activation)
               * self.length
-              * if optimize is True : self.__entropy and self.__rel_entropy
+              * if optimize is True : self._entropy and self._rel_entropy
               * self.data_format to "integer" or "compressed_str" or "compressed_array" depending on what takes less
                 memory
               * self.data as an integer, a str or an array
@@ -99,13 +99,13 @@ class Activation(ABC):
 
         if optimize:
             raw = self._int_to_array(value)
-            self.__nones = np.count_nonzero(raw == 1)
+            self._nones = np.count_nonzero(raw == 1)
             compressed = self._compress(raw, dtype=dtype)
             if dtype == str:
-                self.__entropy = len(ast.literal_eval(compressed)) - 2
+                self._entropy = len(ast.literal_eval(compressed)) - 2
             else:
-                self.__entropy = len(compressed) - 2
-            self.__rel_entropy = self.__entropy / self.length
+                self._entropy = len(compressed) - 2
+            self._rel_entropy = self._entropy / self.length
             sizeof = sys.getsizeof(compressed) / 1e6
             if (sizeof / self.length) > Activation.SIZE_LIMIT:
                 self.data = value
@@ -125,15 +125,15 @@ class Activation(ABC):
         will set :
           * self.data as a compressed str
           * self.data_format as "compressed_str"
-          * self.__entropy and self.__rel_entropy
+          * self._entropy and self._rel_entropy
           * self.length
         """
         logger.debug(f"Activation vector is a compressed str")
         evaluated = np.ndarray(ast.literal_eval(value))
         self.data = value
-        self.__entropy = len(evaluated) - 2
+        self._entropy = len(evaluated) - 2
         self.length = evaluated[-1]
-        self.__rel_entropy = self.__entropy / self.length
+        self._rel_entropy = self._entropy / self.length
         self.data_format = "compressed_str"
 
     def _init_with_compressed_array(self, value: np.ndarray):
@@ -141,14 +141,14 @@ class Activation(ABC):
         will set :
           * self.data as a compressed array
           * self.data_format as "compressed_array"
-          * self.__entropy and self.__rel_entropy
+          * self._entropy and self._rel_entropy
           * self.length
         """
         logger.debug(f"Activation vector is a compressed array")
         self.data = value
-        self.__entropy = len(value) - 2
+        self._entropy = len(value) - 2
         self.length = value[-1]
-        self.__rel_entropy = self.__entropy / self.length
+        self._rel_entropy = self._entropy / self.length
         self.data_format = "compressed_array"
 
     def _init_with_raw(self, value: np.ndarray, dtype: type):
@@ -156,19 +156,19 @@ class Activation(ABC):
         will set :
           * self.data as an integer or a compressed array/str depending on what takes less memory and on what dtype is
           * self.data_format as "integer", "compressed_array" or "compressed_str"
-          * self.__entropy and self.__rel_entropy
+          * self._entropy and self._rel_entropy
           * self.length
-          * self.__nones
+          * self._nones
         """
         logger.debug(f"Activation vector is raw")
         self.length = len(value)
-        self.__nones = np.count_nonzero(value == 1)
+        self._nones = np.count_nonzero(value == 1)
         compressed = self._compress(value, dtype=dtype)
         if dtype is str:
-            self.__entropy = len(compressed.split(",")) - 2
+            self._entropy = len(compressed.split(",")) - 2
         else:
-            self.__entropy = len(compressed) - 2
-        self.__rel_entropy = self.__entropy / self.length
+            self._entropy = len(compressed) - 2
+        self._rel_entropy = self._entropy / self.length
         sizeof = sys.getsizeof(compressed) / 1e6
         if (sizeof / len(value)) > Activation.SIZE_LIMIT:
             logger.debug(f"Using int activation representation for rule {str(self)}")
@@ -245,7 +245,7 @@ class Activation(ABC):
         return act_bis
 
     def _decompress(self, value: Union[str, np.ndarray] = None) -> np.ndarray:
-        """Will return the original activation vector, and set self.__nones and self.__ones"""
+        """Will return the original activation vector, and set self._nones and self._ones"""
         if value is None:
             if self.data_format == "compressed_str":
                 act = ast.literal_eval(self.data)
@@ -266,20 +266,20 @@ class Activation(ABC):
         previous_value = 0
         previous_index = 0
 
-        compute_nones = self.__nones is None
-        compute_ones = self.__ones is None
+        compute_nones = self._nones is None
+        compute_ones = self._ones is None
 
         if act[0] == 1:
             previous_value = 1
             s[0] = 1
         if len(act) == 2:
             if act[0] == 1:
-                self.__nones = 1
-                self.__ones = [pd.IndexSlice[0:1]]
+                self._nones = 1
+                self._ones = [pd.IndexSlice[0:1]]
                 return np.array(s, dtype=int)
             else:
-                self.__nones = 0
-                self.__ones = []
+                self._nones = 0
+                self._ones = []
                 return np.array(s, dtype=int)
 
         for index in act[1:]:
@@ -296,11 +296,11 @@ class Activation(ABC):
                 previous_value = 0
 
         if compute_nones:
-            self.__nones = n_ones
-            self.__coverage_rate = self.__nones / self.length
+            self._nones = n_ones
+            self._coverage_rate = self._nones / self.length
 
         if compute_ones:
-            self.__ones = ones
+            self._ones = ones
         return np.array(s, dtype="int32")
 
     @staticmethod
@@ -346,54 +346,54 @@ class Activation(ABC):
         if self.data_format == "integer":
             return self._int_to_array()
         else:
-            return self._decompress()  # will also set self.__ones and self.__nones
+            return self._decompress()  # will also set self._ones and self._nones
 
     @property
     def ones(self) -> int:
-        """self.__ones might not be set since it can only be set when decompressing a compressed vector"""
-        if self.__ones is None:
+        """self._ones might not be set since it can only be set when decompressing a compressed vector"""
+        if self._ones is None:
             _ = self.raw  # calling raw will compute nones and ones
-        return self.__ones
+        return self._ones
 
     @property
     def nones(self) -> int:
-        """self.__nones might not be set since it can only be set at object creation if the full array was given"""
-        if self.__nones is None:
+        """self._nones might not be set since it can only be set at object creation if the full array was given"""
+        if self._nones is None:
             if self.data_format == "integer":
-                self.__nones = bin(self.data).count("1")  # faster than calling "raw"
+                self._nones = bin(self.data).count("1")  # faster than calling "raw"
             else:
                 _ = self.raw  # calling raw will compute nones
 
-        if self.__coverage_rate is None:
-            self.__coverage_rate = self.__nones / self.length
-        return self.__nones
+        if self._coverage_rate is None:
+            self._coverage_rate = self._nones / self.length
+        return self._nones
 
     @property
     def entropy(self) -> int:
-        if self.__entropy is None:
+        if self._entropy is None:
             if self.data_format == "integer":
                 compressed = self._compress(self.raw)
-                self.__entropy = len(ast.literal_eval(compressed)) - 2
+                self._entropy = len(ast.literal_eval(compressed)) - 2
             else:
                 raise ValueError(
                     "Data format is not integer and yet entropy is not set. There is a problem in the "
                     "Activation class, please contact its maintainer."
                 )
-        if self.__rel_entropy is None:
-            self.__rel_entropy = self.__entropy / self.length
-        return self.__entropy
+        if self._rel_entropy is None:
+            self._rel_entropy = self._entropy / self.length
+        return self._entropy
 
     @property
     def rel_entropy(self) -> float:
-        if self.__rel_entropy is None:
-            _ = self.entropy  # will set self.__rel_entropy
-        return self.__rel_entropy
+        if self._rel_entropy is None:
+            _ = self.entropy  # will set self._rel_entropy
+        return self._rel_entropy
 
     @property
     def coverage_rate(self) -> float:
-        if self.__coverage_rate is None:
-            _ = self.nones  # will set self.__coverage_rate
-        return self.__coverage_rate
+        if self._coverage_rate is None:
+            _ = self.nones  # will set self._coverage_rate
+        return self._coverage_rate
 
     @property
     def as_int(self):
