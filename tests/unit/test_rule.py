@@ -66,5 +66,6 @@ def test_add(x, y, condition1, condition2, activation1, activation2, activation_
     rule2.fit(xs=x, y=y)
 
     new_rule = rule1 + rule2
+    np.testing.assert_equal(new_rule.activation, activation_test)
     new_rule.fit(xs=x, y=y)
     np.testing.assert_equal(new_rule.activation, activation_test)
