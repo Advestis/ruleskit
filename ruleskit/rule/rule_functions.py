@@ -1,20 +1,37 @@
 import numpy as np
+from typing import Union
 
 
-def coverage(activation: np.ndarray) -> float:
-    return np.count_nonzero(activation) / len(activation)
+def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+    """Mean of all activated values
+
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    """
+    if activation is None:
+        return float(np.nanmean(y))
+
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+    else:
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
+    return float(np.nanmean(y_conditional))
 
 
-def conditional_mean(activation: np.ndarray, y: np.ndarray) -> float:
-    y_conditional = np.extract(activation, y)
-    cond_mean = np.nanmean(y_conditional)
-    return float(cond_mean)
+def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+    """Standard deviation of all activated values
 
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    """
+    if activation is None:
+        return float(np.nanstd(y))
 
-def conditional_std(activation: np.ndarray, y: np.ndarray) -> float:
-    y_conditional = np.extract(activation, y)
-    cond_std = np.nanstd(y_conditional)
-    return float(cond_std)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+    else:
+        raise TypeError("'activationt' in conditional_std must be None or a np.ndarray")
+    return float(np.nanstd(y_conditional))
 
 
 def mse_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
@@ -53,9 +70,9 @@ def mae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     Parameters
     ----------
     prediction_vector : np.ndarray
-                A predictor vector. It means a sparse array with two
-                different values ymean, if the rule is not active
-                and the prediction is the rule is active.
+        A predictor vector. It means a sparse array with two
+        different values ymean, if the rule is not active
+        and the prediction is the rule is active.
 
     y : np.ndarray
         The real target values (real numbers)
@@ -107,7 +124,7 @@ def calc_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, co
     Parameters
     ----------
     prediction_vector : np.ndarray
-                        The prediction vector
+        The prediction vector
 
     y : np.ndarray
         The real target values (real numbers)
