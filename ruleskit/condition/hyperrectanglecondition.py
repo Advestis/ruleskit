@@ -28,6 +28,7 @@ class HyperrectangleCondition(Condition):
                 self._features_names = features_names
             else:
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
+            self.sort()
 
     def __and__(self, other: "HyperrectangleCondition"):
         args = [i + j for i, j in zip(self.getattr, other.getattr)]
