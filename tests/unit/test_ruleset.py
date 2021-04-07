@@ -1,6 +1,6 @@
 import numpy as np
-from condition import HyperrectangleCondition
-from rule import Rule
+from ruleskit.condition import HyperrectangleCondition
+from ruleskit.rule import Rule
 from ruleskit.ruleset import RuleSet
 import pytest
 
