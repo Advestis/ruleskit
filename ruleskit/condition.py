@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import List, Union
 import numpy as np
-from ruleskit.activation import Activation
+from .activation import Activation
 
 
 class Condition(ABC):
@@ -106,6 +106,7 @@ class HyperrectangleCondition(Condition):
 
     def __and__(self, other: "HyperrectangleCondition"):
         args = [i+j for i, j in zip(self.getattr, other.getattr)]
+        # noinspection PyTypeChecker
         return HyperrectangleCondition(features_indexes=args[0], bmins=args[1], bmaxs=args[2],
                                        features_names=args[3], empty=False)
 

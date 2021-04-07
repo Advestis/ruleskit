@@ -1,20 +1,37 @@
 import numpy as np
+from typing import Union
 
 
-def coverage(activation: np.ndarray) -> float:
-    return np.count_nonzero(activation) / len(activation)
+def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+    """Mean of all activated values
+
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    """
+    if activation is None:
+        return float(np.nanmean(y))
+
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+    else:
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
+    return float(np.nanmean(y_conditional))
 
 
-def conditional_mean(activation: np.ndarray, y: np.ndarray) -> float:
-    y_conditional = np.extract(activation, y)
-    cond_mean = np.nanmean(y_conditional)
-    return float(cond_mean)
+def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+    """Standard deviation of all activated values
 
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    """
+    if activation is None:
+        return float(np.nanstd(y))
 
-def conditional_std(activation: np.ndarray, y: np.ndarray) -> float:
-    y_conditional = np.extract(activation, y)
-    cond_std = np.nanstd(y_conditional)
-    return float(cond_std)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+    else:
+        raise TypeError("'activationt' in conditional_std must be None or a np.ndarray")
+    return float(np.nanstd(y_conditional))
 
 
 def mse_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
@@ -24,23 +41,24 @@ def mse_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    prediction_vector : {array type}
-                A predictor vector. It means a sparse array with two
-                different values ymean, if the rule is not active
-                and the prediction is the rule is active.
+    prediction_vector : np.ndarray
+        A predictor vector. It means a sparse array with two
+        different values ymean, if the rule is not active
+        and the prediction is the rule is active.
 
-    y : {array type}
+    y : np.ndarray
         The real target values (real numbers)
 
     Return
     ------
-    criterion : {float type}
-           the mean squared error
+    criterion : float
+        the mean squared error
     """
-    assert len(prediction_vector) == len(y), \
-        'The two array must have the same length'
+    if len(prediction_vector) != len(y):
+        raise ValueError("The two array must have the same length")
     error_vector = prediction_vector - y
     criterion = np.nanmean(error_vector ** 2)
+    # noinspection PyTypeChecker
     return criterion
 
 
@@ -51,23 +69,24 @@ def mae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    prediction_vector : {array type}
-                A predictor vector. It means a sparse array with two
-                different values ymean, if the rule is not active
-                and the prediction is the rule is active.
+    prediction_vector : np.ndarray
+        A predictor vector. It means a sparse array with two
+        different values ymean, if the rule is not active
+        and the prediction is the rule is active.
 
-    y : {array type}
+    y : np.ndarray
         The real target values (real numbers)
 
     Return
     ------
-    criterion : {float type}
-           the mean absolute error
+    criterion : float
+        the mean absolute error
     """
-    assert len(prediction_vector) == len(y), \
-        'The two array must have the same length'
+    if len(prediction_vector) != len(y):
+        raise ValueError("The two array must have the same length")
     error_vect = np.abs(prediction_vector - y)
     criterion = np.nanmean(error_vect)
+    # noinspection PyTypeChecker
     return criterion
 
 
@@ -78,21 +97,21 @@ def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    prediction_vector : {array type}
-                A predictor vector. It means a sparse array with two
-                different values ymean, if the rule is not active
-                and the prediction is the rule is active.
+    prediction_vector : np.ndarray
+        A predictor vector. It means a sparse array with two
+        different values ymean, if the rule is not active
+        and the prediction is the rule is active.
 
-    y : {array type}
+    y : np.ndarray
         The real target values (real numbers)
 
     Return
     ------
-    criterion : {float type}
-           the mean squared error
+    criterion : float
+        the mean squared error
     """
-    assert len(prediction_vector) == len(y), \
-        'The two array must have the same length'
+    if len(prediction_vector) != len(y):
+        raise ValueError("The two array must have the same length")
     error_vector = np.mean(np.abs(prediction_vector - y))
     median_error = np.mean(np.abs(y - np.median(y)))
     return error_vector / median_error
@@ -104,22 +123,22 @@ def calc_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, co
 
     Parameters
     ----------
-    prediction_vector : {array type}
-                        The prediction vector
+    prediction_vector : np.ndarray
+        The prediction vector
 
-    y : {array type}
+    y : np.ndarray
         The real target values (real numbers)
 
-    method : {string type}
-             The method mse_function or mse_function criterion
+    method : str
+        The method mse_function or mse_function criterion
 
-    cond : {boolean type}
-            To evaluate the criterion only if the rule is activated
+    cond : bool
+        To evaluate the criterion only if the rule is activated
 
     Return
     ------
-    criterion : {float type}
-           Criteria value
+    criterion : float
+        Criteria value
     """
     if cond:
         sub_y = np.extract(prediction_vector != 0, y)
@@ -128,16 +147,16 @@ def calc_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, co
         sub_y = y
         sub_pred = prediction_vector
 
-    if method.lower() == 'mse':
+    if method.lower() == "mse":
         criterion = mse_function(sub_pred, sub_y)
 
-    elif method.lower() == 'mae':
+    elif method.lower() == "mae":
         criterion = mae_function(sub_pred, sub_y)
 
-    elif method.lower() == 'aae':
+    elif method.lower() == "aae":
         criterion = aae_function(sub_pred, sub_y)
 
     else:
-        raise ValueError('Unknown criterion: %s. Please choose among mse, mae and aae' % method)
+        raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
 
     return criterion

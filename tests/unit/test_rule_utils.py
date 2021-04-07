@@ -1,8 +1,8 @@
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 from ruleskit.utils.rule_utils import extract_rules_from_tree
-from ruleskit.condition import HyperrectangleCondition
-from ruleskit.rule import Rule
+from condition import HyperrectangleCondition
+from rule import Rule
 import numpy as np
 import pytest
 
@@ -11,31 +11,63 @@ import pytest
     "tree, output, get_leaf",
     [
         (
-                DecisionTreeRegressor(max_depth=2),
-                [Rule(HyperrectangleCondition([1], [-0.126097385560409], [-0.0037617861526086926])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.126097385560409, -0.0902752958985185],
-                                              [-0.0037617861526086926, 0.0061888848431408405])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.126097385560409, 0.0061888848431408405],
-                                              [-0.0037617861526086926, 0.17055522598066])),
-                 Rule(HyperrectangleCondition([1], [-0.0037617861526086926], [0.133598980013008])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.0037617861526086926, -0.0902752958985185],
-                                              [0.133598980013008, 0.014811381697654724])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.0037617861526086926, 0.014811381697654724],
-                                              [0.133598980013008, 0.17055522598066]))],
-                False,
+            DecisionTreeRegressor(max_depth=2),
+            [
+                Rule(HyperrectangleCondition([1], [-0.126097385560409], [-0.0037617861526086926])),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0],
+                        [-0.126097385560409, -0.0902752958985185],
+                        [-0.0037617861526086926, 0.0061888848431408405],
+                    )
+                ),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0], [-0.126097385560409, 0.0061888848431408405], [-0.0037617861526086926, 0.17055522598066]
+                    )
+                ),
+                Rule(HyperrectangleCondition([1], [-0.0037617861526086926], [0.133598980013008])),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0], [-0.0037617861526086926, -0.0902752958985185], [0.133598980013008, 0.014811381697654724]
+                    )
+                ),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0], [-0.0037617861526086926, 0.014811381697654724], [0.133598980013008, 0.17055522598066]
+                    )
+                ),
+            ],
+            False,
         ),
-(
-                DecisionTreeRegressor(max_depth=2),
-                [Rule(HyperrectangleCondition([1, 0], [-0.126097385560409, -0.0902752958985185],
-                                              [-0.0037617861526086926, 0.0061888848431408405])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.126097385560409, 0.0061888848431408405],
-                                              [-0.0037617861526086926, 0.17055522598066])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.0037617861526086926, -0.0902752958985185],
-                                              [0.133598980013008, 0.014811381697654724])),
-                 Rule(HyperrectangleCondition([1, 0], [-0.0037617861526086926, 0.014811381697654724],
-                                              [0.133598980013008, 0.17055522598066]))],
-                True,
-        )
+        (
+            DecisionTreeRegressor(max_depth=2),
+            [
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0],
+                        [-0.126097385560409, -0.0902752958985185],
+                        [-0.0037617861526086926, 0.0061888848431408405],
+                    )
+                ),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0], [-0.126097385560409, 0.0061888848431408405], [-0.0037617861526086926, 0.17055522598066]
+                    )
+                ),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0], [-0.0037617861526086926, -0.0902752958985185], [0.133598980013008, 0.014811381697654724]
+                    )
+                ),
+                Rule(
+                    HyperrectangleCondition(
+                        [1, 0], [-0.0037617861526086926, 0.014811381697654724], [0.133598980013008, 0.17055522598066]
+                    )
+                ),
+            ],
+            True,
+        ),
     ],
 )
 def test_extract_rules_from_tree(tree, output, get_leaf):
@@ -44,12 +76,12 @@ def test_extract_rules_from_tree(tree, output, get_leaf):
     # Keep the two most important variables
     x = data.T[2]
     y = data.T[-2]
-    X = np.vstack((x, y)).T
+    x_vstack = np.vstack((x, y)).T
     # Get the target variable
     y = diabetes.target
 
-    tree.fit(X, y)
-    rule_list = extract_rules_from_tree(tree, xmins=X.min(axis=0), xmaxs=X.max(axis=0), get_leaf=get_leaf)
+    tree.fit(x_vstack, y)
+    rule_list = extract_rules_from_tree(tree, xmins=x_vstack.min(axis=0), xmaxs=x_vstack.max(axis=0), get_leaf=get_leaf)
     np.testing.assert_equal(rule_list, output)
 
 

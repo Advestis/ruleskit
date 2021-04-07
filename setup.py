@@ -5,11 +5,11 @@ from typing import List
 from setuptools import find_packages, setup
 
 
-name = "rule"
+name = "ruleskit"
 author = "P.Cotte & V.Margot"
-author_email = "{pcotte, vmargot}@advestis.com"
+author_email = "pythondev@advestis.com"
 description = "Generic rule package for rule-based algorithms"
-url = "https://github.com/Advestis/rule"
+url = f"https://github.com/Advestis/ruleskit"
 
 
 def run_cmd(cmd):
@@ -85,13 +85,13 @@ try:
     version = get_version()
     with open("VERSION.txt", "w") as vfile:
         vfile.write(version)
-except FileNotFoundError as e:
+except (FileNotFoundError, subprocess.CalledProcessError) as e:
     # noinspection PyBroadException
     try:
         with open("VERSION.txt", "r") as vfile:
             version = vfile.readline()
     except Exception:
-        version = None
+        raise ValueError("Could not get package version")
 
 
 if __name__ == "__main__":

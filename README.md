@@ -7,9 +7,9 @@ permalink: /docs/index.html
 
 ## Documentation
 
+https://advestis.github.io/ruleskit/
 
 ## Installation
 
-### Required python packages:
 
-`pip install -r requirements.txt`
+`pip install ruleskit`

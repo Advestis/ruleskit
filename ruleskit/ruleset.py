@@ -4,7 +4,7 @@ from typing import List, Union
 from functools import reduce
 from collections import Counter
 import numpy as np
-from ruleskit.rule import Rule
+from rule import Rule
 
 
 class RuleSet(ABC):
@@ -48,12 +48,11 @@ class RuleSet(ABC):
             else:
                 rs_activation = rule.condition.evaluate(xs)
         else:
-            if xs is None:
-                activations_list = [rule._activation for rule in self.rules]
-                rs_activation = reduce(operator.add, activations_list)
-            else:
-                activations_list = [rule.calc_activation(xs) for rule in self.rules]
-                rs_activation = reduce(operator.add, activations_list)
+            if xs is not None:
+                [rule.calc_activation(xs) for rule in self.rules]
+
+            activations_list = [rule._activation for rule in self.rules]
+            rs_activation = reduce(operator.add, activations_list)
 
         return rs_activation
 
@@ -62,7 +61,7 @@ class RuleSet(ABC):
             return 0.0
         else:
             rs_activation = self.get_activation(xs)
-            return rs_activation.calc_coverage_rate()
+            return rs_activation.coverage_rate
 
     def get_variables_count(self):
         """

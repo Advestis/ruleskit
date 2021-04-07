@@ -4,24 +4,30 @@ import pytest
 
 
 @pytest.mark.parametrize(
-    "vector, val, n",
+    "vector, cs, ca, i, n",
     [
         (
                 np.array([1, 0, 1]),
+                "1,1,2,3",
+                np.array([1, 1, 2, 3]),
                 5,
                 3,
         ),
         (
                 np.array([0, 1, 0, 1]),
+                "0,1,2,3,4",
+                np.array([0, 1, 2, 3, 4]),
                 5,
                 4,
         ),
     ],
 )
-def test_init(vector, val, n):
+def test_init(vector, cs, ca, i, n):
     res = Activation(vector)
-    np.testing.assert_equal(res.val, val)
-    np.testing.assert_equal(res.n, n)
+    np.testing.assert_equal(res.as_int, i)
+    np.testing.assert_equal(res.as_compressed_array, ca)
+    np.testing.assert_equal(res.as_compressed_str, cs)
+    np.testing.assert_equal(res.length, n)
 
 
 @pytest.mark.parametrize(
@@ -31,9 +37,9 @@ def test_init(vector, val, n):
         np.array([0, 1, 0, 1]),
     ],
 )
-def test_get_array(vector):
+def test_raw(vector):
     res = Activation(vector)
-    np.testing.assert_equal(res.get_array(), vector)
+    np.testing.assert_equal(res.raw, vector)
 
 
 @pytest.mark.parametrize(
@@ -51,7 +57,7 @@ def test_get_array(vector):
 )
 def test_coverage(vector, coverage):
     res = Activation(vector)
-    np.testing.assert_equal(res.calc_coverage_rate(), coverage)
+    np.testing.assert_equal(res.coverage_rate, coverage)
 
 
 @pytest.mark.parametrize(
@@ -67,7 +73,7 @@ def test_coverage(vector, coverage):
 def test_diff(vector1, vector2, diff):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal((act1 - act2).get_array(), diff)
+    np.testing.assert_equal((act1 - act2).raw, diff)
 
 
 @pytest.mark.parametrize(
@@ -80,10 +86,10 @@ def test_diff(vector1, vector2, diff):
         ),
     ],
 )
-def test_diff(vector1, vector2, and_vector):
+def test_and(vector1, vector2, and_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal((act1 & act2).get_array(), and_vector)
+    np.testing.assert_equal((act1 & act2).raw, and_vector)
 
 
 @pytest.mark.parametrize(
@@ -96,7 +102,7 @@ def test_diff(vector1, vector2, and_vector):
         ),
     ],
 )
-def test_diff(vector1, vector2, add_vector):
+def test_add(vector1, vector2, add_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal((act1 + act2).get_array(), add_vector)
+    np.testing.assert_equal((act1 + act2).raw, add_vector)
