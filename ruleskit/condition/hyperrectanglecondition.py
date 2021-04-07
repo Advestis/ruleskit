@@ -30,14 +30,17 @@ class HyperrectangleCondition(Condition):
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
             self.sort()
 
-    def __and__(self, other: "HyperrectangleCondition"):
+    def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
         args = [i + j for i, j in zip(self.getattr, other.getattr)]
         # noinspection PyTypeChecker
-        return HyperrectangleCondition(
+        to_ret = HyperrectangleCondition(
             features_indexes=args[0], bmins=args[1], bmaxs=args[2], features_names=args[3], empty=False
         )
+        if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
+            to_ret.normalize_features_indexes()
+        return to_ret
 
-    def __add__(self, other: "HyperrectangleCondition"):
+    def __add__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
         return self & other
 
     @property

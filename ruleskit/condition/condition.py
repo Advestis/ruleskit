@@ -13,11 +13,14 @@ class Condition(ABC):
                 raise ValueError("Must specify features_indexes")
         self._features_indexes = features_indexes
 
-    def __and__(self, other: "Condition"):
+    def __and__(self, other: "Condition") -> "Condition":
         args = [i + j for i, j in zip(self.getattr, other.getattr)]
-        return Condition(features_indexes=args[0], empty=False)
+        ro_ret = Condition(features_indexes=args[0], empty=False)
+        if len(set(ro_ret.features_indexes)) < len(ro_ret.features_indexes):
+            ro_ret.normalize_features_indexes()
+        return ro_ret
 
-    def __add__(self, other: "Condition"):
+    def __add__(self, other: "Condition") -> "Condition":
         return self & other
 
     @property
@@ -57,3 +60,6 @@ class Condition(ABC):
     def intersect_condition(self, other):
         """To be implemented in daughter class"""
         pass
+
+    def normalize_features_indexes(self):
+        self.features_indexes = list(range(len(self.features_indexes)))
