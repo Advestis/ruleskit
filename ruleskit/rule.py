@@ -1,10 +1,10 @@
 from abc import ABC
 import numpy as np
 from typing import Optional
-from ..condition.condition import Condition
-from ..activation.activation import Activation
-from . import rule_functions as functions
 from copy import copy
+from .condition import Condition
+from .activation import Activation
+from .utils import rfunctions as functions
 
 
 class Rule(ABC):
@@ -82,6 +82,9 @@ class Rule(ABC):
     def __len__(self):
         return len(self._condition)
 
+    def evaluate(self, xs: np.ndarray) -> Activation:
+        return self._condition.evaluate(xs)
+
     def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse"):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         self.calc_activation(xs)  # returns Activation
@@ -91,7 +94,7 @@ class Rule(ABC):
         self.calc_criterion(prediction_vector, y, crit)
 
     def calc_activation(self, xs: np.ndarray) -> None:
-        self._activation = self._condition.evaluate(xs)
+        self._activation = self.evaluate(xs)
 
     def calc_prediction(self, y: np.ndarray) -> None:
         """If you do not need to to all 'fit' but only want to compute 'prediction'"""

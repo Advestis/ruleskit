@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import ast
 import sys
-from ..logger.logger import log as logger
+from .logger.logger import log as logger
 
 MAX_INT_32 = 2 ** 32
 
@@ -226,8 +226,6 @@ class Activation(ABC):
     def _int_to_array(self, value: int = None) -> np.ndarray:
         """From a value of the form 45786542 (int), which is the base 10 representation of the binary form of an
         activation vector, returns the initial vector.
-
-
         """
         if value is None:
             act = np.fromiter(bin(self.data)[2:], dtype=int)
@@ -335,7 +333,7 @@ class Activation(ABC):
 
         Examples
         --------
-        >>> from ruleskit.activation.activation import Activation
+        >>> from ruleskit import Activation
         >>> Activation._array_to_int(np.array([0, 1, 1, 0]))
         6  # the binary number '0110' is 6 in base 10
         """
