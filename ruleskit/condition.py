@@ -69,6 +69,8 @@ class Condition(ABC):
 
 class HyperrectangleCondition(Condition):
 
+    SORT_ACCORDING_TO = "index"
+
     def __init__(
         self,
         features_indexes: Union[List[int], None] = None,
@@ -169,10 +171,19 @@ class HyperrectangleCondition(Condition):
 
     def sort(self):
         if len(self) > 1:
-            self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
-            self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
-            self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
-            self._features_names = sorted(self._features_names)
+            if HyperrectangleCondition.SORT_ACCORDING_TO == "index":
+                self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
+                self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
+                self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
+                self._features_indexes = sorted(self._features_indexes)
+            elif HyperrectangleCondition.SORT_ACCORDING_TO == "name":
+                self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
+                self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
+                self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
+                self._features_names = sorted(self._features_names)
+            else:
+                raise ValueError("HyperrectangleCondition's SORT_ACCORDING_TO"
+                                 f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}")
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         """
