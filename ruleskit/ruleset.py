@@ -4,7 +4,8 @@ from typing import List, Union
 from functools import reduce
 from collections import Counter
 import numpy as np
-from ruleskit.rule import Rule
+from .rule import Rule
+from .condition import HyperrectangleCondition
 
 
 class RuleSet(ABC):
@@ -44,6 +45,7 @@ class RuleSet(ABC):
         elif len(self) == 1:
             rule = self[0]
             if xs is None:
+                # noinspection PyProtectedMember
                 rs_activation = rule._activation
             else:
                 rs_activation = rule.condition.evaluate(xs)
@@ -51,6 +53,7 @@ class RuleSet(ABC):
             if xs is not None:
                 [rule.calc_activation(xs) for rule in self.rules]
 
+            # noinspection PyProtectedMember
             activations_list = [rule._activation for rule in self.rules]
             rs_activation = reduce(operator.add, activations_list)
 
@@ -71,9 +74,11 @@ class RuleSet(ABC):
         Return
         ------
         count : {Counter type}
-                Counter of all different features in the ruleset
+            Counter of all different features in the ruleset
         """
-        var_in = [rule.condition.features_names for rule in self]
+        # noinspection PyUnresolvedReferences
+        var_in = [rule.condition.features_names if isinstance(rule.condition, HyperrectangleCondition) else
+                  rule.condition.features_indexes for rule in self]
         var_in = reduce(operator.add, var_in)
         count = Counter(var_in)
 

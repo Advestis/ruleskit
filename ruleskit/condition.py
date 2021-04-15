@@ -1,3 +1,4 @@
+import ast
 from abc import ABC
 from typing import List, Union
 import numpy as np
@@ -15,10 +16,10 @@ class Condition(ABC):
 
     def __and__(self, other: "Condition") -> "Condition":
         args = [i + j for i, j in zip(self.getattr, other.getattr)]
-        ro_ret = Condition(features_indexes=args[0], empty=False)
-        if len(set(ro_ret.features_indexes)) < len(ro_ret.features_indexes):
-            ro_ret.normalize_features_indexes()
-        return ro_ret
+        to_ret = Condition(features_indexes=args[0], empty=False)
+        if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
+            to_ret.normalize_features_indexes()
+        return to_ret
 
     def __add__(self, other: "Condition") -> "Condition":
         return self & other
@@ -71,8 +72,8 @@ class HyperrectangleCondition(Condition):
     def __init__(
         self,
         features_indexes: Union[List[int], None] = None,
-        bmins: Union[List[float], None] = None,
-        bmaxs: Union[List[float], None] = None,
+        bmins: Union[List[Union[int, float]], None] = None,
+        bmaxs: Union[List[Union[int, float]], None] = None,
         features_names: Union[List[str], None] = None,
         empty: bool = False,
     ):
@@ -93,7 +94,7 @@ class HyperrectangleCondition(Condition):
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
             self.sort()
 
-    def __and__(self, other: "HyperrectangleCondition"):
+    def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
         args = [i+j for i, j in zip(self.getattr, other.getattr)]
         # noinspection PyTypeChecker
         to_ret = HyperrectangleCondition(features_indexes=args[0], bmins=args[1], bmaxs=args[2],
@@ -102,11 +103,11 @@ class HyperrectangleCondition(Condition):
             to_ret.normalize_features_indexes()
         return to_ret
 
-    def __add__(self, other: "HyperrectangleCondition"):
+    def __add__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
         return self & other
 
     @property
-    def getattr(self):
+    def getattr(self) -> List[list]:
         return [self.features_indexes, self.bmins, self.bmaxs, self.features_names]
 
     @property
@@ -114,47 +115,29 @@ class HyperrectangleCondition(Condition):
         return self._features_names
 
     @property
-    def bmins(self) -> List[float]:
+    def bmins(self) -> List[Union[int, float]]:
         return self._bmins
 
     @property
-    def bmaxs(self) -> List[float]:
+    def bmaxs(self) -> List[Union[int, float]]:
         return self._bmaxs
 
     @features_names.setter
     def features_names(self, values: Union[List[str], str]):
         if isinstance(values, str):
-            values = (
-                values.replace("[", "").replace("]", "").replace(" ", "").replace("'", "").replace('"', "").split(",")
-            )
+            values = ast.literal_eval(values)
         self._features_names = values
 
     @bmins.setter
-    def bmins(self, values: Union[List[float], str]):
+    def bmins(self, values: Union[List[Union[int, float]], str]):
         if isinstance(values, str):
-            values = [
-                int(float(v))
-                for v in values.replace("[", "")
-                .replace("]", "")
-                .replace(" ", "")
-                .replace("'", "")
-                .replace('"', "")
-                .split(",")
-            ]
+            values = [int(v) for v in ast.literal_eval(values)]
         self._bmins = values
 
     @bmaxs.setter
-    def bmaxs(self, values: Union[List[float], str]):
+    def bmaxs(self, values: Union[List[Union[int, float]], str]):
         if isinstance(values, str):
-            values = [
-                int(float(v))
-                for v in values.replace("[", "")
-                .replace("]", "")
-                .replace(" ", "")
-                .replace("'", "")
-                .replace('"', "")
-                .split(",")
-            ]
+            values = [int(v) for v in ast.literal_eval(values)]
         self._bmaxs = values
 
     def __repr__(self):
@@ -186,10 +169,10 @@ class HyperrectangleCondition(Condition):
 
     def sort(self):
         if len(self) > 1:
-            self.bmins = [x for _, x in sorted(zip(self.features_indexes, self.bmins))]
-            self.bmaxs = [x for _, x in sorted(zip(self.features_indexes, self.bmaxs))]
-            self.features_names = sorted(self.features_names)
-            self.features_indexes = sorted(self.features_indexes)
+            self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
+            self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
+            self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
+            self._features_names = sorted(self._features_names)
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         """
@@ -203,7 +186,7 @@ class HyperrectangleCondition(Condition):
         Returns
         -------
         activation: np.ndarray
-             Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
+            Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
 
         Examples
         --------

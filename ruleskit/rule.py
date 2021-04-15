@@ -1,10 +1,10 @@
 from abc import ABC
 import numpy as np
 from typing import Optional
-from ruleskit.condition import Condition
+from copy import copy
+from .condition import Condition
 from .activation import Activation
 from .utils import rfunctions as functions
-from copy import copy
 
 
 class Rule(ABC):
