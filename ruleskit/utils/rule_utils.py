@@ -1,9 +1,9 @@
 from typing import List, Union
 import copy
 import numpy as np
-from ruleskit.rule import Rule
+from ..rule import Rule
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ruleskit.condition import HyperrectangleCondition
+from ..condition import HyperrectangleCondition
 
 # noinspection PyProtectedMember
 from sklearn.tree import _tree

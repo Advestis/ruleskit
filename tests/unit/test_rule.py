@@ -1,5 +1,5 @@
-from ruleskit.condition import HyperrectangleCondition
-from ruleskit.rule import Rule
+from ruleskit import HyperrectangleCondition
+from ruleskit import Rule
 import numpy as np
 import pytest
 

@@ -40,7 +40,8 @@ class Condition(ABC):
     def __len__(self):
         return len(self._features_indexes)
 
-    def evaluate(self, xs: np.ndarray) -> Activation:
+    @staticmethod
+    def evaluate(xs: np.ndarray) -> Activation:
         """
         Evaluates where a condition if fullfilled
 
@@ -90,6 +91,7 @@ class HyperrectangleCondition(Condition):
                 self._features_names = features_names
             else:
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
+            self.sort()
 
     def __and__(self, other: "HyperrectangleCondition"):
         args = [i+j for i, j in zip(self.getattr, other.getattr)]
@@ -112,11 +114,11 @@ class HyperrectangleCondition(Condition):
         return self._features_names
 
     @property
-    def bmins(self) -> List[int]:
+    def bmins(self) -> List[float]:
         return self._bmins
 
     @property
-    def bmaxs(self) -> List[int]:
+    def bmaxs(self) -> List[float]:
         return self._bmaxs
 
     @features_names.setter
@@ -128,7 +130,7 @@ class HyperrectangleCondition(Condition):
         self._features_names = values
 
     @bmins.setter
-    def bmins(self, values: Union[List[int], str]):
+    def bmins(self, values: Union[List[float], str]):
         if isinstance(values, str):
             values = [
                 int(float(v))
@@ -142,7 +144,7 @@ class HyperrectangleCondition(Condition):
         self._bmins = values
 
     @bmaxs.setter
-    def bmaxs(self, values: Union[List[int], str]):
+    def bmaxs(self, values: Union[List[float], str]):
         if isinstance(values, str):
             values = [
                 int(float(v))
@@ -181,6 +183,13 @@ class HyperrectangleCondition(Condition):
 
     def __len__(self):
         return len(self._features_names)
+
+    def sort(self):
+        if len(self) > 1:
+            self.bmins = [x for _, x in sorted(zip(self.features_indexes, self.bmins))]
+            self.bmaxs = [x for _, x in sorted(zip(self.features_indexes, self.bmaxs))]
+            self.features_names = sorted(self.features_names)
+            self.features_indexes = sorted(self.features_indexes)
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         """
