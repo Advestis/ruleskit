@@ -54,8 +54,9 @@ class RuleSet(ABC):
                 [rule.calc_activation(xs) for rule in self.rules]
 
             # noinspection PyProtectedMember
-            activations_list = [rule._activation for rule in self.rules]
-            rs_activation = reduce(operator.add, activations_list)
+            rs_activation = [rule._activation for rule in self.rules]
+            if len(rs_activation) > 1:
+                rs_activation = reduce(operator.add, rs_activation)
 
         return rs_activation
 
@@ -79,7 +80,8 @@ class RuleSet(ABC):
         # noinspection PyUnresolvedReferences
         var_in = [rule.condition.features_names if isinstance(rule.condition, HyperrectangleCondition) else
                   rule.condition.features_indexes for rule in self]
-        var_in = reduce(operator.add, var_in)
+        if len(var_in) > 1:
+            var_in = reduce(operator.add, var_in)
         count = Counter(var_in)
 
         count = count.most_common()
