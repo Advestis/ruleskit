@@ -209,7 +209,7 @@ class Activation(ABC):
         else:
             val_xor = np.logical_xor(self.raw, other.raw)
             val_and = self.raw * other.raw
-            val = np.logical_xor(val_xor ^ val_and).astype("int32")
+            val = np.logical_xor(val_xor, val_and).astype("int32")
         return Activation(val, length=self.length)
 
     def __sub__(self, other: "Activation") -> "Activation":
