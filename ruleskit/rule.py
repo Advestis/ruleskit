@@ -48,7 +48,7 @@ class Rule(ABC):
 
     @property
     def coverage(self) -> float:
-        return self._activation.coverage_rate
+        return self._activation.coverage
 
     @property
     def prediction(self) -> float:

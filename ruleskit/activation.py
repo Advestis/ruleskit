@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Union
+from typing import Union
 import numpy as np
 import pandas as pd
 import ast
@@ -14,7 +14,7 @@ class Activation(ABC):
     SIZE_LIMIT = 0.000000139  # 0.25 / 1.8e6. From numerical experiment.
     DTYPE = str
 
-    def __init__(self, activation: Union[np.ndarray, List[int]] = None, length: int = None, optimize: bool = True):
+    def __init__(self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True):
         """ Compresses an activation vector into a str(list) describing its variations or an int corresponding to the
          binary representation of the vector
 
@@ -56,7 +56,7 @@ class Activation(ABC):
         self._ones = None  # Will be set if "activation" is the raw activation vector
         self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
         self._nones = None  # Will be set if activation is not an integer or if optimize is True
-        self._coverage_rate = None
+        self._coverage = None
 
         if isinstance(activation, str) and "," not in activation:  # activation is actualy an integer, stored as an int
             activation = int(activation)
@@ -129,7 +129,7 @@ class Activation(ABC):
           * self.length
         """
         logger.debug(f"Activation vector is a compressed str")
-        evaluated = np.ndarray(ast.literal_eval(value))
+        evaluated = np.array(ast.literal_eval(value))
         self.data = value
         self._entropy = len(evaluated) - 2
         self.length = evaluated[-1]
@@ -170,12 +170,12 @@ class Activation(ABC):
             self._entropy = len(compressed) - 2
         self._rel_entropy = self._entropy / self.length
         sizeof = sys.getsizeof(compressed) / 1e6
+        logger.debug(f"Using int activation representation")
         if (sizeof / len(value)) > Activation.SIZE_LIMIT:
-            logger.debug(f"Using int activation representation for rule {str(self)}")
             self.data = self._array_to_int(value)
             self.data_format = "integer"
         else:
-            logger.debug(f"Using compressed activation representation for rule {str(self)}")
+            logger.debug(f"Using compressed activation representation")
             self.data = compressed
             if dtype == str:
                 self.data_format = "compressed_str"
@@ -295,7 +295,7 @@ class Activation(ABC):
 
         if compute_nones:
             self._nones = n_ones
-            self._coverage_rate = self._nones / self.length
+            self._coverage = self._nones / self.length
 
         if compute_ones:
             self._ones = ones
@@ -362,8 +362,8 @@ class Activation(ABC):
             else:
                 _ = self.raw  # calling raw will compute nones
 
-        if self._coverage_rate is None:
-            self._coverage_rate = self._nones / self.length
+        if self._coverage is None:
+            self._coverage = self._nones / self.length
         return self._nones
 
     @property
@@ -388,10 +388,10 @@ class Activation(ABC):
         return self._rel_entropy
 
     @property
-    def coverage_rate(self) -> float:
-        if self._coverage_rate is None:
-            _ = self.nones  # will set self._coverage_rate
-        return self._coverage_rate
+    def coverage(self) -> float:
+        if self._coverage is None:
+            _ = self.nones  # will set self._coverage
+        return self._coverage
 
     @property
     def as_int(self):

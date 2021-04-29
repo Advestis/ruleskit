@@ -57,7 +57,7 @@ def test_raw(vector):
 )
 def test_coverage(vector, coverage):
     res = Activation(vector)
-    np.testing.assert_equal(res.coverage_rate, coverage)
+    np.testing.assert_equal(res.coverage, coverage)
 
 
 @pytest.mark.parametrize(
