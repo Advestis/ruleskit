@@ -170,12 +170,12 @@ class Activation(ABC):
             self._entropy = len(compressed) - 2
         self._rel_entropy = self._entropy / self.length
         sizeof = sys.getsizeof(compressed) / 1e6
+        logger.debug(f"Using int activation representation")
         if (sizeof / len(value)) > Activation.SIZE_LIMIT:
-            logger.debug(f"Using int activation representation for rule {str(self)}")
             self.data = self._array_to_int(value)
             self.data_format = "integer"
         else:
-            logger.debug(f"Using compressed activation representation for rule {str(self)}")
+            logger.debug(f"Using compressed activation representation")
             self.data = compressed
             if dtype == str:
                 self.data_format = "compressed_str"
