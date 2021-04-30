@@ -301,6 +301,13 @@ class Activation(ABC):
             self._ones = ones
         return np.array(s, dtype="int32")
 
+    def __contains__(self, other: "Activation") -> bool:
+        # TODO : pytests (for vmargot)
+        nones_intersection = (self & other).nones
+        if nones_intersection < min(self.nones, other.nones):
+            return False
+        return True
+
     @staticmethod
     def _compress(value: np.ndarray, dtype: type = str) -> Union[np.ndarray, str]:
         """Transforms a raw activation vector to a compressed one.
