@@ -68,6 +68,9 @@ class Rule(ABC):
         else:
             return self._condition == other._condition
 
+    def __contains__(self, other: "Rule") -> bool:
+        return other._activation in self._activation
+
     def __str__(self) -> str:
         prediction = "<prediction unset>"
         if self._prediction is not None:
