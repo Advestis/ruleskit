@@ -78,6 +78,7 @@ class HyperrectangleCondition(Condition):
         bmaxs: Union[List[Union[int, float]], None] = None,
         features_names: Union[List[str], None] = None,
         empty: bool = False,
+        sort: bool = True
     ):
         if empty:
             super().__init__(empty=True)
@@ -94,7 +95,8 @@ class HyperrectangleCondition(Condition):
                 self._features_names = features_names
             else:
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
-            self.sort()
+            if sort:
+                self.sort()
 
     def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
         args = [i+j for i, j in zip(self.getattr, other.getattr)]
