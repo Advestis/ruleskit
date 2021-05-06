@@ -1,6 +1,5 @@
-numpy~=1.19.5
-pytest~=6.2.1
-pathlib~=1.0.1
-setuptools~=51.1.2
-scikit-learn~=0.24.1
-pandas~=1.2.3
+numpy
+pytest
+pathlib
+scikit-learn
+pandas

@@ -48,7 +48,7 @@ class Rule(ABC):
 
     @property
     def coverage(self) -> float:
-        return self._activation.coverage_rate
+        return self._activation.coverage
 
     @property
     def prediction(self) -> float:
@@ -67,6 +67,9 @@ class Rule(ABC):
             raise TypeError(f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}.")
         else:
             return self._condition == other._condition
+
+    def __contains__(self, other: "Rule") -> bool:
+        return other._activation in self._activation
 
     def __str__(self) -> str:
         prediction = "<prediction unset>"
