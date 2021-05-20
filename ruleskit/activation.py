@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import ast
 import sys
+from time import time
 from .logger.logger import log as logger
 
 MAX_INT_32 = 2 ** 32
@@ -57,6 +58,18 @@ class Activation(ABC):
         self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
         self._nones = None  # Will be set if activation is not an integer or if optimize is True
         self._coverage = None
+        self._time_decompress = -1
+        self._time_compress = -1
+        self._time_conversions_to_int = -1
+        self._time_conversions_from_int = -1
+        self._decompressions = 0
+        self._compressions = 0
+        self._conversions_to_int = 0
+        self._conversions_from_int = 0
+        self._sizeof_compressed_array = -1
+        self._sizeof_compressed_str = -1
+        self._sizeof_integer = -1
+        self._sizeof_raw = -1
 
         if isinstance(activation, str) and "," not in activation:  # activation is actualy an integer, stored as an int
             activation = int(activation)
@@ -96,18 +109,28 @@ class Activation(ABC):
 
         logger.debug(f"Activation vector is an int")
         self.length = length
+        self._sizeof_integer = sys.getsizeof(value) / 1e6
 
         if optimize:
             raw = self._int_to_array(value)
+            self._sizeof_raw = sys.getsizeof(raw) / 1e6
             self._nones = np.count_nonzero(raw == 1)
+            t0 = time()
             compressed = self._compress(raw, dtype=dtype)
+            self._time_compress = time() - t0
+            self._compressions += 1
+            if isinstance(compressed, str):
+                self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
+                size_compressed = self._sizeof_compressed_str
+            else:
+                self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
+                size_compressed = self._sizeof_compressed_array
             if dtype == str:
                 self._entropy = len(ast.literal_eval(compressed)) - 2
             else:
                 self._entropy = len(compressed) - 2
             self._rel_entropy = self._entropy / self.length
-            sizeof = sys.getsizeof(compressed) / 1e6
-            if (sizeof / self.length) > Activation.SIZE_LIMIT:
+            if (size_compressed / self.length) > Activation.SIZE_LIMIT:
                 self.data = value
                 self.data_format = "integer"
             else:
@@ -131,6 +154,7 @@ class Activation(ABC):
         logger.debug(f"Activation vector is a compressed str")
         evaluated = np.array(ast.literal_eval(value))
         self.data = value
+        self._sizeof_compressed_str = sys.getsizeof(value) / 1e6
         self._entropy = len(evaluated) - 2
         self.length = evaluated[-1]
         self._rel_entropy = self._entropy / self.length
@@ -146,6 +170,7 @@ class Activation(ABC):
         """
         logger.debug(f"Activation vector is a compressed array")
         self.data = value
+        self._sizeof_compressed_array = sys.getsizeof(value) / 1e6
         self._entropy = len(value) - 2
         self.length = value[-1]
         self._rel_entropy = self._entropy / self.length
@@ -161,18 +186,31 @@ class Activation(ABC):
           * self._nones
         """
         logger.debug(f"Activation vector is raw")
+        self._sizeof_raw = sys.getsizeof(value) / 1e6
         self.length = len(value)
         self._nones = np.count_nonzero(value == 1)
+        t0 = time()
         compressed = self._compress(value, dtype=dtype)
+        self._time_compress = time() - t0
+        self._compressions += 1
+        if isinstance(compressed, str):
+            self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
+            size_compressed = self._sizeof_compressed_str
+        else:
+            self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
+            size_compressed = self._sizeof_compressed_array
         if dtype is str:
             self._entropy = len(compressed.split(",")) - 2
         else:
             self._entropy = len(compressed) - 2
         self._rel_entropy = self._entropy / self.length
-        sizeof = sys.getsizeof(compressed) / 1e6
         logger.debug(f"Using int activation representation")
-        if (sizeof / len(value)) > Activation.SIZE_LIMIT:
+        if (size_compressed / len(value)) > Activation.SIZE_LIMIT:
+            t0 = time()
             self.data = self._array_to_int(value)
+            self._time_conversions_to_int = time() - t0
+            self._conversions_to_int += 1
+            self._sizeof_integer = sys.getsizeof(self.data) / 1e6
             self.data_format = "integer"
         else:
             logger.debug(f"Using compressed activation representation")
@@ -227,9 +265,24 @@ class Activation(ABC):
         """From a value of the form 45786542 (int), which is the base 10 representation of the binary form of an
         activation vector, returns the initial vector.
         """
+        t0 = time()
         if value is None:
+            if isinstance(self.data, np.ndarray) and (self.data[-1] == 0 or self.data[-1] == 1):
+                self._time_conversions_from_int = time() - t0
+                self._conversions_from_int += 1
+                return self.data
+            elif not isinstance(self.data, int):
+                raise ValueError("Can not apply _int_to_array on a compressed vector")
             act = np.fromiter(bin(self.data)[2:], dtype=int)
+            if self._sizeof_integer == -1:
+                self._sizeof_raw = sys.getsizeof(self.data) / 1e6
         else:
+            if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
+                self._time_conversions_from_int = time() - t0
+                self._conversions_from_int += 1
+                return value
+            elif not isinstance(value, int):
+                raise ValueError("Can not apply _int_to_array on a compressed vector")
             act = np.fromiter(bin(value)[2:], dtype=int)
 
         if len(act) > self.length:
@@ -240,17 +293,36 @@ class Activation(ABC):
             )
         act_bis = np.zeros(self.length)
         act_bis[self.length - len(act):] = act
+        if value is None and self._sizeof_raw == -1:
+            self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
+        self._time_conversions_from_int = time() - t0
+        self._conversions_from_int += 1
         return act_bis
 
     def _decompress(self, value: Union[str, np.ndarray] = None) -> np.ndarray:
         """Will return the original activation vector, and set self._nones and self._ones"""
+        t0 = time()
         if value is None:
+
+            if isinstance(self.data, np.ndarray) and (self.data[-1] == 0 or self.data[-1] == 1):
+                self._time_decompress = time() - t0
+                self._decompressions += 1
+                return self.data
+            elif isinstance(self.data, int):
+                raise ValueError("Can not apply _decompress on a integer vector")
+
             if self.data_format == "compressed_str":
                 act = ast.literal_eval(self.data)
+                if self._sizeof_compressed_str == -1:
+                    self._sizeof_compressed_str = sys.getsizeof(self.data) / 1e6
             elif self.data_format == "compressed_array":
                 act = self.data
+                if self._sizeof_compressed_array == -1:
+                    self._sizeof_compressed_array = sys.getsizeof(self.data) / 1e6
             else:
-                raise TypeError("Cannot decompress an activation vector which data format is not compressed")
+                self._time_decompress = time() - t0
+                self._decompressions += 1
+                return self.data
         else:
             if isinstance(value, str):
                 act = ast.literal_eval(value)
@@ -274,11 +346,21 @@ class Activation(ABC):
             if act[0] == 1:
                 self._nones = 1
                 self._ones = [pd.IndexSlice[0:1]]
-                return np.array(s, dtype=int)
+                act = np.array(s, dtype=int)
+                if value is None and self._sizeof_raw == -1:
+                    self._sizeof_raw = sys.getsizeof(act) / 1e6
+                self._time_decompress = time() - t0
+                self._decompressions += 1
+                return act
             else:
                 self._nones = 0
                 self._ones = []
-                return np.array(s, dtype=int)
+                act = np.array(s, dtype=int)
+                if value is None and self._sizeof_raw == -1:
+                    self._sizeof_raw = sys.getsizeof(act) / 1e6
+                self._time_decompress = time() - t0
+                self._decompressions += 1
+                return act
 
         for index in act[1:]:
             if previous_value == 0:
@@ -299,7 +381,12 @@ class Activation(ABC):
 
         if compute_ones:
             self._ones = ones
-        return np.array(s, dtype="int32")
+        act = np.array(s, dtype="int32")
+        if value is None and self._sizeof_raw == -1:
+            self._sizeof_raw = sys.getsizeof(act) / 1e6
+        self._time_decompress = time() - t0
+        self._decompressions += 1
+        return act
 
     def __contains__(self, other: "Activation") -> bool:
         # TODO : pytests (for vmargot)
@@ -320,6 +407,10 @@ class Activation(ABC):
         The compressed vector can be stored as a str looking like "0, 12, 456, ..., 47782" or as a numpy array of
         integers. What storage to use is specified by the "dtype" argument.
         """
+        if isinstance(value, int):
+            raise ValueError("Can not use _compress or an integer")
+        if not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
+            return value
         value = value.astype(int)
         to_ret = [value[0]]
         diff_arr = abs(np.diff(value))
@@ -344,10 +435,16 @@ class Activation(ABC):
         >>> Activation._array_to_int(np.array([0, 1, 1, 0]))
         6  # the binary number '0110' is 6 in base 10
         """
-        return int("".join(str(i) for i in value.astype('int')), 2)
+        if isinstance(value, int):
+            return value
+        elif not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
+            raise ValueError("Can not use _array_to_int or a compressed vector")
+        to_ret = int("".join(str(i) for i in value.astype('int')), 2)
+        return to_ret
 
     @property
     def raw(self) -> np.ndarray:
+        """ Returns the raw np.array. Will set relevant sizes if this has not been done yet """
         if self.data_format == "integer":
             return self._int_to_array()
         else:
@@ -355,14 +452,14 @@ class Activation(ABC):
 
     @property
     def ones(self) -> int:
-        """self._ones might not be set since it can only be set when decompressing a compressed vector"""
+        """ self._ones might not be set since it can only be set when decompressing a compressed vector """
         if self._ones is None:
             _ = self.raw  # calling raw will compute nones and ones
         return self._ones
 
     @property
     def nones(self) -> int:
-        """self._nones might not be set since it can only be set at object creation if the full array was given"""
+        """ self._nones might not be set since it can only be set at object creation if the full array was given """
         if self._nones is None:
             if self.data_format == "integer":
                 self._nones = bin(self.data).count("1")  # faster than calling "raw"
@@ -377,7 +474,16 @@ class Activation(ABC):
     def entropy(self) -> int:
         if self._entropy is None:
             if self.data_format == "integer":
+                t0 = time()
                 compressed = self._compress(self.raw)
+                self._time_compress = time() - t0
+                self._compressions += 1
+                if self.data_format == "compressed_str":
+                    if self._sizeof_compressed_str == -1:
+                        self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
+                if self.data_format == "compressed_array":
+                    if self._sizeof_compressed_array == -1:
+                        self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
                 self._entropy = len(ast.literal_eval(compressed)) - 2
             else:
                 raise ValueError(
@@ -403,20 +509,148 @@ class Activation(ABC):
     @property
     def as_int(self):
         if self.data_format == "integer":
+            if self._sizeof_integer == -1:
+                self._sizeof_integer = sys.getsizeof(self.data)
             return self.data
         else:
-            return self._array_to_int(self.raw)
+            t0 = time()
+            to_ret = self._array_to_int(self.raw)
+            self._time_conversions_to_int = time() - t0
+            self._conversions_to_int += 1
+            if self._sizeof_integer == -1:
+                self._sizeof_integer = sys.getsizeof(to_ret)
+            return to_ret
+
+    @property
+    def as_compressed(self):
+        if self.data_format == "compressed_array":
+            if self._sizeof_compressed_array == -1:
+                self._sizeof_compressed_array = sys.getsizeof(self.data)
+            return self.data
+        elif self.data_format == "compressed_str":
+            if self._sizeof_compressed_str == -1:
+                self._sizeof_compressed_str = sys.getsizeof(self.data)
+            return self.data
+        else:
+            t0 = time()
+            to_ret = self._compress(self.raw)
+            self._time_compress = time() - t0
+            self._compressions += 1
+            if self.data_format == "compressed_array" and self._sizeof_compressed_array == -1:
+                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+            elif self.data_format == "compressed_str" and self._sizeof_compressed_str == -1:
+                self._sizeof_compressed_str = sys.getsizeof(self.data)
+            return to_ret
 
     @property
     def as_compressed_array(self):
         if self.data_format == "compressed_array":
+            if self._sizeof_compressed_array == -1:
+                self._sizeof_compressed_array = sys.getsizeof(self.data)
             return self.data
         else:
-            return self._compress(self.raw, dtype=np.ndarray)
+            t0 = time()
+            to_ret = self._compress(self.raw, dtype=np.ndarray)
+            self._time_compress = time() - t0
+            self._compressions += 1
+            if self._sizeof_compressed_array == -1:
+                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+            return to_ret
 
     @property
     def as_compressed_str(self):
         if self.data_format == "compressed_str":
+            if self._sizeof_compressed_str == -1:
+                self._sizeof_compressed_str = sys.getsizeof(self.data)
             return self.data
         else:
-            return self._compress(self.raw, dtype=str)
+            t0 = time()
+            to_ret = self._compress(self.raw, dtype=str)
+            self._time_compress = time() - t0
+            self._compressions += 1
+            if self._sizeof_compressed_str == -1:
+                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+            return to_ret
+
+    @property
+    def sizeof_raw(self):
+        if self._sizeof_raw == -1:
+            _ = self.raw
+        if self._sizeof_raw == -1:
+            raise ValueError("Calling 'raw' should have set _sizeof_raw")
+        return self._sizeof_raw
+
+    @property
+    def sizeof_integer(self):
+        if self._sizeof_integer == -1:
+            self._sizeof_integer = sys.getsizeof(self.as_int)
+        if self._sizeof_integer == -1:
+            raise ValueError("Calling 'as_int' should have set _sizeof_integer")
+        return self._sizeof_integer
+
+    @property
+    def sizeof_compressed_array(self):
+        if self._sizeof_compressed_array == -1:
+            self._sizeof_compressed_array = sys.getsizeof(self.as_compressed_array)
+        if self._sizeof_compressed_array == -1:
+            raise ValueError("Calling 'as_compressed_array' should have set _sizeof_compressed_array")
+        return self._sizeof_compressed_array
+
+    @property
+    def sizeof_compressed_str(self):
+        if self._sizeof_compressed_str == -1:
+            self._sizeof_compressed_str = sys.getsizeof(self.as_compressed_str)
+        if self._sizeof_compressed_str == -1:
+            raise ValueError("Calling 'as_compressed_str' should have set _sizeof_compressed_str")
+        return self._sizeof_compressed_str
+
+    @property
+    def time_compress(self):
+        if self._time_compress == -1:
+            _ = self.as_compressed
+        if self._time_compress == -1:
+            raise ValueError("Calling 'time_compress' should have set _time_compress")
+        return self._time_compress
+
+    @property
+    def time_conversions_to_int(self):
+        if self._time_conversions_to_int == -1:
+            t0 = time()
+            _ = self._array_to_int(self.raw)
+            self._time_conversions_to_int = time() - t0
+            self._conversions_to_int += 1
+        if self._time_conversions_to_int == -1:
+            raise ValueError("Calling 'time_conversions_to_int' should have set _time_conversions_to_int")
+        return self._time_conversions_to_int
+
+    @property
+    def time_decompress(self):
+        if self._time_decompress == -1:
+            _ = self._decompress(self.as_compressed)
+        if self._time_decompress == -1:
+            raise ValueError("Calling '_decompress' should have set _time_decompress")
+        return self._time_decompress
+
+    @property
+    def time_conversions_from_int(self):
+        if self._time_conversions_from_int == -1:
+            _ = self._array_to_int(self.raw)
+        if self._time_conversions_from_int == -1:
+            raise ValueError("Calling 'time_conversions_from_int' should have set _time_conversions_from_int")
+        return self._time_conversions_from_int
+
+    @property
+    def compressions(self):
+        return self._compressions
+
+    @property
+    def decompressions(self):
+        return self._decompressions
+
+    @property
+    def conversions_to_int(self):
+        return self._conversions_to_int
+
+    @property
+    def conversions_from_int(self):
+        return self._conversions_from_int
