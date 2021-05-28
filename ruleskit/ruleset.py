@@ -19,8 +19,8 @@ class RuleSet(ABC):
         else:
             self._rules = rules_list
 
-    def __add__(self, other: Union["RuleSet", Rule]):
-        if type(other) == Rule:
+    def __add__(self, other: Union['RuleSet', Rule]):
+        if isinstance(other,  Rule):
             rules = self.rules + [other]
         else:
             rules = list(set(self.rules + other.rules))
