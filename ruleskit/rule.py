@@ -1,6 +1,6 @@
 from abc import ABC
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 from copy import copy
 from time import time
 from .condition import Condition
@@ -44,7 +44,7 @@ class Rule(ABC):
         return copy(self._condition)
 
     @property
-    def activation(self) -> np.ndarray:
+    def activation(self) -> Union[None, np.ndarray]:
         """Decompress activation vector
 
         Returns
@@ -52,11 +52,15 @@ class Rule(ABC):
         np.ndarray
             of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]
         """
-        return self._activation.raw
+        if self._activation:
+            return self._activation.raw
+        return None
 
     @property
-    def coverage(self) -> float:
-        return self._activation.coverage
+    def coverage(self) -> Union[None, float]:
+        if self._activation:
+            return self._activation.coverage
+        return None
 
     @property
     def prediction(self) -> float:
@@ -101,6 +105,8 @@ class Rule(ABC):
             return self._condition == other._condition
 
     def __contains__(self, other: "Rule") -> bool:
+        if not self._activation or not other._activation:
+            return False
         return other._activation in self._activation
 
     def __str__(self) -> str:
@@ -139,7 +145,7 @@ class Rule(ABC):
         """If you do not need to to all 'fit' but only want to compute 'prediction'"""
         t0 = time()
         if self.activation is None:
-            raise ValueError("The activation vector has not been computed yet.")
+            return None
         self._prediction = functions.conditional_mean(self.activation, y)
         self._time_calc_prediction = time() - t0
 
@@ -147,7 +153,7 @@ class Rule(ABC):
         """If you do not need to to all 'fit' but only want to compute 'std'"""
         t0 = time()
         if self.activation is None:
-            raise ValueError("The activation vector has not been computed yet.")
+            return None
         self._std = functions.conditional_std(self.activation, y)
         self._time_calc_std = time() - t0
 
