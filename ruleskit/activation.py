@@ -14,6 +14,7 @@ class Activation(ABC):
 
     SIZE_LIMIT = 0.000000139  # 0.25 / 1.8e6. From numerical experiment.
     DTYPE = str
+    FORCE_STAT = False
 
     def __init__(self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True):
         """ Compresses an activation vector into a str(list) describing its variations or an int corresponding to the
@@ -574,69 +575,69 @@ class Activation(ABC):
 
     @property
     def sizeof_raw(self):
-        if self._sizeof_raw == -1:
+        if self._sizeof_raw == -1 and Activation.FORCE_STAT:
             _ = self.raw
-        if self._sizeof_raw == -1:
-            raise ValueError("Calling 'raw' should have set _sizeof_raw")
+            if self._sizeof_raw == -1:
+                raise ValueError("Calling 'raw' should have set _sizeof_raw")
         return self._sizeof_raw
 
     @property
     def sizeof_integer(self):
-        if self._sizeof_integer == -1:
+        if self._sizeof_integer == -1 and Activation.FORCE_STAT:
             self._sizeof_integer = sys.getsizeof(self.as_int)
-        if self._sizeof_integer == -1:
-            raise ValueError("Calling 'as_int' should have set _sizeof_integer")
+            if self._sizeof_integer == -1:
+                raise ValueError("Calling 'as_int' should have set _sizeof_integer")
         return self._sizeof_integer
 
     @property
     def sizeof_compressed_array(self):
-        if self._sizeof_compressed_array == -1:
+        if self._sizeof_compressed_array == -1 and Activation.FORCE_STAT:
             self._sizeof_compressed_array = sys.getsizeof(self.as_compressed_array)
-        if self._sizeof_compressed_array == -1:
-            raise ValueError("Calling 'as_compressed_array' should have set _sizeof_compressed_array")
+            if self._sizeof_compressed_array == -1:
+                raise ValueError("Calling 'as_compressed_array' should have set _sizeof_compressed_array")
         return self._sizeof_compressed_array
 
     @property
     def sizeof_compressed_str(self):
-        if self._sizeof_compressed_str == -1:
+        if self._sizeof_compressed_str == -1 and Activation.FORCE_STAT:
             self._sizeof_compressed_str = sys.getsizeof(self.as_compressed_str)
-        if self._sizeof_compressed_str == -1:
-            raise ValueError("Calling 'as_compressed_str' should have set _sizeof_compressed_str")
+            if self._sizeof_compressed_str == -1:
+                raise ValueError("Calling 'as_compressed_str' should have set _sizeof_compressed_str")
         return self._sizeof_compressed_str
 
     @property
     def time_compress(self):
-        if self._time_compress == -1:
+        if self._time_compress == -1 and Activation.FORCE_STAT:
             _ = self.as_compressed
-        if self._time_compress == -1:
-            raise ValueError("Calling 'time_compress' should have set _time_compress")
+            if self._time_compress == -1:
+                raise ValueError("Calling 'time_compress' should have set _time_compress")
         return self._time_compress
 
     @property
     def time_conversions_to_int(self):
-        if self._time_conversions_to_int == -1:
+        if self._time_conversions_to_int == -1 and Activation.FORCE_STAT:
             t0 = time()
             _ = self._array_to_int(self.raw)
             self._time_conversions_to_int = time() - t0
             self._conversions_to_int += 1
-        if self._time_conversions_to_int == -1:
-            raise ValueError("Calling 'time_conversions_to_int' should have set _time_conversions_to_int")
+            if self._time_conversions_to_int == -1:
+                raise ValueError("Calling 'time_conversions_to_int' should have set _time_conversions_to_int")
         return self._time_conversions_to_int
 
     @property
     def time_decompress(self):
-        if self._time_decompress == -1:
+        if self._time_decompress == -1 and Activation.FORCE_STAT:
             _ = self._decompress(self.as_compressed)
-        if self._time_decompress == -1:
-            raise ValueError("Calling '_decompress' should have set _time_decompress")
+            if self._time_decompress == -1:
+                raise ValueError("Calling '_decompress' should have set _time_decompress")
         return self._time_decompress
 
     @property
     def time_conversions_from_int(self):
-        if self._time_conversions_from_int == -1:
-            _ = self._array_to_int(self.raw)
-        if self._time_conversions_from_int == -1:
-            raise ValueError("Calling 'time_conversions_from_int' should have set _time_conversions_from_int")
+        if self._time_conversions_from_int == -1 and Activation.FORCE_STAT:
+            _ = self._int_to_array(self.as_int)
+            if self._time_conversions_from_int == -1:
+                raise ValueError("Calling 'time_conversions_from_int' should have set _time_conversions_from_int")
         return self._time_conversions_from_int
 
     @property
