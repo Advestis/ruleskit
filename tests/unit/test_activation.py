@@ -2,6 +2,8 @@ import numpy as np
 from ruleskit import Activation
 import pytest
 
+Activation.FORCE_STAT = True
+
 
 @pytest.mark.parametrize(
     "vector, cs, ca, i, n",
