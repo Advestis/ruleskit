@@ -2,6 +2,7 @@ from abc import ABC
 import numpy as np
 from typing import Optional
 from copy import copy
+from time import time
 from .condition import Condition
 from .activation import Activation
 from .utils import rfunctions as functions
@@ -22,6 +23,13 @@ class Rule(ABC):
         self._prediction = None
         self._std = None
         self._criterion = None
+
+        self._time_fit = -1
+        self._time_calc_criterion = -1
+        self._time_calc_prediction = -1
+        self._time_predict = -1
+        self._time_calc_std = -1
+        self._time_calc_activation = -1
 
     def __and__(self, other: "Rule") -> "Rule":
         condition = self._condition + other._condition
@@ -62,6 +70,30 @@ class Rule(ABC):
     def criterion(self) -> float:
         return self._criterion
 
+    @property
+    def time_fit(self):
+        return self._time_fit
+
+    @property
+    def time_predict(self):
+        return self._time_predict
+
+    @property
+    def time_calc_prediction(self):
+        return self._time_calc_prediction
+
+    @property
+    def time_calc_criterion(self):
+        return self._time_calc_criterion
+
+    @property
+    def time_calc_std(self):
+        return self._time_calc_std
+
+    @property
+    def time_calc_activation(self):
+        return self._time_calc_activation
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, Rule):
             raise TypeError(f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}.")
@@ -90,35 +122,48 @@ class Rule(ABC):
 
     def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse"):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
+        t0 = time()
         self.calc_activation(xs)  # returns Activation
         self.calc_prediction(y)
         self.calc_std(y)
         prediction_vector = self.prediction * self.activation
         self.calc_criterion(prediction_vector, y, crit)
+        self._time_fit = time() - t0
 
     def calc_activation(self, xs: np.ndarray) -> None:
+        t0 = time()
         self._activation = self.evaluate(xs)
+        self._time_calc_activation = time() - t0
 
     def calc_prediction(self, y: np.ndarray) -> None:
         """If you do not need to to all 'fit' but only want to compute 'prediction'"""
+        t0 = time()
         if self.activation is None:
             raise ValueError("The activation vector has not been computed yet.")
         self._prediction = functions.conditional_mean(self.activation, y)
+        self._time_calc_prediction = time() - t0
 
     def calc_std(self, y: np.ndarray) -> None:
         """If you do not need to to all 'fit' but only want to compute 'std'"""
+        t0 = time()
         if self.activation is None:
             raise ValueError("The activation vector has not been computed yet.")
         self._std = functions.conditional_std(self.activation, y)
+        self._time_calc_std = time() - t0
 
     def calc_criterion(self, p, y, c):
+        t0 = time()
         self._criterion = functions.calc_criterion(p, y, c)
+        self._time_calc_criterion = time() - t0
 
     def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
         Will raise ValueError is xs is None and activation is not yet known."""
+        t0 = time()
         if xs is not None:
             self.calc_activation(xs)
         elif self.activation is None:
             raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        return self._prediction * self.activation
+        to_ret = self._prediction * self.activation
+        self._time_predict = time() - t0
+        return to_ret
