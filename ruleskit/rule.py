@@ -126,7 +126,7 @@ class Rule(ABC):
     def evaluate(self, xs: np.ndarray) -> Activation:
         return self._condition.evaluate(xs)
 
-    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse"):
+    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         t0 = time()
         self.calc_activation(xs)  # returns Activation
@@ -157,7 +157,7 @@ class Rule(ABC):
         self._std = functions.conditional_std(self.activation, y)
         self._time_calc_std = time() - t0
 
-    def calc_criterion(self, p, y, c):
+    def calc_criterion(self, p, y, c, **kwargs):
         t0 = time()
         self._criterion = functions.calc_criterion(p, y, c)
         self._time_calc_criterion = time() - t0
