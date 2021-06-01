@@ -35,8 +35,11 @@ class RuleSet(ABC):
     def __iter__(self):
         return self.rules.__iter__()
 
-    def __getitem__(self, x):
-        return self.rules.__getitem__(x)
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            indices = range(*key.indices(len(self.rules)))
+            return RuleSet([self.rules[i] for i in indices])
+        return self.rules.__getitem__(key)
 
     def __str__(self):
         if len(self) < 2 * RuleSet.NLINES:
