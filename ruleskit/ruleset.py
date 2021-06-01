@@ -24,7 +24,7 @@ class RuleSet(ABC):
             rules = self.rules + [other]
         else:
             rules = list(set(self.rules + other.rules))
-        return RuleSet(rules)
+        return self.__class__(rules)
 
     def __len__(self):
         return len(self.rules)
@@ -38,7 +38,7 @@ class RuleSet(ABC):
     def __getitem__(self, key):
         if isinstance(key, slice):
             indices = range(*key.indices(len(self.rules)))
-            return RuleSet([self.rules[i] for i in indices])
+            return self.__class__([self.rules[i] for i in indices])
         return self.rules.__getitem__(key)
 
     def __str__(self):
