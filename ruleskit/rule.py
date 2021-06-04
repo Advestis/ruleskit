@@ -268,3 +268,17 @@ class ClassificationRule(Rule):
             self.activation, self.prediction, y, c
         )
         self._time_calc_criterion = time() - t0
+
+    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
+        """Returns the prediction vector. If xs is not given, will use existing activation vector.
+        Will raise ValueError is xs is None and activation is not yet known."""
+        t0 = time()
+        if xs is not None:
+            self.calc_activation(xs)
+        elif self.activation is None:
+            raise ValueError(
+                "If the activation vector has not been computed yet, xs can not be None."
+            )
+        to_ret = np.array([self._prediction if i == 1 else '' for i in self.activation])
+        self._time_predict = time() - t0
+        return to_ret
