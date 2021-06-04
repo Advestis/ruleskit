@@ -45,7 +45,7 @@ class Rule(ABC):
         return copy(self._condition)
 
     @property
-    def activation(self) -> np.ndarray:
+    def activation(self) -> Union[None, np.ndarray]:
         """Decompress activation vector
 
         Returns
@@ -53,11 +53,15 @@ class Rule(ABC):
         np.ndarray
             of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]
         """
-        return self._activation.raw
+        if self._activation:
+            return self._activation.raw
+        return None
 
     @property
-    def coverage(self) -> float:
-        return self._activation.coverage
+    def coverage(self) -> Union[None, float]:
+        if self._activation:
+            return self._activation.coverage
+        return None
 
     @property
     def prediction(self) -> float:
@@ -84,6 +88,8 @@ class Rule(ABC):
             return self._condition == other._condition
 
     def __contains__(self, other: "Rule") -> bool:
+        if not self._activation or not other._activation:
+            return False
         return other._activation in self._activation
 
     def __str__(self) -> str:
@@ -103,7 +109,7 @@ class Rule(ABC):
     def evaluate(self, xs: np.ndarray) -> Activation:
         return self._condition.evaluate(xs)
 
-    def fit(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         t0 = time()
         self.calc_activation(xs)  # returns Activation
@@ -188,7 +194,7 @@ class RegressionRule(Rule):
         """If you do not need to to all 'fit' but only want to compute 'prediction'"""
         t0 = time()
         if self.activation is None:
-            raise ValueError("The activation vector has not been computed yet.")
+            return None
         self._prediction = functions.conditional_mean(self.activation, y)
         self._time_calc_prediction = time() - t0
 
@@ -196,14 +202,26 @@ class RegressionRule(Rule):
         """If you do not need to to all 'fit' but only want to compute 'std'"""
         t0 = time()
         if self.activation is None:
-            raise ValueError("The activation vector has not been computed yet.")
+            return None
         self._std = functions.conditional_std(self.activation, y)
         self._time_calc_std = time() - t0
 
-    def calc_criterion(self, p, y, c):
+    def calc_criterion(self, p, y, c, **kwargs):
         t0 = time()
         self._criterion = functions.calc_regression_criterion(p, y, c)
         self._time_calc_criterion = time() - t0
+
+    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
+        """Returns the prediction vector. If xs is not given, will use existing activation vector.
+        Will raise ValueError is xs is None and activation is not yet known."""
+        t0 = time()
+        if xs is not None:
+            self.calc_activation(xs)
+        elif self.activation is None:
+            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
+        to_ret = self._prediction * self.activation
+        self._time_predict = time() - t0
+        return to_ret
 
 
 class ClassificationRule(Rule):
@@ -244,7 +262,10 @@ class ClassificationRule(Rule):
 
     def calc_criterion(self, y, c):
         t0 = time()
-        self._criterion = functions.calc_classification_criterion(
-            self.activation, self.prediction, y, c
-        )
-        self._time_calc_criterion = time() - t0
+        if xs is not None:
+            self.calc_activation(xs)
+        elif self.activation is None:
+            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
+        to_ret = self._prediction * self.activation
+        self._time_predict = time() - t0
+        return to_ret
