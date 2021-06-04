@@ -218,7 +218,9 @@ class RegressionRule(Rule):
         if xs is not None:
             self.calc_activation(xs)
         elif self.activation is None:
-            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
+            raise ValueError(
+                "If the activation vector has not been computed yet, xs can not be None."
+            )
         to_ret = self._prediction * self.activation
         self._time_predict = time() - t0
         return to_ret
@@ -262,10 +264,7 @@ class ClassificationRule(Rule):
 
     def calc_criterion(self, y, c):
         t0 = time()
-        if xs is not None:
-            self.calc_activation(xs)
-        elif self.activation is None:
-            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        to_ret = self._prediction * self.activation
-        self._time_predict = time() - t0
-        return to_ret
+        self._criterion = functions.calc_classification_criterion(
+            self.activation, self.prediction, y, c
+        )
+        self._time_calc_criterion = time() - t0
