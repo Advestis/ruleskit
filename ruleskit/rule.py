@@ -1,6 +1,6 @@
 from abc import ABC
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 from copy import copy
 from time import time
 from .condition import Condition
@@ -9,27 +9,28 @@ from .utils import rfunctions as functions
 
 
 class Rule(ABC):
-    def __init__(self, condition: Optional[Condition] = None, activation: Optional[Activation] = None):
+    def __init__(
+        self,
+        condition: Optional[Condition] = None,
+        activation: Optional[Activation] = None,
+    ):
 
         if condition is not None and not isinstance(condition, Condition):
-            raise TypeError("Argument 'condition' must derive from Condition or be None.")
+            raise TypeError(
+                "Argument 'condition' must derive from Condition or be None."
+            )
         if activation is not None and not isinstance(activation, Activation):
-            raise TypeError("Argument 'activation' must derive from Activation or be None.")
+            raise TypeError(
+                "Argument 'activation' must derive from Activation or be None."
+            )
 
         self._condition = condition
-
         self._activation = activation
-        self._coverage = None
         self._prediction = None
-        self._std = None
-        self._criterion = None
 
         self._time_fit = -1
-        self._time_calc_criterion = -1
-        self._time_calc_prediction = -1
-        self._time_predict = -1
-        self._time_calc_std = -1
         self._time_calc_activation = -1
+        self._time_predict = -1
 
     def __and__(self, other: "Rule") -> "Rule":
         condition = self._condition + other._condition
@@ -63,14 +64,6 @@ class Rule(ABC):
         return self._prediction
 
     @property
-    def std(self) -> float:
-        return self._std
-
-    @property
-    def criterion(self) -> float:
-        return self._criterion
-
-    @property
     def time_fit(self):
         return self._time_fit
 
@@ -79,24 +72,14 @@ class Rule(ABC):
         return self._time_predict
 
     @property
-    def time_calc_prediction(self):
-        return self._time_calc_prediction
-
-    @property
-    def time_calc_criterion(self):
-        return self._time_calc_criterion
-
-    @property
-    def time_calc_std(self):
-        return self._time_calc_std
-
-    @property
     def time_calc_activation(self):
         return self._time_calc_activation
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Rule):
-            raise TypeError(f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}.")
+            raise TypeError(
+                f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}."
+            )
         else:
             return self._condition == other._condition
 
@@ -120,15 +103,81 @@ class Rule(ABC):
     def evaluate(self, xs: np.ndarray) -> Activation:
         return self._condition.evaluate(xs)
 
-    def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse"):
+    def fit(self, xs: np.ndarray, y: np.ndarray, **kwargs):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         t0 = time()
+        self.calc_activation(xs)  # returns Activation
+        self.calc_attributs(xs, y, **kwargs)
+        self._time_fit = time() - t0
+
+    def calc_attributs(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+        pass
+
+    def calc_activation(self, xs: np.ndarray) -> None:
+        t0 = time()
+        self._activation = self.evaluate(xs)
+        self._time_calc_activation = time() - t0
+
+    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
+        """Returns the prediction vector. If xs is not given, will use existing activation vector.
+        Will raise ValueError is xs is None and activation is not yet known."""
+        t0 = time()
+        if xs is not None:
+            self.calc_activation(xs)
+        elif self.activation is None:
+            raise ValueError(
+                "If the activation vector has not been computed yet, xs can not be None."
+            )
+        to_ret = self._prediction * self.activation
+        self._time_predict = time() - t0
+        return to_ret
+
+
+class RegressionRule(Rule):
+    def __init__(
+        self,
+        condition: Optional[Condition] = None,
+        activation: Optional[Activation] = None,
+    ):
+        super().__init__(condition, activation)
+
+        self._coverage = None
+        self._std = None
+        self._criterion = None
+
+        # Inspection / Audit attributs
+        self._time_calc_criterion = -1
+        self._time_calc_prediction = -1
+        self._time_calc_std = -1
+
+    @property
+    def std(self) -> float:
+        return self._std
+
+    @property
+    def criterion(self) -> float:
+        return self._criterion
+
+    @property
+    def time_calc_prediction(self):
+        return self._time_calc_prediction
+
+    @property
+    def time_calc_criterion(self):
+        return self._time_calc_criterion
+
+    @property
+    def time_calc_std(self):
+        return self._time_calc_std
+
+    def calc_attributs(
+        self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs
+    ):
         self.calc_activation(xs)  # returns Activation
         self.calc_prediction(y)
         self.calc_std(y)
         prediction_vector = self.prediction * self.activation
         self.calc_criterion(prediction_vector, y, crit)
-        self._time_fit = time() - t0
 
     def calc_activation(self, xs: np.ndarray) -> None:
         t0 = time()
@@ -153,17 +202,49 @@ class Rule(ABC):
 
     def calc_criterion(self, p, y, c):
         t0 = time()
-        self._criterion = functions.calc_criterion(p, y, c)
+        self._criterion = functions.calc_regression_criterion(p, y, c)
         self._time_calc_criterion = time() - t0
 
-    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
-        """Returns the prediction vector. If xs is not given, will use existing activation vector.
-        Will raise ValueError is xs is None and activation is not yet known."""
+
+class ClassificationRule(Rule):
+    def __init__(
+        self,
+        condition: Optional[Condition] = None,
+        activation: Optional[Activation] = None,
+    ):
+        super().__init__(condition, activation)
+
+        self._criterion = None
+
+        # Inspection / Audit attributs
+        self._time_calc_criterion = -1
+        self._time_calc_prediction = -1
+
+    @property
+    def prediction(self) -> Union[int, str]:
+        return self._prediction
+
+    @property
+    def criterion(self) -> float:
+        return self._criterion
+
+    def calc_attributs(
+        self, xs: np.ndarray, y: np.ndarray, crit: str = "success_rate", **kwargs
+    ):
+        self.calc_prediction(y)
+        self.calc_criterion(y, crit)
+
+    def calc_prediction(self, y: np.ndarray) -> None:
+        """If you do not need to to all 'fit' but only want to compute 'prediction'"""
         t0 = time()
-        if xs is not None:
-            self.calc_activation(xs)
-        elif self.activation is None:
-            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        to_ret = self._prediction * self.activation
-        self._time_predict = time() - t0
-        return to_ret
+        if self.activation is None:
+            raise ValueError("The activation vector has not been computed yet.")
+        self._prediction = functions.most_common_class(self.activation, y)
+        self._time_calc_prediction = time() - t0
+
+    def calc_criterion(self, y, c):
+        t0 = time()
+        self._criterion = functions.calc_classification_criterion(
+            self.activation, self.prediction, y, c
+        )
+        self._time_calc_criterion = time() - t0

@@ -19,8 +19,8 @@ class RuleSet(ABC):
         else:
             self._rules = rules_list
 
-    def __add__(self, other: Union['RuleSet', Rule]):
-        if isinstance(other,  Rule):
+    def __add__(self, other: Union["RuleSet", Rule]):
+        if isinstance(other, Rule):
             rules = self.rules + [other]
         else:
             rules = list(set(self.rules + other.rules))
@@ -51,8 +51,11 @@ class RuleSet(ABC):
     def sort(self) -> None:
         if len(self) == 0:
             return
-        if not (hasattr(self[0].condition, "features_names") and hasattr(self[0].condition, "bmins") and hasattr(
-                self[0].condition, "bmaxs")):
+        if not (
+            hasattr(self[0].condition, "features_names")
+            and hasattr(self[0].condition, "bmins")
+            and hasattr(self[0].condition, "bmaxs")
+        ):
             return
         rules_by_fnames = OrderedDict()
         for rule in self:
@@ -62,8 +65,12 @@ class RuleSet(ABC):
                 rules_by_fnames[v] = [rule]
             else:
                 rules_by_fnames[v].append(rule)
-        rules_by_fnames = {n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in
-                           rules_by_fnames}
+        rules_by_fnames = {
+            n: sorted(
+                rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs
+            )
+            for n in rules_by_fnames
+        }
         self._rules = []
         for n in rules_by_fnames:
             self._rules += rules_by_fnames[n]

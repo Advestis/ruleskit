@@ -6,7 +6,9 @@ from .activation import Activation
 
 
 class Condition(ABC):
-    def __init__(self, features_indexes: Union[List[int], None] = None, empty: bool = False):
+    def __init__(
+        self, features_indexes: Union[List[int], None] = None, empty: bool = False
+    ):
         if empty:
             self._features_indexes = None
         else:
@@ -35,7 +37,13 @@ class Condition(ABC):
     @features_indexes.setter
     def features_indexes(self, value: Union[List[int], str]):
         if isinstance(value, str):
-            value = [int(v) for v in value.replace("[", "").replace("]", "").replace(" ", "").split(",")]
+            value = [
+                int(v)
+                for v in value.replace("[", "")
+                .replace("]", "")
+                .replace(" ", "")
+                .split(",")
+            ]
         self._features_indexes = value
 
     def __len__(self):
@@ -78,7 +86,7 @@ class HyperrectangleCondition(Condition):
         bmaxs: Union[List[Union[int, float]], None] = None,
         features_names: Union[List[str], None] = None,
         empty: bool = False,
-        sort: bool = True
+        sort: bool = True,
     ):
         if empty:
             super().__init__(empty=True)
@@ -99,10 +107,15 @@ class HyperrectangleCondition(Condition):
                 self.sort()
 
     def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
-        args = [i+j for i, j in zip(self.getattr, other.getattr)]
+        args = [i + j for i, j in zip(self.getattr, other.getattr)]
         # noinspection PyTypeChecker
-        to_ret = HyperrectangleCondition(features_indexes=args[0], bmins=args[1], bmaxs=args[2],
-                                         features_names=args[3], empty=False)
+        to_ret = HyperrectangleCondition(
+            features_indexes=args[0],
+            bmins=args[1],
+            bmaxs=args[2],
+            features_names=args[3],
+            empty=False,
+        )
         if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
             to_ret.normalize_features_indexes()
         return to_ret
@@ -150,23 +163,35 @@ class HyperrectangleCondition(Condition):
     def __str__(self):
         if self._features_names is None:
             return "empty condition"
-        str_output = f"{self._features_names[0]} in [{self._bmins[0]}, {self._bmaxs[0]}]"
+        str_output = (
+            f"{self._features_names[0]} in [{self._bmins[0]}, {self._bmaxs[0]}]"
+        )
         if len(self) > 1:
             for i in range(1, len(self)):
                 str_output += " AND "
-                str_output += f"{self._features_names[i]} in [{self._bmins[i]}, {self._bmaxs[i]}]"
+                str_output += (
+                    f"{self._features_names[i]} in [{self._bmins[i]}, {self._bmaxs[i]}]"
+                )
         return str_output
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
 
     def __hash__(self):
-        to_hash = [(self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))]
+        to_hash = [
+            (self._features_names[i], self._bmins[i], self._bmaxs[i])
+            for i in range(len(self._features_names))
+        ]
         to_hash = frozenset(to_hash)
         return hash(to_hash)
 
     def __getitem__(self, item):
-        return self._features_names[item], self._features_indexes[item], self._bmins[item], self._bmaxs[item]
+        return (
+            self._features_names[item],
+            self._features_indexes[item],
+            self._bmins[item],
+            self._bmaxs[item],
+        )
 
     def __len__(self):
         return len(self._features_names)
@@ -174,18 +199,38 @@ class HyperrectangleCondition(Condition):
     def sort(self):
         if len(self) > 1:
             if HyperrectangleCondition.SORT_ACCORDING_TO == "index":
-                self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
-                self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
-                self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
+                self._bmins = [
+                    x for _, x in sorted(zip(self._features_indexes, self._bmins))
+                ]
+                self._bmaxs = [
+                    x for _, x in sorted(zip(self._features_indexes, self._bmaxs))
+                ]
+                self._features_names = [
+                    x
+                    for _, x in sorted(
+                        zip(self._features_indexes, self._features_names)
+                    )
+                ]
                 self._features_indexes = sorted(self._features_indexes)
             elif HyperrectangleCondition.SORT_ACCORDING_TO == "name":
-                self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
-                self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
-                self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
+                self._bmins = [
+                    x for _, x in sorted(zip(self._features_names, self._bmins))
+                ]
+                self._bmaxs = [
+                    x for _, x in sorted(zip(self._features_names, self._bmaxs))
+                ]
+                self._features_indexes = [
+                    x
+                    for _, x in sorted(
+                        zip(self._features_names, self._features_indexes)
+                    )
+                ]
                 self._features_names = sorted(self._features_names)
             else:
-                raise ValueError("HyperrectangleCondition's SORT_ACCORDING_TO"
-                                 f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}")
+                raise ValueError(
+                    "HyperrectangleCondition's SORT_ACCORDING_TO"
+                    f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}"
+                )
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         """

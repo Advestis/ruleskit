@@ -50,7 +50,7 @@ def get_last_tag() -> str:
 
 
 def get_nb_commits_until(tag: str) -> int:
-    return len(run_cmd(f'git log {tag}..HEAD --oneline'))
+    return len(run_cmd(f"git log {tag}..HEAD --oneline"))
 
 
 def get_version() -> str:
@@ -113,28 +113,40 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3",
             "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
             "Operating System :: OS Independent",
-            "Development Status :: 5 - Production/Stable"
+            "Development Status :: 5 - Production/Stable",
         ],
-        python_requires='>=3.7',
+        python_requires=">=3.7",
     )
 
     if Path("apt-requirements.txt").is_file():
         apt_requirements = Path("apt-requirements.txt").read_text().splitlines()
-        print("WARNING: Found apt-requirements.txt. You will have to install by hand its content :")
+        print(
+            "WARNING: Found apt-requirements.txt. You will have to install by hand its content :"
+        )
         for line in apt_requirements:
             print(" - ", line)
-        print("If you are using Linux, you can use apt-get install or equivalent to install those packages. Else,"
-              "download and install them according to your OS.")
-        print("If you are using Linux and used install.sh to install this package, you can ignore this message,"
-              "the requirements have been installed.")
+        print(
+            "If you are using Linux, you can use apt-get install or equivalent to install those packages. Else,"
+            "download and install them according to your OS."
+        )
+        print(
+            "If you are using Linux and used install.sh to install this package, you can ignore this message,"
+            "the requirements have been installed."
+        )
 
     if Path("gspip-requirements.txt").is_file():
         gspip_requirements = Path("gspip-requirements.txt").read_text().splitlines()
-        print("WARNING: Found gspip-requirements.txt. You will have to install from gcs its content :")
+        print(
+            "WARNING: Found gspip-requirements.txt. You will have to install from gcs its content :"
+        )
         for line in gspip_requirements:
             print(" - ", line)
-        print("If you are using Linux, install and use gspip from https://github.com/Advestis/gspip. On windows,"
-              "you will have to download by hand the latest version of the required packages on"
-              " gs://pypi_server_sand/package_name")
-        print("If you are using Linux and used install.sh to install this package, you can ignore this message,"
-              "the requirements have been installed.")
+        print(
+            "If you are using Linux, install and use gspip from https://github.com/Advestis/gspip. On windows,"
+            "you will have to download by hand the latest version of the required packages on"
+            " gs://pypi_server_sand/package_name"
+        )
+        print(
+            "If you are using Linux and used install.sh to install this package, you can ignore this message,"
+            "the requirements have been installed."
+        )

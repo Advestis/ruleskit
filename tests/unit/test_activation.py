@@ -9,18 +9,18 @@ Activation.FORCE_STAT = True
     "vector, cs, ca, i, n",
     [
         (
-                np.array([1, 0, 1]),
-                "1,1,2,3",
-                np.array([1, 1, 2, 3]),
-                5,
-                3,
+            np.array([1, 0, 1]),
+            "1,1,2,3",
+            np.array([1, 1, 2, 3]),
+            5,
+            3,
         ),
         (
-                np.array([0, 1, 0, 1]),
-                "0,1,2,3,4",
-                np.array([0, 1, 2, 3, 4]),
-                5,
-                4,
+            np.array([0, 1, 0, 1]),
+            "0,1,2,3,4",
+            np.array([0, 1, 2, 3, 4]),
+            5,
+            4,
         ),
     ],
 )
@@ -48,12 +48,12 @@ def test_raw(vector):
     "vector, coverage",
     [
         (
-                np.array([1, 0, 1]),
-                2/3,
+            np.array([1, 0, 1]),
+            2 / 3,
         ),
         (
-                np.array([0, 1, 0, 1]),
-                1/2,
+            np.array([0, 1, 0, 1]),
+            1 / 2,
         ),
     ],
 )
@@ -66,9 +66,9 @@ def test_coverage(vector, coverage):
     "vector1, vector2, diff",
     [
         (
-                np.array([1, 0, 1]),
-                np.array([1, 1, 0]),
-                np.array([0, 0, 1]),
+            np.array([1, 0, 1]),
+            np.array([1, 1, 0]),
+            np.array([0, 0, 1]),
         ),
     ],
 )
@@ -82,9 +82,9 @@ def test_diff(vector1, vector2, diff):
     "vector1, vector2, and_vector",
     [
         (
-                np.array([1, 0, 1]),
-                np.array([1, 1, 0]),
-                np.array([1, 0, 0]),
+            np.array([1, 0, 1]),
+            np.array([1, 1, 0]),
+            np.array([1, 0, 0]),
         ),
     ],
 )
@@ -98,9 +98,9 @@ def test_and(vector1, vector2, and_vector):
     "vector1, vector2, add_vector",
     [
         (
-                np.array([1, 0, 1]),
-                np.array([1, 1, 0]),
-                np.array([1, 1, 1]),
+            np.array([1, 0, 1]),
+            np.array([1, 1, 0]),
+            np.array([1, 1, 1]),
         ),
     ],
 )

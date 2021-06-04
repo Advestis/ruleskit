@@ -1,5 +1,20 @@
 import numpy as np
+from collections import Counter
 from typing import Union
+
+
+def most_common_class(
+    activation: Union[np.ndarray, None], y: np.ndarray
+) -> Union[int, str]:
+    if activation is None:
+        return np.bincount(y).argmax()
+
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+    else:
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
+    count = Counter(y_conditional).most_common()
+    return count[0][0]
 
 
 def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
@@ -117,7 +132,9 @@ def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     return error_vector / median_error
 
 
-def calc_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, cond: bool = True) -> float:
+def calc_regression_criterion(
+    prediction_vector: np.ndarray, y: np.ndarray, method: str, cond: bool = True
+) -> float:
     """
     Compute the criteria
 
@@ -157,6 +174,61 @@ def calc_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, co
         criterion = aae_function(sub_pred, sub_y)
 
     else:
-        raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
+        raise ValueError(
+            f"Unknown criterion: {method}. Please choose among mse, mae and aae"
+        )
+
+    return criterion
+
+
+def success_rate(prediction: Union[int, str], y: np.ndarray):
+    success = sum(y == prediction)
+    return success / len(y)
+
+
+def calc_classification_criterion(
+    activation_vector: np.ndarray,
+    prediction: Union[int, str],
+    y: np.ndarray,
+    method: str,
+    cond: bool = True,
+) -> float:
+    """
+    Compute the criteria
+
+    Parameters
+    ----------
+    activation_vector : np.ndarray
+        The prediction vector
+
+    prediction: int or str:
+                The label prediction
+
+    y : np.ndarray
+        The real target values (real numbers)
+
+    method : str
+        The method mse_function or mse_function criterion
+
+    cond : bool
+        To evaluate the criterion only if the rule is activated
+
+    Return
+    ------
+    criterion : float
+        Criteria value
+    """
+    if cond:
+        sub_y = np.extract(activation_vector != 0, y)
+    else:
+        sub_y = y
+
+    if method.lower() == "success_rate":
+        criterion = success_rate(prediction, sub_y)
+
+    else:
+        raise ValueError(
+            f"Unknown criterion: {method}. Please choose among success_rate"
+        )
 
     return criterion

@@ -1,11 +1,11 @@
 from ruleskit import HyperrectangleCondition
-from ruleskit import Rule
+from ruleskit import Rule, RegressionRule, ClassificationRule
 import numpy as np
 import pytest
 
 
 @pytest.mark.parametrize(
-    "x, y, condition, activation, compressed_activation, cov, pred",
+    "x, y, condition, activation, compressed_activation",
     [
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
@@ -13,8 +13,6 @@ import pytest
             HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
             np.array([1, 0, 1]),
             5,
-            2/3,
-            1.5,
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
@@ -22,8 +20,6 @@ import pytest
             HyperrectangleCondition([1], bmins=[3], bmaxs=[5]),
             np.array([1, 1, 0]),
             6,
-            2/3,
-            2
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
@@ -31,18 +27,80 @@ import pytest
             HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5]),
             np.array([1, 0, 0]),
             4,
-            1/3,
-            1
         ),
     ],
 )
-def test_activation(x, y, condition, activation, compressed_activation, cov, pred):
+def test_activation(x, y, condition, activation, compressed_activation):
     rule = Rule(condition=condition)
     rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule.activation, activation)
     np.testing.assert_equal(rule._activation.as_int, compressed_activation)
+
+
+@pytest.mark.parametrize(
+    "x, y, condition, cov, pred",
+    [
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            np.array([1, 3, 2]),
+            HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
+            2 / 3,
+            1.5,
+        ),
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            np.array([1, 3, 2]),
+            HyperrectangleCondition([1], bmins=[3], bmaxs=[5]),
+            2 / 3,
+            2,
+        ),
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            np.array([1, 3, 2]),
+            HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5]),
+            1 / 3,
+            1,
+        ),
+    ],
+)
+def test_regression_attributs(x, y, condition, cov, pred):
+    rule = RegressionRule(condition=condition)
+    rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule.coverage, cov)
     np.testing.assert_equal(rule.prediction, pred)
+
+
+@pytest.mark.parametrize(
+    "x, y, condition, pred, crit",
+    [
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            np.array(["a", "b", "a"]),
+            HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
+            "a",
+            1.0,
+        ),
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            np.array(["a", "b", "a"]),
+            HyperrectangleCondition([1], bmins=[4], bmaxs=[5]),
+            "b",
+            1.0,
+        ),
+        (
+            np.array([[1, 3], [2, 4], [5, np.nan]]),
+            np.array(["a", "b", "a"]),
+            HyperrectangleCondition([0], bmins=[1], bmaxs=[5]),
+            "a",
+            2 / 3,
+        ),
+    ],
+)
+def test_classification_attributs(x, y, condition, pred, crit):
+    rule = ClassificationRule(condition=condition)
+    rule.fit(xs=x, y=y)
+    np.testing.assert_equal(rule.prediction, pred)
+    np.testing.assert_equal(rule.criterion, crit)
 
 
 @pytest.mark.parametrize(
