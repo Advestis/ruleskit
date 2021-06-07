@@ -1,7 +1,7 @@
 from typing import List, Union
 import copy
 import numpy as np
-from ..rule import Rule
+from ..rule import RegressionRule, ClassificationRule
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..condition import HyperrectangleCondition
 
@@ -15,7 +15,7 @@ def extract_rules_from_tree(
     xmaxs: Union[List[float], np.ndarray],
     features_names: List[str] = None,
     get_leaf: bool = False,
-) -> List[Rule]:
+) -> Union[List[RegressionRule], List[ClassificationRule]]:
     """To extract rules from a sklearn decision tree
 
     features are the list of X names.
@@ -120,7 +120,10 @@ def extract_rules_from_tree(
             # Create a new Rule with all the condition and append it to the rules
             # list. So the rule list is actually a history of how one rule evolved.
             if get_leaf is False:
-                new_rule = Rule(copy.deepcopy(new_condition))
+                if isinstance(tree, DecisionTreeClassifier):
+                    new_rule = ClassificationRule(copy.deepcopy(new_condition))
+                else:
+                    new_rule = RegressionRule(copy.deepcopy(new_condition))
                 rules_list.append(new_rule)
 
             # Execute the current function on the left of the current node
@@ -170,7 +173,10 @@ def extract_rules_from_tree(
             # Create the rule for the right side of the node then apply this
             # function on the right side of the node
             if get_leaf is False:
-                new_rule = Rule(copy.deepcopy(new_condition))
+                if isinstance(tree, DecisionTreeClassifier):
+                    new_rule = ClassificationRule(copy.deepcopy(new_condition))
+                else:
+                    new_rule = RegressionRule(copy.deepcopy(new_condition))
                 rules_list.append(new_rule)
 
             rules_list = visitor(
@@ -178,7 +184,10 @@ def extract_rules_from_tree(
             )
 
         elif get_leaf:
-            rules_list.append(Rule(copy.deepcopy(condition)))
+            if isinstance(tree, DecisionTreeClassifier):
+                rules_list.append(ClassificationRule(copy.deepcopy(condition)))
+            else:
+                rules_list.append(RegressionRule(copy.deepcopy(condition)))
 
         return rules_list
 
