@@ -78,7 +78,7 @@ class HyperrectangleCondition(Condition):
         bmaxs: Union[List[Union[int, float]], None] = None,
         features_names: Union[List[str], None] = None,
         empty: bool = False,
-        sort: bool = True
+        sort: bool = True,
     ):
         if empty:
             super().__init__(empty=True)
@@ -99,10 +99,11 @@ class HyperrectangleCondition(Condition):
                 self.sort()
 
     def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
-        args = [i+j for i, j in zip(self.getattr, other.getattr)]
+        args = [i + j for i, j in zip(self.getattr, other.getattr)]
         # noinspection PyTypeChecker
-        to_ret = HyperrectangleCondition(features_indexes=args[0], bmins=args[1], bmaxs=args[2],
-                                         features_names=args[3], empty=False)
+        to_ret = HyperrectangleCondition(
+            features_indexes=args[0], bmins=args[1], bmaxs=args[2], features_names=args[3], empty=False,
+        )
         if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
             to_ret.normalize_features_indexes()
         return to_ret
@@ -166,7 +167,12 @@ class HyperrectangleCondition(Condition):
         return hash(to_hash)
 
     def __getitem__(self, item):
-        return self._features_names[item], self._features_indexes[item], self._bmins[item], self._bmaxs[item]
+        return (
+            self._features_names[item],
+            self._features_indexes[item],
+            self._bmins[item],
+            self._bmaxs[item],
+        )
 
     def __len__(self):
         return len(self._features_names)
@@ -184,8 +190,10 @@ class HyperrectangleCondition(Condition):
                 self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
                 self._features_names = sorted(self._features_names)
             else:
-                raise ValueError("HyperrectangleCondition's SORT_ACCORDING_TO"
-                                 f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}")
+                raise ValueError(
+                    "HyperrectangleCondition's SORT_ACCORDING_TO"
+                    f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}"
+                )
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         """

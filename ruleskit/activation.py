@@ -16,8 +16,10 @@ class Activation(ABC):
     DTYPE = str
     FORCE_STAT = False
 
-    def __init__(self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True):
-        """ Compresses an activation vector into a str(list) describing its variations or an int corresponding to the
+    def __init__(
+        self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True,
+    ):
+        """Compresses an activation vector into a str(list) describing its variations or an int corresponding to the
          binary representation of the vector
 
         stored data will be either a str(list):
@@ -257,7 +259,7 @@ class Activation(ABC):
         if self.data_format == "integer" and other.data_format == "integer":
             return Activation((self.data ^ other.data) & self.data, length=self.length)
         else:
-            return Activation(np.logical_xor(self.raw, other.raw).astype("int32") * self.raw, length=self.length)
+            return Activation(np.logical_xor(self.raw, other.raw).astype("int32") * self.raw, length=self.length,)
 
     def __len__(self):
         return self.length
@@ -293,7 +295,7 @@ class Activation(ABC):
                 "of x earlier in your code"
             )
         act_bis = np.zeros(self.length)
-        act_bis[self.length - len(act):] = act
+        act_bis[self.length - len(act) :] = act
         if value is None and self._sizeof_raw == -1:
             self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
         self._time_conversions_from_int = time() - t0
@@ -440,12 +442,12 @@ class Activation(ABC):
             return value
         elif not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
             raise ValueError("Can not use _array_to_int or a compressed vector")
-        to_ret = int("".join(str(i) for i in value.astype('int')), 2)
+        to_ret = int("".join(str(i) for i in value.astype("int")), 2)
         return to_ret
 
     @property
     def raw(self) -> np.ndarray:
-        """ Returns the raw np.array. Will set relevant sizes if this has not been done yet """
+        """Returns the raw np.array. Will set relevant sizes if this has not been done yet"""
         if self.data_format == "integer":
             return self._int_to_array()
         else:
@@ -453,14 +455,14 @@ class Activation(ABC):
 
     @property
     def ones(self) -> int:
-        """ self._ones might not be set since it can only be set when decompressing a compressed vector """
+        """self._ones might not be set since it can only be set when decompressing a compressed vector"""
         if self._ones is None:
             _ = self.raw  # calling raw will compute nones and ones
         return self._ones
 
     @property
     def nones(self) -> int:
-        """ self._nones might not be set since it can only be set at object creation if the full array was given """
+        """self._nones might not be set since it can only be set at object creation if the full array was given"""
         if self._nones is None:
             if self.data_format == "integer":
                 self._nones = bin(self.data).count("1")  # faster than calling "raw"
