@@ -105,10 +105,11 @@ class Rule(ABC):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         t0 = time()
         self.calc_activation(xs)  # returns Activation
-        self.calc_attributs(xs, y, **kwargs)
+        self.calc_attributes(xs, y, **kwargs)
         self._time_fit = time() - t0
 
-    def calc_attributs(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+        """Implement in daughter class"""
         pass
 
     def calc_activation(self, xs: np.ndarray) -> None:
@@ -164,8 +165,8 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_attributs(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
-        self.calc_activation(xs)  # returns Activation
+    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
+        self.calc_activation(xs)
         self.calc_prediction(y)
         self.calc_std(y)
         prediction_vector = self.prediction * self.activation
@@ -230,7 +231,7 @@ class ClassificationRule(Rule):
     def criterion(self) -> float:
         return self._criterion
 
-    def calc_attributs(self, xs: np.ndarray, y: np.ndarray, crit: str = "success_rate", **kwargs):
+    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, crit: str = "success_rate", **kwargs):
         self.calc_prediction(y)
         self.calc_criterion(y, crit)
 
