@@ -69,10 +69,7 @@ class RuleSet(ABC):
             else:
                 rules_by_fnames[v].append(rule)
         rules_by_fnames = {
-            n: sorted(
-                rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs
-            )
-            for n in rules_by_fnames
+            n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
         }
         self._rules = []
         for n in rules_by_fnames:

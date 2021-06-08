@@ -3,9 +3,7 @@ from collections import Counter
 from typing import Union
 
 
-def most_common_class(
-    activation: Union[np.ndarray, None], y: np.ndarray
-) -> Union[int, str]:
+def most_common_class(activation: Union[np.ndarray, None], y: np.ndarray) -> Union[int, str]:
     if activation is None:
         return np.bincount(y).argmax()
 
@@ -132,9 +130,7 @@ def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     return error_vector / median_error
 
 
-def calc_regression_criterion(
-    prediction_vector: np.ndarray, y: np.ndarray, method: str, cond: bool = True
-) -> float:
+def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, cond: bool = True) -> float:
     """
     Compute the criteria
 
@@ -174,9 +170,7 @@ def calc_regression_criterion(
         criterion = aae_function(sub_pred, sub_y)
 
     else:
-        raise ValueError(
-            f"Unknown criterion: {method}. Please choose among mse, mae and aae"
-        )
+        raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
 
     return criterion
 
@@ -187,11 +181,7 @@ def success_rate(prediction: Union[int, str], y: np.ndarray):
 
 
 def calc_classification_criterion(
-    activation_vector: np.ndarray,
-    prediction: Union[int, str],
-    y: np.ndarray,
-    method: str,
-    cond: bool = True,
+    activation_vector: np.ndarray, prediction: Union[int, str], y: np.ndarray, method: str, cond: bool = True,
 ) -> float:
     """
     Compute the criteria
@@ -227,8 +217,6 @@ def calc_classification_criterion(
         criterion = success_rate(prediction, sub_y)
 
     else:
-        raise ValueError(
-            f"Unknown criterion: {method}. Please choose among success_rate"
-        )
+        raise ValueError(f"Unknown criterion: {method}. Please choose among success_rate")
 
     return criterion
