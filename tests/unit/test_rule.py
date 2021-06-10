@@ -99,7 +99,7 @@ def test_regression_attributes(x, y, condition, cov, pred):
         ),
     ],
 )
-def test_classification_attributes(x, y, condition, pred, crit):
+def test_classification_attributes(x, y, condition, proba, pred, crit):
     rule = ClassificationRule(condition=condition)
     rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule._prediction, proba)
