@@ -63,7 +63,7 @@ def test_activation(x, y, condition, activation, compressed_activation):
         ),
     ],
 )
-def test_regression_attributs(x, y, condition, cov, pred):
+def test_regression_attributes(x, y, condition, cov, pred):
     rule = RegressionRule(condition=condition)
     rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule.coverage, cov)
@@ -99,7 +99,7 @@ def test_regression_attributs(x, y, condition, cov, pred):
         ),
     ],
 )
-def test_classification_attributs(x, y, condition, proba, pred, crit):
+def test_classification_attributes(x, y, condition, pred, crit):
     rule = ClassificationRule(condition=condition)
     rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule._prediction, proba)

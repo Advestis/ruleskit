@@ -10,19 +10,13 @@ from .utils import rfunctions as functions
 
 class Rule(ABC):
     def __init__(
-        self,
-        condition: Optional[Condition] = None,
-        activation: Optional[Activation] = None,
+        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
     ):
 
         if condition is not None and not isinstance(condition, Condition):
-            raise TypeError(
-                "Argument 'condition' must derive from Condition or be None."
-            )
+            raise TypeError("Argument 'condition' must derive from Condition or be None.")
         if activation is not None and not isinstance(activation, Activation):
-            raise TypeError(
-                "Argument 'activation' must derive from Activation or be None."
-            )
+            raise TypeError("Argument 'activation' must derive from Activation or be None.")
 
         self._condition = condition
         self._activation = activation
@@ -81,9 +75,7 @@ class Rule(ABC):
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Rule):
-            raise TypeError(
-                f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}."
-            )
+            raise TypeError(f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}.")
         else:
             return self._condition == other._condition
 
@@ -113,10 +105,11 @@ class Rule(ABC):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         t0 = time()
         self.calc_activation(xs)  # returns Activation
-        self.calc_attributs(xs, y, **kwargs)
+        self.calc_attributes(xs, y, **kwargs)
         self._time_fit = time() - t0
 
-    def calc_attributs(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+        """Implement in daughter class"""
         pass
 
     def calc_activation(self, xs: np.ndarray) -> None:
@@ -131,9 +124,7 @@ class Rule(ABC):
         if xs is not None:
             self.calc_activation(xs)
         elif self.activation is None:
-            raise ValueError(
-                "If the activation vector has not been computed yet, xs can not be None."
-            )
+            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
         to_ret = self._prediction * self.activation
         self._time_predict = time() - t0
         return to_ret
@@ -141,9 +132,7 @@ class Rule(ABC):
 
 class RegressionRule(Rule):
     def __init__(
-        self,
-        condition: Optional[Condition] = None,
-        activation: Optional[Activation] = None,
+        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
     ):
         super().__init__(condition, activation)
 
@@ -176,10 +165,8 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_attributs(
-        self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs
-    ):
-        self.calc_activation(xs)  # returns Activation
+    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
+        self.calc_activation(xs)
         self.calc_prediction(y)
         self.calc_std(y)
         prediction_vector = self.prediction * self.activation
@@ -218,9 +205,7 @@ class RegressionRule(Rule):
         if xs is not None:
             self.calc_activation(xs)
         elif self.activation is None:
-            raise ValueError(
-                "If the activation vector has not been computed yet, xs can not be None."
-            )
+            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
         to_ret = self._prediction * self.activation
         self._time_predict = time() - t0
         return to_ret
@@ -228,9 +213,7 @@ class RegressionRule(Rule):
 
 class ClassificationRule(Rule):
     def __init__(
-        self,
-        condition: Optional[Condition] = None,
-        activation: Optional[Activation] = None,
+        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
     ):
         super().__init__(condition, activation)
 
@@ -253,9 +236,7 @@ class ClassificationRule(Rule):
     def criterion(self) -> float:
         return self._criterion
 
-    def calc_attributs(
-        self, xs: np.ndarray, y: np.ndarray, crit: str = "success_rate", **kwargs
-    ):
+    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, crit: str = "success_rate", **kwargs):
         self.calc_prediction(y)
         self.calc_criterion(y, crit)
 
@@ -269,9 +250,7 @@ class ClassificationRule(Rule):
 
     def calc_criterion(self, y, c):
         t0 = time()
-        self._criterion = functions.calc_classification_criterion(
-            self.activation, self.prediction, y, c
-        )
+        self._criterion = functions.calc_classification_criterion(self.activation, self.prediction, y, c)
         self._time_calc_criterion = time() - t0
 
     def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
@@ -281,9 +260,7 @@ class ClassificationRule(Rule):
         if xs is not None:
             self.calc_activation(xs)
         elif self.activation is None:
-            raise ValueError(
-                "If the activation vector has not been computed yet, xs can not be None."
-            )
-        to_ret = np.array([self.prediction if i == 1 else '' for i in self.activation])
+            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
+        to_ret = np.array([self.prediction if i == 1 else "" for i in self.activation])
         self._time_predict = time() - t0
         return to_ret

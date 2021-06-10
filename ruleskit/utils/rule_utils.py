@@ -110,12 +110,8 @@ def extract_rules_from_tree(
                 else:
                     new_bmaxs = decision_tree.threshold[node]
                     new_condition = copy.deepcopy(condition)
-                    place = condition.features_indexes.index(
-                        decision_tree.feature[node]
-                    )
-                    new_condition.bmaxs[place] = min(
-                        new_bmaxs, new_condition.bmaxs[place]
-                    )
+                    place = condition.features_indexes.index(decision_tree.feature[node])
+                    new_condition.bmaxs[place] = min(new_bmaxs, new_condition.bmaxs[place])
 
             # Create a new Rule with all the condition and append it to the rules
             # list. So the rule list is actually a history of how one rule evolved.
@@ -128,9 +124,7 @@ def extract_rules_from_tree(
 
             # Execute the current function on the left of the current node
             # (the "True" side)
-            rules_list = visitor(
-                decision_tree.children_left[node], depth + 1, new_condition, rules_list
-            )
+            rules_list = visitor(decision_tree.children_left[node], depth + 1, new_condition, rules_list)
 
             # At this point, any rule found on the left of the current node will be
             # in rules list and new_cond will contain the corresponding conditions.
@@ -160,15 +154,9 @@ def extract_rules_from_tree(
                     new_bmins = decision_tree.threshold[node]
                     new_bmaxs = xmaxs[decision_tree.feature[node]]
                     new_condition = copy.deepcopy(condition)
-                    place = new_condition.features_indexes.index(
-                        decision_tree.feature[node]
-                    )
-                    new_condition.bmins[place] = max(
-                        new_bmins, new_condition.bmins[place]
-                    )
-                    new_condition.bmaxs[place] = max(
-                        new_bmaxs, new_condition.bmaxs[place]
-                    )
+                    place = new_condition.features_indexes.index(decision_tree.feature[node])
+                    new_condition.bmins[place] = max(new_bmins, new_condition.bmins[place])
+                    new_condition.bmaxs[place] = max(new_bmaxs, new_condition.bmaxs[place])
 
             # Create the rule for the right side of the node then apply this
             # function on the right side of the node
@@ -179,9 +167,7 @@ def extract_rules_from_tree(
                     new_rule = RegressionRule(copy.deepcopy(new_condition))
                 rules_list.append(new_rule)
 
-            rules_list = visitor(
-                decision_tree.children_right[node], depth + 1, new_condition, rules_list
-            )
+            rules_list = visitor(decision_tree.children_right[node], depth + 1, new_condition, rules_list)
 
         elif get_leaf:
             if isinstance(tree, DecisionTreeClassifier):

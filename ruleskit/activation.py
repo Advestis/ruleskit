@@ -17,10 +17,7 @@ class Activation(ABC):
     FORCE_STAT = False
 
     def __init__(
-        self,
-        activation: Union[np.ndarray, int, str] = None,
-        length: int = None,
-        optimize: bool = True,
+        self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True,
     ):
         """Compresses an activation vector into a str(list) describing its variations or an int corresponding to the
          binary representation of the vector
@@ -57,18 +54,12 @@ class Activation(ABC):
             Else, does not check and uses integer. Note that is optimize is True, entropy is computed.
         """
         self.length = None  # Will be set by init methods
-        self._entropy = (
-            None  # Will be set if activation is not an integer or if optimize is True
-        )
+        self._entropy = None  # Will be set if activation is not an integer or if optimize is True
         self.data_format = None  # Will be set by init methods
         self.data = None  # Will be set by init methods
         self._ones = None  # Will be set if "activation" is the raw activation vector
-        self._rel_entropy = (
-            None  # Will be set if activation is not an integer or if optimize is True
-        )
-        self._nones = (
-            None  # Will be set if activation is not an integer or if optimize is True
-        )
+        self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
+        self._nones = None  # Will be set if activation is not an integer or if optimize is True
         self._coverage = None
         self._time_decompress = -1
         self._time_compress = -1
@@ -83,9 +74,7 @@ class Activation(ABC):
         self._sizeof_integer = -1
         self._sizeof_raw = -1
 
-        if (
-            isinstance(activation, str) and "," not in activation
-        ):  # activation is actualy an integer, stored as an int
+        if isinstance(activation, str) and "," not in activation:  # activation is actualy an integer, stored as an int
             activation = int(activation)
 
         if isinstance(activation, int):
@@ -99,13 +88,9 @@ class Activation(ABC):
             else:
                 self._init_with_raw(activation, Activation.DTYPE)
         else:
-            raise TypeError(
-                f"An activation can only be a np.ndarray, and int or a str. Got {type(activation)}."
-            )
+            raise TypeError(f"An activation can only be a np.ndarray, and int or a str. Got {type(activation)}.")
 
-    def _init_with_integer(
-        self, value: int, dtype: type, length: int = None, optimize: bool = True
-    ):
+    def _init_with_integer(self, value: int, dtype: type, length: int = None, optimize: bool = True):
 
         """
         Will set
@@ -123,9 +108,7 @@ class Activation(ABC):
         """
 
         if length is None:
-            raise ValueError(
-                "When giving an integer to Activation, you must also specify its length."
-            )
+            raise ValueError("When giving an integer to Activation, you must also specify its length.")
 
         logger.debug(f"Activation vector is an int")
         self.length = length
@@ -242,9 +225,7 @@ class Activation(ABC):
 
     def __and__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
-            raise ValueError(
-                f"Activations have different lengths. Left is {self.length}, right is {other.length}"
-            )
+            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
 
         if self.data_format == "integer" and other.data_format == "integer":
             return Activation(self.data & other.data, length=self.length)
@@ -253,21 +234,15 @@ class Activation(ABC):
 
     def __or__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
-            raise ValueError(
-                f"Activations have different lengths. Left is {self.length}, right is {other.length}"
-            )
+            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
         if self.data_format == "integer" and other.data_format == "integer":
             return Activation(self.data or other.data, length=self.length)
         else:
-            return Activation(
-                np.logical_or(self.raw, other.raw, length=self.length).astype("int32")
-            )
+            return Activation(np.logical_or(self.raw, other.raw, length=self.length).astype("int32"))
 
     def __add__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
-            raise ValueError(
-                f"Activations have different lengths. Left is {self.length}, right is {other.length}"
-            )
+            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
         if self.data_format == "integer" and other.data_format == "integer":
             val_xor = self.data ^ other.data
             val_and = self.data & other.data
@@ -280,16 +255,11 @@ class Activation(ABC):
 
     def __sub__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
-            raise ValueError(
-                f"Activations have different lengths. Left is {self.length}, right is {other.length}"
-            )
+            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
         if self.data_format == "integer" and other.data_format == "integer":
             return Activation((self.data ^ other.data) & self.data, length=self.length)
         else:
-            return Activation(
-                np.logical_xor(self.raw, other.raw).astype("int32") * self.raw,
-                length=self.length,
-            )
+            return Activation(np.logical_xor(self.raw, other.raw).astype("int32") * self.raw, length=self.length,)
 
     def __len__(self):
         return self.length
@@ -300,9 +270,7 @@ class Activation(ABC):
         """
         t0 = time()
         if value is None:
-            if isinstance(self.data, np.ndarray) and (
-                self.data[-1] == 0 or self.data[-1] == 1
-            ):
+            if isinstance(self.data, np.ndarray) and (self.data[-1] == 0 or self.data[-1] == 1):
                 self._time_conversions_from_int = time() - t0
                 self._conversions_from_int += 1
                 return self.data
@@ -339,9 +307,7 @@ class Activation(ABC):
         t0 = time()
         if value is None:
 
-            if isinstance(self.data, np.ndarray) and (
-                self.data[-1] == 0 or self.data[-1] == 1
-            ):
+            if isinstance(self.data, np.ndarray) and (self.data[-1] == 0 or self.data[-1] == 1):
                 self._time_decompress = time() - t0
                 self._decompressions += 1
                 return self.data
@@ -573,15 +539,9 @@ class Activation(ABC):
             to_ret = self._compress(self.raw)
             self._time_compress = time() - t0
             self._compressions += 1
-            if (
-                self.data_format == "compressed_array"
-                and self._sizeof_compressed_array == -1
-            ):
+            if self.data_format == "compressed_array" and self._sizeof_compressed_array == -1:
                 self._sizeof_compressed_array = sys.getsizeof(to_ret)
-            elif (
-                self.data_format == "compressed_str"
-                and self._sizeof_compressed_str == -1
-            ):
+            elif self.data_format == "compressed_str" and self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(self.data)
             return to_ret
 
@@ -636,9 +596,7 @@ class Activation(ABC):
         if self._sizeof_compressed_array == -1 and Activation.FORCE_STAT:
             self._sizeof_compressed_array = sys.getsizeof(self.as_compressed_array)
             if self._sizeof_compressed_array == -1:
-                raise ValueError(
-                    "Calling 'as_compressed_array' should have set _sizeof_compressed_array"
-                )
+                raise ValueError("Calling 'as_compressed_array' should have set _sizeof_compressed_array")
         return self._sizeof_compressed_array
 
     @property
@@ -646,9 +604,7 @@ class Activation(ABC):
         if self._sizeof_compressed_str == -1 and Activation.FORCE_STAT:
             self._sizeof_compressed_str = sys.getsizeof(self.as_compressed_str)
             if self._sizeof_compressed_str == -1:
-                raise ValueError(
-                    "Calling 'as_compressed_str' should have set _sizeof_compressed_str"
-                )
+                raise ValueError("Calling 'as_compressed_str' should have set _sizeof_compressed_str")
         return self._sizeof_compressed_str
 
     @property
@@ -656,9 +612,7 @@ class Activation(ABC):
         if self._time_compress == -1 and Activation.FORCE_STAT:
             _ = self.as_compressed
             if self._time_compress == -1:
-                raise ValueError(
-                    "Calling 'time_compress' should have set _time_compress"
-                )
+                raise ValueError("Calling 'time_compress' should have set _time_compress")
         return self._time_compress
 
     @property
@@ -669,9 +623,7 @@ class Activation(ABC):
             self._time_conversions_to_int = time() - t0
             self._conversions_to_int += 1
             if self._time_conversions_to_int == -1:
-                raise ValueError(
-                    "Calling 'time_conversions_to_int' should have set _time_conversions_to_int"
-                )
+                raise ValueError("Calling 'time_conversions_to_int' should have set _time_conversions_to_int")
         return self._time_conversions_to_int
 
     @property
@@ -679,9 +631,7 @@ class Activation(ABC):
         if self._time_decompress == -1 and Activation.FORCE_STAT:
             _ = self._decompress(self.as_compressed)
             if self._time_decompress == -1:
-                raise ValueError(
-                    "Calling '_decompress' should have set _time_decompress"
-                )
+                raise ValueError("Calling '_decompress' should have set _time_decompress")
         return self._time_decompress
 
     @property
@@ -689,9 +639,7 @@ class Activation(ABC):
         if self._time_conversions_from_int == -1 and Activation.FORCE_STAT:
             _ = self._int_to_array(self.as_int)
             if self._time_conversions_from_int == -1:
-                raise ValueError(
-                    "Calling 'time_conversions_from_int' should have set _time_conversions_from_int"
-                )
+                raise ValueError("Calling 'time_conversions_from_int' should have set _time_conversions_from_int")
         return self._time_conversions_from_int
 
     @property
