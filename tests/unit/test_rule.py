@@ -71,34 +71,38 @@ def test_regression_attributs(x, y, condition, cov, pred):
 
 
 @pytest.mark.parametrize(
-    "x, y, condition, pred, crit",
+    "x, y, condition, proba, pred, crit",
     [
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             np.array(["a", "b", "a"]),
             HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
-            "a",
+            [('a', 1.0)],
+            'a',
             1.0,
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             np.array(["a", "b", "a"]),
             HyperrectangleCondition([1], bmins=[4], bmaxs=[5]),
-            "b",
+            [('b', 1.0)],
+            'b',
             1.0,
         ),
         (
             np.array([[1, 3], [2, 4], [5, np.nan]]),
             np.array(["a", "b", "a"]),
             HyperrectangleCondition([0], bmins=[1], bmaxs=[5]),
-            "a",
+            [('a', 2/3), ('b', 1/3)],
+            'a',
             2 / 3,
         ),
     ],
 )
-def test_classification_attributs(x, y, condition, pred, crit):
+def test_classification_attributs(x, y, condition, proba, pred, crit):
     rule = ClassificationRule(condition=condition)
     rule.fit(xs=x, y=y)
+    np.testing.assert_equal(rule._prediction, proba)
     np.testing.assert_equal(rule.prediction, pred)
     np.testing.assert_equal(rule.criterion, crit)
 

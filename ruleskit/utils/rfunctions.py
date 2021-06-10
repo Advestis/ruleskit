@@ -1,11 +1,11 @@
 import numpy as np
 from collections import Counter
-from typing import Union
+from typing import Union, Tuple
 
 
 def most_common_class(
     activation: Union[np.ndarray, None], y: np.ndarray
-) -> Union[int, str]:
+) -> Tuple[str, float]:
     if activation is None:
         return np.bincount(y).argmax()
 
@@ -13,8 +13,10 @@ def most_common_class(
         y_conditional = np.extract(activation, y)
     else:
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
-    count = Counter(y_conditional).most_common()
-    return count[0][0]
+    count = Counter(y_conditional)
+    n = len(y_conditional)
+    prop = [v / n for v in count.values()]
+    return [(c, v) for c, v in zip(count.keys(), prop)]
 
 
 def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
