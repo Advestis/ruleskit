@@ -224,8 +224,13 @@ class ClassificationRule(Rule):
         self._time_calc_prediction = -1
 
     @property
-    def prediction(self) -> Union[int, str]:
-        return self._prediction
+    def prediction(self) -> Union[int, str, None]:
+        if self._prediction is not None:
+            prop = [p[1] for p in self._prediction]
+            idx = prop.index(max(prop))
+            return self._prediction[idx][0]
+        else:
+            return None
 
     @property
     def criterion(self) -> float:
@@ -256,6 +261,6 @@ class ClassificationRule(Rule):
             self.calc_activation(xs)
         elif self.activation is None:
             raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        to_ret = np.array([self._prediction if i == 1 else "" for i in self.activation])
+        to_ret = np.array([self.prediction if i == 1 else "" for i in self.activation])
         self._time_predict = time() - t0
         return to_ret
