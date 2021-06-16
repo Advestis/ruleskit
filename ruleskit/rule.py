@@ -9,9 +9,7 @@ from .utils import rfunctions as functions
 
 
 class Rule(ABC):
-    def __init__(
-        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
-    ):
+    def __init__( self, condition: Optional[Condition] = None, activation: Optional[Activation] = None):
 
         if condition is not None and not isinstance(condition, Condition):
             raise TypeError("Argument 'condition' must derive from Condition or be None.")
@@ -131,9 +129,7 @@ class Rule(ABC):
 
 
 class RegressionRule(Rule):
-    def __init__(
-        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
-    ):
+    def __init__(self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,):
         super().__init__(condition, activation)
 
         self._coverage = None
@@ -212,9 +208,7 @@ class RegressionRule(Rule):
 
 
 class ClassificationRule(Rule):
-    def __init__(
-        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
-    ):
+    def __init__(self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,):
         super().__init__(condition, activation)
 
         self._criterion = None

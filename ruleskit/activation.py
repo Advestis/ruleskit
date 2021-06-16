@@ -16,9 +16,7 @@ class Activation(ABC):
     DTYPE = str
     FORCE_STAT = False
 
-    def __init__(
-        self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True,
-    ):
+    def __init__(self, activation: Union[np.ndarray, int, str] = None, length: int = None, optimize: bool = True,):
         """Compresses an activation vector into a str(list) describing its variations or an int corresponding to the
          binary representation of the vector
 
