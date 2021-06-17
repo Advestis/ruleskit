@@ -51,6 +51,11 @@ class RuleSet(ABC):
                 + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
             )
 
+    def append(self, rule: Rule):
+        if not isinstance(rule, Rule):
+            raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
+        self.rules.append(rule)
+
     def sort(self) -> None:
         if len(self) == 0:
             return
