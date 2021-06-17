@@ -51,6 +51,9 @@ class RuleSet(ABC):
                 + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
             )
 
+    def append(self, rule: Rule):
+        self.rules.append(rule)
+
     def sort(self) -> None:
         if len(self) == 0:
             return
