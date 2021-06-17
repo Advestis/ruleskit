@@ -52,6 +52,8 @@ class RuleSet(ABC):
             )
 
     def append(self, rule: Rule):
+        if not isinstance(rule, Rule):
+            raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
         self.rules.append(rule)
 
     def sort(self) -> None:
