@@ -34,7 +34,7 @@ def test_activation(x, y, condition, activation, compressed_activation):
     rule = Rule(condition=condition)
     rule.fit(xs=x, y=y)
     np.testing.assert_equal(rule.activation, activation)
-    np.testing.assert_equal(rule._activation.as_int, compressed_activation)
+    np.testing.assert_equal(rule._activation.as_bitarray, compressed_activation)
 
 
 @pytest.mark.parametrize(

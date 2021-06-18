@@ -3,3 +3,4 @@ pytest
 pathlib
 scikit-learn
 pandas
+bitarray
