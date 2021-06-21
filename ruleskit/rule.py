@@ -75,7 +75,7 @@ class Rule(ABC):
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Rule):
-            raise TypeError(f"Can only compare a Rule with another Rule. Tried to compare to {type(other)}.")
+            return False
         else:
             return self._condition == other._condition
 
