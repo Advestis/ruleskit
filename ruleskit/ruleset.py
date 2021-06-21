@@ -17,7 +17,9 @@ class RuleSet(ABC):
         if rules_list is None:
             self._rules = []
         else:
-            self._rules = rules_list
+            self._rules = [r if isinstance(r, Rule) else "error" for r in rules_list if r is not None]
+            if "error" in self._rules:
+                raise TypeError("Some rules in given list were not of type 'Rule'")
 
     def __add__(self, other: Union["RuleSet", Rule]):
         if isinstance(other, Rule):
