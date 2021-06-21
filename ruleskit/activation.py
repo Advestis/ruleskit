@@ -39,7 +39,7 @@ class Activation(ABC):
         activation: Union[np.ndarray, bitarray, str]
             If np.ndarray : Of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1], or compressed vector
             If str : compressed vector
-            If int : Integer represented by the binary number that is the activation vector
+            If bitarray : same as np.array but takes 64x less memory (each entry is stored in one bit only)
         optimize: bool
             Only relevent 'value' is an integer. In that case, will check whether using compression saves up memory.
             Else, does not check and uses integer. Note that is optimize is True, entropy is computed.
@@ -69,8 +69,8 @@ class Activation(ABC):
         self._sizeof_bitarray = -1
         self._sizeof_raw = -1
 
-        if isinstance(activation, str) and "," not in activation:  # activation is actualy an integer, stored as an int
-            activation = int(activation)
+        if isinstance(activation, str) and "," not in activation:
+            activation = bitarray(activation)
 
         if isinstance(activation, bitarray):
             self._init_with_bitarray(activation, Activation.DTYPE, optimize)
@@ -83,7 +83,7 @@ class Activation(ABC):
             else:
                 self._init_with_raw(activation, Activation.DTYPE)
         else:
-            raise TypeError(f"An activation can only be a np.ndarray, and int or a str. Got {type(activation)}.")
+            raise TypeError(f"An activation can only be a np.ndarray, and bitarray or a str. Got {type(activation)}.")
 
     def _init_with_bitarray(self, value: bitarray, dtype: type, optimize: bool = True):
 
@@ -102,7 +102,7 @@ class Activation(ABC):
 
         """
 
-        logger.debug(f"Activation vector is an int")
+        logger.debug(f"Activation vector is a bitarray")
         self.length = len(value)
         self._sizeof_bitarray = sys.getsizeof(value) / 1e6
 
@@ -210,7 +210,7 @@ class Activation(ABC):
             else:
                 self.data_format = "compressed_array"
         else:
-            logger.debug(f"Using int activation representation")
+            logger.debug(f"Using bitarray activation representation")
             self.data_format = "bitarray"
             self.data = inbitarray
 
@@ -311,7 +311,7 @@ class Activation(ABC):
             raise TypeError(f"'value' can not be of type {type(value)}")
 
         length = act[-1]
-        s = np.zeros(length, dtype=int)
+        s = np.zeros(length, dtype=np.ushort)
         ones = []
         n_ones = 0
         previous_value = 0
