@@ -1,5 +1,6 @@
 from ruleskit import HyperrectangleCondition
 from ruleskit import Rule, RegressionRule, ClassificationRule
+from bitarray import bitarray
 import numpy as np
 import pytest
 
@@ -12,21 +13,21 @@ import pytest
             np.array([1, 3, 2]),
             HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
             np.array([1, 0, 1]),
-            5,
+            bitarray('101'),
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             np.array([1, 3, 2]),
             HyperrectangleCondition([1], bmins=[3], bmaxs=[5]),
             np.array([1, 1, 0]),
-            6,
+            bitarray('110'),
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             np.array([1, 3, 2]),
             HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5]),
             np.array([1, 0, 0]),
-            4,
+            bitarray('100'),
         ),
     ],
 )
@@ -121,13 +122,13 @@ def test_classification_attributes(x, y, condition, proba, pred, crit):
         ),
     ],
 )
-def test_add(x, y, condition1, condition2, activation1, activation2, activation_test):
+def test_and(x, y, condition1, condition2, activation1, activation2, activation_test):
     rule1 = Rule(condition=condition1)
     rule1.fit(xs=x, y=y)
     rule2 = Rule(condition=condition2)
     rule2.fit(xs=x, y=y)
 
-    new_rule = rule1 + rule2
+    new_rule = rule1 & rule2
     np.testing.assert_equal(new_rule.activation, activation_test)
     new_rule.fit(xs=x, y=y)
     np.testing.assert_equal(new_rule.activation, activation_test)

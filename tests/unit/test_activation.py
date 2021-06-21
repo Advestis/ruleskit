@@ -108,7 +108,8 @@ def test_and(vector1, vector2, and_vector):
 def test_add(vector1, vector2, add_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal((act1 + act2).raw, add_vector)
+    added = (act1 + act2).raw
+    np.testing.assert_equal(added, add_vector)
 
 
 def test_sizes():

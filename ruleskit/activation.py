@@ -255,11 +255,10 @@ class Activation(ABC):
     def __len__(self):
         return self.length
 
-    def _bitarray_to_raw(self, value: bitarray = None) -> np.ndarray:
+    def _bitarray_to_raw(self, value: bitarray = None, out=True) -> np.ndarray:
         """Transforms a bitarray to a nparray
         """
         t0 = time()
-        out = True
         if value is None:
             out = False
             value = self.data
@@ -281,11 +280,9 @@ class Activation(ABC):
             self._n_bitarray_to_raw += 1
         return act
 
-    def _decompress(self, value: Union[str, np.ndarray] = None, raw=True) -> Union[np.ndarray, bitarray]:
+    def _decompress(self, value: Union[str, np.ndarray] = None, raw=True, out=True) -> Union[np.ndarray, bitarray]:
         """Will return the original activation vector, and set self._nones and self._ones"""
         t0 = time()
-
-        out = True
 
         if value is None:
             out = False
@@ -329,6 +326,7 @@ class Activation(ABC):
                     self._nones = 1
                 if compute_ones:
                     self._ones = [pd.IndexSlice[0:1]]
+                s = np.ones(length, dtype=np.ushort)
             else:
                 if compute_nones:
                     self._nones = 0
@@ -621,7 +619,7 @@ class Activation(ABC):
     @property
     def time_compressed_to_raw(self):
         if self._time_compressed_to_raw == -1 and Activation.FORCE_STAT:
-            _ = self._decompress(self.as_compressed)
+            _ = self._decompress(self.as_compressed, out=False)
             if self._time_compressed_to_raw == -1:
                 raise ValueError("Calling '_decompress' should have set _time_compressed_to_raw")
         return self._time_compressed_to_raw
@@ -629,7 +627,7 @@ class Activation(ABC):
     @property
     def time_bitarray_to_raw(self):
         if self._time_bitarray_to_raw == -1 and Activation.FORCE_STAT:
-            _ = self._bitarray_to_raw(self.as_bitarray)
+            _ = self._bitarray_to_raw(self.as_bitarray, out=False)
             if self._time_bitarray_to_raw == -1:
                 raise ValueError("Calling '_bitarray_to_raw' should have set _time_bitarray_to_raw")
         return self._time_bitarray_to_raw
