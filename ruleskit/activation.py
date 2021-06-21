@@ -255,73 +255,60 @@ class Activation(ABC):
     def __len__(self):
         return self.length
 
-    def _bitarray_to_raw(self, value: int = None) -> np.ndarray:
-        """From a value of the form 45786542 (int), which is the base 10 representation of the binary form of an
-        activation vector, returns the initial vector.
+    def _bitarray_to_raw(self, value: bitarray = None) -> np.ndarray:
+        """Transforms a bitarray to a nparray
         """
         t0 = time()
+        out = True
         if value is None:
-            if isinstance(self.data, np.ndarray) and (self.data[-1] == 0 or self.data[-1] == 1):
+            out = False
+            value = self.data
+        if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
+            if not out:
                 self._time_bitarray_to_raw = time() - t0
                 self._n_bitarray_to_raw += 1
-                return self.data
-            elif not isinstance(self.data, int):
-                raise ValueError("Can not apply _int_to_array on a compressed vector")
-            act = np.fromiter(bin(self.data)[2:], dtype=int)
-            if self._sizeof_bitarray == -1:
-                self._sizeof_raw = sys.getsizeof(self.data) / 1e6
-        else:
-            if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
-                self._time_bitarray_to_raw = time() - t0
-                self._n_bitarray_to_raw += 1
-                return value
-            elif not isinstance(value, int):
-                raise ValueError("Can not apply _int_to_array on a compressed vector")
-            act = np.fromiter(bin(value)[2:], dtype=int)
+            return value
+        elif not isinstance(value, bitarray):
+            raise ValueError("Can not apply _bitarray_to_raw on a compressed vector")
+        act = np.array(list(value), dtype=np.ushort)
 
-        if len(act) > self.length:
-            raise ValueError(
-                "After using int_to_array, I ended up with an activation vector bigger than the specified "
-                "max length. This should not happend as the max length should have been set by the indexing "
-                "of x earlier in your code"
-            )
-        act_bis = np.zeros(self.length)
-        act_bis[self.length - len(act):] = act
-        if value is None and self._sizeof_raw == -1:
-            self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
-        self._time_bitarray_to_raw = time() - t0
-        self._n_bitarray_to_raw += 1
-        return act_bis
+        if self._sizeof_raw == -1 and not out:
+            self._sizeof_raw = sys.getsizeof(act) / 1e6
+        if self._sizeof_bitarray == -1 and not out:
+            self._sizeof_bitarray = sys.getsizeof(value) / 1e6
+        if not out:
+            self._time_bitarray_to_raw = time() - t0
+            self._n_bitarray_to_raw += 1
+        return act
 
     def _decompress(self, value: Union[str, np.ndarray] = None, raw=True) -> Union[np.ndarray, bitarray]:
         """Will return the original activation vector, and set self._nones and self._ones"""
         t0 = time()
+
+        out = True
+
         if value is None:
+            out = False
+            value = self.data
 
-            if isinstance(self.data, np.ndarray) and (self.data[-1] == 0 or self.data[-1] == 1):
+        if value[-1] == 0 or value[-1] == 1:
+            if not out:
                 self._time_compressed_to_raw = time() - t0
                 self._n_compressed_to_raw += 1
-                return self.data
-            elif isinstance(self.data, bitarray):
-                raise ValueError("Can not apply _decompress on a bitarray vector")
+            return value
+        elif isinstance(value, bitarray):
+            raise ValueError("Can not apply _decompress on a bitarray vector")
 
-            if self.data_format == "compressed_str":
-                act = ast.literal_eval(self.data)
-                if self._sizeof_compressed_str == -1:
-                    self._sizeof_compressed_str = sys.getsizeof(self.data) / 1e6
-            elif self.data_format == "compressed_array":
-                act = self.data
-                if self._sizeof_compressed_array == -1:
-                    self._sizeof_compressed_array = sys.getsizeof(self.data) / 1e6
-            else:
-                self._time_compressed_to_raw = time() - t0
-                self._n_compressed_to_raw += 1
-                return self.data
+        if isinstance(value, str):
+            act = ast.literal_eval(value)
+            if self._sizeof_compressed_str == -1 and not out:
+                self._sizeof_compressed_str = sys.getsizeof(value) / 1e6
+        elif isinstance(value, np.ndarray):
+            act = value
+            if self._sizeof_compressed_array == -1 and not out:
+                self._sizeof_compressed_array = sys.getsizeof(value) / 1e6
         else:
-            if isinstance(value, str):
-                act = ast.literal_eval(value)
-            else:
-                act = value
+            raise TypeError(f"'value' can not be of type {type(value)}")
 
         length = act[-1]
         s = np.zeros(length, dtype=int)
@@ -330,31 +317,36 @@ class Activation(ABC):
         previous_value = 0
         previous_index = 0
 
-        compute_nones = self._nones is None
-        compute_ones = self._ones is None
+        compute_nones = self._nones is None and not out
+        compute_ones = self._ones is None and not out
 
         if act[0] == 1:
             previous_value = 1
             s[0] = 1
         if len(act) == 2:
             if act[0] == 1:
-                self._nones = 1
-                self._ones = [pd.IndexSlice[0:1]]
-                act = np.array(s, dtype=int)
-                if value is None and self._sizeof_raw == -1:
-                    self._sizeof_raw = sys.getsizeof(act) / 1e6
-                self._time_compressed_to_raw = time() - t0
-                self._n_compressed_to_raw += 1
-                return act
+                if compute_nones:
+                    self._nones = 1
+                if compute_ones:
+                    self._ones = [pd.IndexSlice[0:1]]
             else:
-                self._nones = 0
-                self._ones = []
-                act = np.array(s, dtype=int)
-                if value is None and self._sizeof_raw == -1:
+                if compute_nones:
+                    self._nones = 0
+                if compute_ones:
+                    self._ones = []
+
+            if raw:
+                act = np.array(s, dtype=np.ushort)
+            else:
+                # noinspection PyTypeChecker
+                act = bitarray(s.tolist())
+
+            if not out:
+                if self._sizeof_raw == -1:
                     self._sizeof_raw = sys.getsizeof(act) / 1e6
                 self._time_compressed_to_raw = time() - t0
                 self._n_compressed_to_raw += 1
-                return act
+            return act
 
         for index in act[1:]:
             if previous_value == 0:
@@ -376,18 +368,20 @@ class Activation(ABC):
         if compute_ones:
             self._ones = ones
         if raw:
-            act = np.array(s, dtype="int32")
-            if value is None and self._sizeof_raw == -1:
-                self._sizeof_raw = sys.getsizeof(act) / 1e6
-            self._time_compressed_to_raw = time() - t0
-            self._n_compressed_to_raw += 1
+            act = np.array(s, dtype=np.ushort)
+            if not out:
+                if self._sizeof_raw == -1:
+                    self._sizeof_raw = sys.getsizeof(act) / 1e6
+                self._time_compressed_to_raw = time() - t0
+                self._n_compressed_to_raw += 1
         else:
             # noinspection PyTypeChecker
             act = bitarray(s.tolist())
-            if value is None and self._sizeof_bitarray == -1:
-                self._sizeof_bitarray = sys.getsizeof(act) / 1e6
-            self._time_compressed_to_bitarray = time() - t0
-            self._n_compressed_to_bitarray += 1
+            if not out:
+                if self._sizeof_bitarray == -1:
+                    self._sizeof_bitarray = sys.getsizeof(act) / 1e6
+                self._time_compressed_to_bitarray = time() - t0
+                self._n_compressed_to_bitarray += 1
         return act
 
     def __contains__(self, other: "Activation") -> bool:
@@ -410,6 +404,8 @@ class Activation(ABC):
         integers. What storage to use is specified by the "dtype" argument.
         """
         if not isinstance(value, (np.ndarray, bitarray)) or (value[-1] != 0 and value[-1] != 1):
+            if isinstance(value, str):
+                return np.array(value.split(",")).astype(int)
             return value
         if isinstance(value, np.ndarray):
             value = value.astype(int)
