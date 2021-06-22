@@ -14,12 +14,12 @@ class RuleSet(ABC):
     NLINES = 5
 
     def __init__(self, rules_list: Union[List[Rule], None] = None):
-        if rules_list is None:
-            self._rules = []
-        else:
-            self._rules = [r if isinstance(r, Rule) else "error" for r in rules_list if r is not None]
-            if "error" in self._rules:
-                raise TypeError("Some rules in given list were not of type 'Rule'")
+        self._rules = []
+        if rules_list is not None:
+            for rule in rules_list:
+                if not isinstance(rule, Rule):
+                    raise TypeError(f"Some rules in given iterable were not of type 'Rule' but of type {type(rule)}")
+                self._rules.append(rule)
 
     def __add__(self, other: Union["RuleSet", Rule]):
         if isinstance(other, Rule):
