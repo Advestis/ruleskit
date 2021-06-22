@@ -17,7 +17,9 @@ class RuleSet(ABC):
         if rules_list is None:
             self._rules = []
         else:
-            self._rules = rules_list
+            self._rules = [r if isinstance(r, Rule) else "error" for r in rules_list if r is not None]
+            if "error" in self._rules:
+                raise TypeError("Some rules in given list were not of type 'Rule'")
 
     def __add__(self, other: Union["RuleSet", Rule]):
         if isinstance(other, Rule):
@@ -65,14 +67,14 @@ class RuleSet(ABC):
             and hasattr(self[0].condition, "bmaxs")
         ):
             return
-        rules_by_fnames = OrderedDict()
+        # noinspection PyUnresolvedReferences
+        fnames = list(set([str(r.features_names) for r in self]))
+        fnames.sort(reverse=True)
+        rules_by_fnames = OrderedDict({f: [] for f in fnames})
         for rule in self:
             # noinspection PyUnresolvedReferences
-            v = str(rule.condition.features_names)
-            if v not in rules_by_fnames:
-                rules_by_fnames[v] = [rule]
-            else:
-                rules_by_fnames[v].append(rule)
+            v = str(rule.features_names)
+            rules_by_fnames[v].append(rule)
         rules_by_fnames = {
             n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
         }
