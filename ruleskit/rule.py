@@ -32,7 +32,7 @@ class Rule(ABC):
         return self.__class__(condition, activation)
 
     def __add__(self, other: "Rule") -> "Rule":
-        return self & other
+        return NotImplemented("Can not add rules (seen as 'logical OR'). you can use logical AND however.")
 
     @property
     def condition(self) -> Condition:
