@@ -407,7 +407,7 @@ class Activation(ABC):
             return value
         elif not isinstance(value, bitarray):
             raise TypeError("Can not apply _bitarray_to_raw on a compressed vector or integer")
-        act = np.array(list(value), dtype=np.ushort)
+        act = np.array(list(value), dtype=np.ubyte)
 
         if not out:
             if self._sizeof_raw == -1:
@@ -450,7 +450,7 @@ class Activation(ABC):
             raise TypeError(f"'value' can not be of type {type(value)}")
 
         length = act[-1]
-        s = np.zeros(length, dtype=np.ushort)
+        s = np.zeros(length, dtype=np.ubyte)
         previous_value = 0
         previous_index = 0
 
@@ -459,9 +459,9 @@ class Activation(ABC):
             s[0] = 1
         if len(act) == 2:
             if act[0] == 1:
-                s = np.ones(length, dtype=np.ushort)
+                s = np.ones(length, dtype=np.ubyte)
             if raw:
-                act = np.array(s, dtype=np.ushort)
+                act = np.array(s, dtype=np.ubyte)
             else:
                 # noinspection PyTypeChecker
                 act = bitarray(s.tolist())
@@ -486,7 +486,7 @@ class Activation(ABC):
                 previous_value = 0
 
         if raw:
-            act = np.array(s, dtype=np.ushort)
+            act = np.array(s, dtype=np.ubyte)
             if not out:
                 if self._sizeof_raw == -1:
                     self._sizeof_raw = sys.getsizeof(act) / 1e6
