@@ -429,7 +429,7 @@ class Activation(ABC):
         if isinstance(value, bitarray):
             return value
         elif not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
-            raise ValueError("Can not use _array_to_bitarray or a compressed vector")
+            raise ValueError("Can not use _raw_to_bitarray or a compressed vector")
         # noinspection PyTypeChecker
         return bitarray(value.tolist())
 
