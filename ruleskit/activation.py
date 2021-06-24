@@ -575,7 +575,7 @@ class Activation(ABC):
             raise TypeError("Can not use _raw_to_integer or a compressed vector")
         elif isinstance(value, bitarray):
             raise TypeError("Can not use _raw_to_integer on a bitarray vector")
-        to_ret = int("".join(str(i) for i in value.astype("int")), 2)
+        to_ret = int("".join(str(i) for i in value.astype(np.ubyte)), 2)
         return to_ret
 
     @property
