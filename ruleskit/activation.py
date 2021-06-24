@@ -379,7 +379,7 @@ class Activation(ABC):
                 "max length. This should not happend as the max length should have been set by the indexing "
                 "of x earlier in your code"
             )
-        act_bis = np.zeros(self.length)
+        act_bis = np.zeros(self.length).astype(np.ubyte)
         act_bis[self.length - len(act):] = act
 
         if not out:
