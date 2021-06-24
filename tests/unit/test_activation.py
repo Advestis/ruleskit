@@ -7,13 +7,14 @@ Activation.FORCE_STAT = True
 
 
 @pytest.mark.parametrize(
-    "vector, cs, ca, i, n",
+    "vector, cs, ca, b, i, n",
     [
         (
             np.array([1, 0, 1]),
             "1,1,2,3",
             np.array([1, 1, 2, 3]),
             bitarray([1, 0, 1]),
+            5,
             3,
         ),
         (
@@ -21,16 +22,24 @@ Activation.FORCE_STAT = True
             "0,1,2,3,4",
             np.array([0, 1, 2, 3, 4]),
             bitarray("0101"),
+            5,
             4,
         ),
     ],
 )
-def test_init(vector, cs, ca, i, n):
+def test_init(vector, cs, ca, b, i, n):
     res = Activation(vector)
-    np.testing.assert_equal(res.as_bitarray, i)
+    np.testing.assert_equal(res.as_bitarray, b)
     np.testing.assert_equal(res.as_compressed_str, cs)
     np.testing.assert_equal(res.as_compressed_array, ca)
     np.testing.assert_equal(res.length, n)
+    Activation.WILL_COMPARE = True
+    res = Activation(vector)
+    np.testing.assert_equal(res.as_integer, i)
+    np.testing.assert_equal(res.as_compressed_str, cs)
+    np.testing.assert_equal(res.as_compressed_array, ca)
+    np.testing.assert_equal(res.length, n)
+    Activation.WILL_COMPARE = False
 
 
 @pytest.mark.parametrize(
@@ -130,3 +139,14 @@ def test_times():
     assert act.n_raw_to_compressed > 0
     assert act.n_raw_to_bitarray > 0
     assert act.n_bitarray_to_raw > 0
+    Activation.WILL_COMPARE = True
+    act = Activation(np.array([1, 0, 1]))
+    assert act.time_raw_to_compressed > -1
+    assert act.time_compressed_to_raw > -1
+    assert act.time_raw_to_integer > -1
+    assert act.time_integer_to_raw > -1
+    assert act.n_compressed_to_raw > 0
+    assert act.n_raw_to_compressed > 0
+    assert act.n_raw_to_integer > 0
+    assert act.n_integer_to_raw > 0
+    Activation.WILL_COMPARE = False
