@@ -266,8 +266,8 @@ class Activation(ABC):
           * self._nones
           * self._ones
         """
-        if value.dtype != np.ushort:
-            value = value.astype(np.ushort)
+        if value.dtype != np.ubyte:
+            value = value.astype(np.ubyte)
         logger.debug(f"Activation vector is raw")
         self._sizeof_raw = sys.getsizeof(value) / 1e6
         self.length = len(value)
@@ -369,7 +369,7 @@ class Activation(ABC):
             return value
         elif not isinstance(value, int):
             raise TypeError("Can not apply _integer_to_raw on a compressed vector or bitarray")
-        act = np.fromiter(bin(value)[2:], dtype=int)
+        act = np.fromiter(bin(value)[2:], dtype=np.ubyte)
         if self._sizeof_integer == -1 and not out:
             self._sizeof_integer = sys.getsizeof(value) / 1e6
 
