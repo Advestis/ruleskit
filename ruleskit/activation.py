@@ -528,10 +528,10 @@ class Activation(ABC):
             raise TypeError("Can not compress an integer vector")
         if not isinstance(value, (np.ndarray, bitarray)) or (value[-1] != 0 and value[-1] != 1):
             if isinstance(value, str):
-                return np.array(value.split(",")).astype(int)
+                return np.array(value.split(",")).astype(np.ubyte)
             return value
         if isinstance(value, np.ndarray):
-            value = value.astype(int)
+            value = value.astype(np.ubyte)
         else:
             value = np.diff(np.array(list(value)))
         to_ret = [value[0]]
