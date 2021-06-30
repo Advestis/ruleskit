@@ -58,6 +58,46 @@ class RuleSet(ABC):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
         self.rules.append(rule)
 
+    # def sort(self) -> None:
+    #     import ast
+    #     if len(self) == 0:
+    #         return
+    #     if not (
+    #         hasattr(self[0].condition, "features_names")
+    #         and hasattr(self[0].condition, "bmins")
+    #         and hasattr(self[0].condition, "bmaxs")
+    #     ):
+    #         return
+    #     # noinspection PyUnresolvedReferences
+    #     fnames = list(set([str(r.features_names) for r in self]))
+    #     dict_names = {}
+    #     lmax = 1
+    #     for f in fnames:
+    #         l = len(ast.literal_eval(f))
+    #         if l > lmax:
+    #             lmax  = l
+    #         if l not in dict_names:
+    #             dict_names[l] = []
+    #         dict_names[l].append(f)
+    #     for l in dict_names:
+    #         dict_names[l].sort()
+    #     fnames = []
+    #     for l in range(1, lmax+1):
+    #         if l in dict_names:
+    #             fnames += dict_names[l]
+    #
+    #     rules_by_fnames = OrderedDict({f: [] for f in fnames})
+    #     for rule in self:
+    #         # noinspection PyUnresolvedReferences
+    #         v = str(rule.features_names)
+    #         rules_by_fnames[v].append(rule)
+    #     rules_by_fnames = {
+    #         n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
+    #     }
+    #     self._rules = []
+    #     for n in rules_by_fnames:
+    #         self._rules += rules_by_fnames[n]
+
     def sort(self) -> None:
         if len(self) == 0:
             return
