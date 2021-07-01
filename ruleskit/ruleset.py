@@ -17,7 +17,7 @@ class RuleSet(ABC):
         self._rules = []
         if rules_list is not None:
             for rule in rules_list:
-                if not isinstance(rule, Rule):
+                if not isinstance(rule, Rule) and rule is not None:
                     raise TypeError(f"Some rules in given iterable were not of type 'Rule' but of type {type(rule)}")
                 if rule is not None:
                     self._rules.append(rule)
@@ -74,18 +74,18 @@ class RuleSet(ABC):
         dict_names = {}
         lmax = 1
         for f in fnames:
-            l = len(ast.literal_eval(f))
-            if l > lmax:
-                lmax  = l
-            if l not in dict_names:
-                dict_names[l] = []
-            dict_names[l].append(f)
-        for l in dict_names:
-            dict_names[l].sort()
+            l_ = len(ast.literal_eval(f))
+            if l_ > lmax:
+                lmax = l_
+            if l_ not in dict_names:
+                dict_names[l_] = []
+            dict_names[l_].append(f)
+        for l_ in dict_names:
+            dict_names[l_].sort()
         fnames = []
-        for l in range(1, lmax+1):
-            if l in dict_names:
-                fnames += dict_names[l]
+        for l_ in range(1, lmax+1):
+            if l_ in dict_names:
+                fnames += dict_names[l_]
 
         rules_by_fnames = OrderedDict({f: [] for f in fnames})
         for rule in self:
@@ -98,7 +98,7 @@ class RuleSet(ABC):
         self._rules = []
         for n in rules_by_fnames:
             self._rules += rules_by_fnames[n]
-    #
+
     # def sort(self) -> None:
     #     if len(self) == 0:
     #         return
@@ -117,7 +117,8 @@ class RuleSet(ABC):
     #         v = str(rule.features_names)
     #         rules_by_fnames[v].append(rule)
     #     rules_by_fnames = {
-    #         n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
+    #         n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs)
+    #         for n in rules_by_fnames
     #     }
     #     self._rules = []
     #     for n in rules_by_fnames:
