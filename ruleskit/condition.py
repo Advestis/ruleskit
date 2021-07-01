@@ -102,7 +102,11 @@ class HyperrectangleCondition(Condition):
         args = [i + j for i, j in zip(self.getattr, other.getattr)]
         # noinspection PyTypeChecker
         to_ret = HyperrectangleCondition(
-            features_indexes=args[0], bmins=args[1], bmaxs=args[2], features_names=args[3], empty=False,
+            features_indexes=args[0],
+            bmins=args[1],
+            bmaxs=args[2],
+            features_names=args[3],
+            empty=False,
         )
         if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
             to_ret.normalize_features_indexes()
@@ -180,11 +184,19 @@ class HyperrectangleCondition(Condition):
     def sort(self):
         if len(self) > 1:
             if HyperrectangleCondition.SORT_ACCORDING_TO == "index":
+                if len(set(self._features_indexes)) != len(self.features_indexes):
+                    raise ValueError(
+                        "Can not sort HyperrectangleCondition according to index : there are duplicated indexes"
+                    )
                 self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
                 self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
                 self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
                 self._features_indexes = sorted(self._features_indexes)
             elif HyperrectangleCondition.SORT_ACCORDING_TO == "name":
+                if len(set(self._features_names)) != len(self._features_names):
+                    raise ValueError(
+                        "Can not sort HyperrectangleCondition according to names : there are duplicated names"
+                    )
                 self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
                 self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
                 self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
