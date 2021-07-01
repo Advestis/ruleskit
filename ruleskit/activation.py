@@ -531,7 +531,8 @@ class Activation(ABC):
                 return np.array(value.split(",")).astype(np.ubyte)
             return value
         if isinstance(value, np.ndarray):
-            value = value.astype(np.ubyte)
+            # not ubyte (unsigned byte), because np.diff will produce negative value that ubyte can not handle
+            value = value.astype(np.byte)
         else:
             value = np.diff(np.array(list(value)))
         to_ret = [value[0]]
