@@ -367,16 +367,17 @@ class Activation(ABC):
             self.data_format = "bitarray"
             self.data = inbitarray
 
-    def __and__(self, other: "Activation") -> "Activation":
-        if self.length != other.length:
-            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
+    @staticmethod
+    def logical_and(r1: "Activation", r2: "Activation", name: str = None) -> "Activation":
+        if r1.length != r2.length:
+            raise ValueError(f"Activations have different lengths. Left is {r1.length}, right is {r2.length}")
 
-        if (self.data_format == "bitarray" and other.data_format == "bitarray") or (
-            self.data_format == "integer" and other.data_format == "integer"
+        if (r1.data_format == "bitarray" and r2.data_format == "bitarray") or (
+            r1.data_format == "integer" and r2.data_format == "integer"
         ):
-            return Activation(self.data & other.data)
+            return Activation(r1.data & r2.data, name_for_file=name)
         else:
-            return Activation(self.raw * other.raw)
+            return Activation(r1.raw * r2.raw, name_for_file=name)
 
     def __or__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
@@ -588,8 +589,7 @@ class Activation(ABC):
         return act
 
     def __contains__(self, other: "Activation") -> bool:
-        # TODO : pytests (for vmargot)
-        nones_intersection = (self & other).nones
+        nones_intersection = (Activation.logical_and(self, other)).nones
         if nones_intersection < min(self.nones, other.nones):
             return False
         return True

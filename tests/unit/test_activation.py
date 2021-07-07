@@ -124,7 +124,7 @@ def test_diff(vector1, vector2, diff):
 def test_and(vector1, vector2, and_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal((act1 & act2).raw, and_vector)
+    np.testing.assert_equal(Activation.logical_and(act1, act2).raw, and_vector)
 
 
 @pytest.mark.parametrize(
