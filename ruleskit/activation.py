@@ -17,7 +17,6 @@ class Activation(ABC):
     DTYPE = str
     FORCE_STAT = False
     WILL_COMPARE = False
-    USE_FILE = False
     DEFAULT_TEMPDIR = Path(gettempdir())
 
     @classmethod
@@ -30,7 +29,7 @@ class Activation(ABC):
         activation: Union[np.ndarray, bitarray, str, int] = None,
         optimize: bool = True,
         length: int = None,
-        name: str = None,
+        name_for_file: str = None,
     ):
         """Compresses an activation vector into a str(list) describing its variations or an bitarray of booleans
 
@@ -45,6 +44,8 @@ class Activation(ABC):
             taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
             "100100011..." then cast it into int using int(s, 2). This is done if Activation.WILL_COMPARE is True :
             converting to int is slower than to bit array, but comparing ints is faster. Size is equivalent to bitarray.
+        or in a file stored locally.
+            This is done if name_for_file is not None
 
         The method will choose how to store the data based on the size (in MB) of the compressed list : if it is
         superior than in bitarray/int, it will take less memory and is prefered. If compression is used and
@@ -66,6 +67,9 @@ class Activation(ABC):
             Only valid if 'value' is an integer. An activation vector stored as an integer has lost the information
             about its size : [0 0 0 1 0 0 0 1 1...] to nit gives 100011... which in turn gives back [1 0 0 0 1 1...].
             To get the leading zeros back, one must specify the length of the activation vector.
+        name_for_file: str
+            If specified, then activation vector is stored in a file in
+            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_name_for_file.txt
         """
         self.length = None  # Will be set by init methods
         self._entropy = None  # Will be set if activation is not an integer or if optimize is True
@@ -123,10 +127,10 @@ class Activation(ABC):
             if activation[-1] > 1:
                 self._init_with_compressed_array(activation)
             else:
-                if not Activation.USE_FILE:
+                if name_for_file is None:
                     self._init_with_raw(activation, Activation.DTYPE)
                 else:
-                    self._write(activation, name)
+                    self._write(activation, name_for_file)
         else:
             raise TypeError(
                 f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"

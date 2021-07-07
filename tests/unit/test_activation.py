@@ -45,7 +45,7 @@ def test_init(vector, cs, ca, b, i, n):
 def test_file():
     exp = np.array([1, 0, 1])
     Activation.USE_FILE = True
-    res = Activation(exp, name="dummy")
+    res = Activation(exp, name_for_file="dummy")
     assert res.data.is_file()
     np.testing.assert_equal(exp, res.raw)
     np.testing.assert_equal(exp, res._read())
