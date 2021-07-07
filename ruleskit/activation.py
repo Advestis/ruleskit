@@ -151,11 +151,13 @@ class Activation(ABC):
         self._time_write = time() - t0
         self._n_written += 1
 
-    def _read(self, out: bool = True) -> np.ndarray:
-        if not isinstance(self.data, Path):
-            raise ValueError("Can not load activation vector : self.data is not a pathlib.Path object")
+    def _read(self, path: Path = None, out: bool = True) -> np.ndarray:
+        if path is None:
+            if not self.data_format == "file":
+                raise ValueError("Activation vector was not saved locally : can not read it.")
+            path = self.data
         t0 = time()
-        with open(self.data, "rb") as f:
+        with open(path, "rb") as f:
             # noinspection PyTypeChecker
             value = np.load(f)
         if not out:
@@ -417,17 +419,21 @@ class Activation(ABC):
         t0 = time()
         if value is None:
             out = False
-            value = self.data
-            if isinstance(value, Path):
+            if self.data_format == "file":
                 value = self._read(out=False)
+            else:
+                value = self.data
 
         if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
             if not out:
                 self._time_integer_to_raw = time() - t0
                 self._n_integer_to_raw += 1
             return value
-        elif not isinstance(value, int):
-            raise TypeError("Can not apply _integer_to_raw on a compressed vector or bitarray")
+
+        if isinstance(value, (bitarray, np.ndarray, str, Path)):
+            raise TypeError("Can not apply _integer_to_raw on a bitarray, raw, compressed or a path")
+        if not isinstance(value, int):
+            raise TypeError(f"Invalid format {type(value)}")
         act = np.fromiter(bin(value)[2:], dtype=np.ubyte)
         if self._sizeof_integer == -1 and not out:
             self._sizeof_integer = sys.getsizeof(value) / 1e6
@@ -457,17 +463,21 @@ class Activation(ABC):
         t0 = time()
         if value is None:
             out = False
-            value = self.data
-            if isinstance(value, Path):
+            if self.data_format == "file":
                 value = self._read(out=False)
+            else:
+                value = self.data
 
         if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
             if not out:
                 self._time_bitarray_to_raw = time() - t0
                 self._n_bitarray_to_raw += 1
             return value
-        elif not isinstance(value, bitarray):
-            raise TypeError("Can not apply _bitarray_to_raw on a compressed vector or integer")
+
+        if isinstance(value, (int, np.ndarray, str, Path)):
+            raise TypeError("Can not apply _bitarray_to_raw on a raw, integer, compressed or a path")
+        if not isinstance(value, bitarray):
+            raise TypeError(f"Invalid format {type(value)}")
         act = np.array(list(value), dtype=np.ubyte)
 
         if not out:
@@ -490,12 +500,15 @@ class Activation(ABC):
 
         if value is None:
             out = False
-            value = self.data
-            if isinstance(value, Path):
+            if self.data_format == "file":
                 value = self._read(out=False)
+            else:
+                value = self.data
 
+        if isinstance(value, (int, bitarray, Path)):
+            raise TypeError("Can not apply _decompress on a bitarray, integer or Path")
         if not isinstance(value, (str, np.ndarray)):
-            raise TypeError("Can not apply _decompress on a bitarray or integer vector")
+            raise TypeError(f"Invalid format {type(value)}")
 
         if value[-1] == 0 or value[-1] == 1:
             if not out:
@@ -679,9 +692,10 @@ class Activation(ABC):
         if self._entropy is None:
             t0 = time()
             fmt = self.data_format
-            data = self.data
             if self.data_format == "file":
                 data = self._read(out=False)
+            else:
+                data = self.data
             compressed = self._compress(data)
 
             if fmt == "bitarray":
