@@ -33,7 +33,7 @@ class Rule(ABC):
         activation = Activation.logical_and(
             self._activation,
             other._activation,
-            self.__hash__() if Rule.LOCAL_ACTIVATION else None
+            condition.__hash__() if Rule.LOCAL_ACTIVATION else None
         )
         return self.__class__(condition, activation)
 
