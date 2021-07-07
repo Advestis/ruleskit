@@ -149,7 +149,7 @@ class Activation(ABC):
         t0 = time()
         self.data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{name}.txt"
         self.data_format = "file"
-        if self.data.isfile():
+        if self.data.is_file():
             raise FileExistsError(f"There is already an activation vector with the name {name}")
         with open(self.data, "wb") as f:
             # noinspection PyTypeChecker
