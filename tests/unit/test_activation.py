@@ -64,6 +64,7 @@ def test_file():
     Activation.clean_files()
     assert not res.data.is_file()
 
+
 @pytest.mark.parametrize(
     "vector",
     [

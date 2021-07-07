@@ -18,10 +18,11 @@ class Activation(ABC):
     FORCE_STAT = False
     WILL_COMPARE = False
     USE_FILE = False
+    DEFAULT_TEMPDIR = Path(gettempdir())
 
     @classmethod
     def clean_files(cls):
-        for path in Path(gettempdir()).glob("ACTIVATION_VECTOR_*.txt"):
+        for path in cls.DEFAULT_TEMPDIR.glob("ACTIVATION_VECTOR_*.txt"):
             path.unlink()
 
     def __init__(
@@ -142,7 +143,7 @@ class Activation(ABC):
         self._nones = np.count_nonzero(value == 1)
         self._ones = np.where(value == 1)[0].tolist()
         t0 = time()
-        self.data = Path(gettempdir()) / f"ACTIVATION_VECTOR_{name}.txt"
+        self.data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{name}.txt"
         self.data_format = "file"
         with open(self.data, "wb") as f:
             # noinspection PyTypeChecker
@@ -438,7 +439,7 @@ class Activation(ABC):
                 "of x earlier in your code"
             )
         act_bis = np.zeros(self.length).astype(np.ubyte)
-        act_bis[self.length - len(act) :] = act
+        act_bis[self.length - len(act):] = act
 
         if not out:
             if self._sizeof_raw == -1:
