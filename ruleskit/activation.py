@@ -106,6 +106,8 @@ class Activation(ABC):
         self._sizeof_bitarray = -1
         self._sizeof_integer = -1
         self._sizeof_raw = -1
+        self._sizeof_file = -1
+        self._sizeof_path = -1
 
         if isinstance(activation, str) and "," not in activation:
             if Activation.WILL_COMPARE:
@@ -152,6 +154,12 @@ class Activation(ABC):
         with open(self.data, "wb") as f:
             # noinspection PyTypeChecker
             np.save(f, value, allow_pickle=False)
+        stat = self.data.stat()
+        if isinstance(stat, dict):
+            self._sizeof_file = stat["st_size"] / 1e6
+        else:
+            self._sizeof_file = stat.st_size / 1e6
+        self._sizeof_path = sys.getsizeof(self.data)
         self._time_write = time() - t0
         self._n_written += 1
 
@@ -874,6 +882,14 @@ class Activation(ABC):
             return to_ret
         else:
             raise ValueError(f"Unkown activation format {self.data_format}")
+
+    @property
+    def sizeof_path(self):  # Can not force stat for file
+        return self._sizeof_path
+
+    @property
+    def sizeof_file(self):  # Can not force stat for file
+        return self._sizeof_file
 
     @property
     def sizeof_raw(self):

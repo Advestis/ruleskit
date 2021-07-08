@@ -56,6 +56,8 @@ def test_file():
     assert res.coverage > 0
     assert res.entropy > 0
     assert res.rel_entropy > 0
+    assert res.sizeof_file > 0
+    assert res.sizeof_path > 0
     _ = res.as_bitarray
     _ = res.as_integer
     _ = res.as_compressed
