@@ -5,6 +5,8 @@ import ast
 import sys
 from time import time
 from bitarray import bitarray
+from tempfile import gettempdir
+from pathlib import Path
 from .logger.logger import log as logger
 
 MAX_INT_32 = 2 ** 32
@@ -15,9 +17,19 @@ class Activation(ABC):
     DTYPE = str
     FORCE_STAT = False
     WILL_COMPARE = False
+    DEFAULT_TEMPDIR = Path(gettempdir())
+
+    @classmethod
+    def clean_files(cls):
+        for path in cls.DEFAULT_TEMPDIR.glob("ACTIVATION_VECTOR_*.txt"):
+            path.unlink()
 
     def __init__(
-        self, activation: Union[np.ndarray, bitarray, str, int] = None, optimize: bool = True, length: int = None
+        self,
+        activation: Union[np.ndarray, bitarray, str, int] = None,
+        optimize: bool = True,
+        length: int = None,
+        name_for_file: str = None,
     ):
         """Compresses an activation vector into a str(list) describing its variations or an bitarray of booleans
 
@@ -32,6 +44,8 @@ class Activation(ABC):
             taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
             "100100011..." then cast it into int using int(s, 2). This is done if Activation.WILL_COMPARE is True :
             converting to int is slower than to bit array, but comparing ints is faster. Size is equivalent to bitarray.
+        or in a file stored locally.
+            This is done if name_for_file is not None
 
         The method will choose how to store the data based on the size (in MB) of the compressed list : if it is
         superior than in bitarray/int, it will take less memory and is prefered. If compression is used and
@@ -53,15 +67,19 @@ class Activation(ABC):
             Only valid if 'value' is an integer. An activation vector stored as an integer has lost the information
             about its size : [0 0 0 1 0 0 0 1 1...] to nit gives 100011... which in turn gives back [1 0 0 0 1 1...].
             To get the leading zeros back, one must specify the length of the activation vector.
+        name_for_file: str
+            If specified, then activation vector is stored in a file in
+            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_name_for_file.txt
         """
         self.length = None  # Will be set by init methods
         self._entropy = None  # Will be set if activation is not an integer or if optimize is True
         self.data_format = None  # Will be set by init methods
         self.data = None  # Will be set by init methods
-        self._ones = None  # Will be set if "activation" is the raw activation vector
         self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
         self._nones = None  # Will be set if activation is not an integer or if optimize is True
         self._coverage = None
+        self._time_write = -1
+        self._time_read = -1
         self._time_compressed_to_raw = -1
         self._time_raw_to_compressed = -1
         self._time_raw_to_integer = -1
@@ -71,6 +89,8 @@ class Activation(ABC):
         self._time_bitarray_to_compressed = -1
         self._time_integer_to_compressed = -1
         self._time_integer_to_raw = -1
+        self._n_written = 0
+        self._n_read = 0
         self._n_compressed_to_raw = 0
         self._n_raw_to_compressed = 0
         self._n_bitarray_to_raw = 0
@@ -86,6 +106,8 @@ class Activation(ABC):
         self._sizeof_bitarray = -1
         self._sizeof_integer = -1
         self._sizeof_raw = -1
+        self._sizeof_file = -1
+        self._sizeof_path = -1
 
         if isinstance(activation, str) and "," not in activation:
             if Activation.WILL_COMPARE:
@@ -106,28 +128,73 @@ class Activation(ABC):
             if activation[-1] > 1:
                 self._init_with_compressed_array(activation)
             else:
-                self._init_with_raw(activation, Activation.DTYPE)
+                if name_for_file is None:
+                    self._init_with_raw(activation, Activation.DTYPE)
+                else:
+                    self._write(activation, name_for_file)
         else:
             raise TypeError(
                 f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
                 f" {type(activation)}."
             )
 
+    def _write(self, value: np.ndarray, name: str):
+
+        logger.debug(f"Activation vector is raw, store it in a file")
+        if name is None:
+            raise ValueError("If storing to file, need to provide a name")
+        self._sizeof_raw = sys.getsizeof(value) / 1e6
+        self.length = len(value)
+        self._nones = np.count_nonzero(value == 1)
+        t0 = time()
+        self.data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{name}.txt"
+        self.data_format = "file"
+        if self.data.is_file():
+            raise FileExistsError(f"There is already an activation vector with the name {name}")
+        with open(self.data, "wb") as f:
+            # noinspection PyTypeChecker
+            np.save(f, value, allow_pickle=False)
+        stat = self.data.stat()
+        if isinstance(stat, dict):
+            self._sizeof_file = stat["st_size"] / 1e6
+        else:
+            self._sizeof_file = stat.st_size / 1e6
+        self._sizeof_path = sys.getsizeof(self.data) / 1e6
+        self._time_write = time() - t0
+        self._n_written += 1
+
+    def _read(self, path: Path = None, out: bool = True) -> np.ndarray:
+        if path is None:
+            if not self.data_format == "file":
+                raise ValueError("Activation vector was not saved locally : can not read it.")
+            path = self.data
+        t0 = time()
+        with open(path, "rb") as f:
+            # noinspection PyTypeChecker
+            value = np.load(f)
+        if not out:
+            if self._sizeof_raw == -1:
+                self._sizeof_raw = sys.getsizeof(value) / 1e6
+            if self._nones is None:
+                self._nones = np.count_nonzero(value == 1)
+            self._time_read = time() - t0
+            self._n_read += 1
+        return value
+
     def _init_with_bitarray(self, value: bitarray, dtype: type, optimize: bool = True):
 
         """
         Will set
           * self._nones (number of ones in the activation)
-          * self._ones (index of ones)
-            if Optimize is True:
-              * self.length
-              * self._entropy and self._rel_entropy
-              * self.data_format to "bitarray" or "compressed_str" or "compressed_array" depending on what takes less
-                memory
-              * self.data as a bitarray, a str or an array
-            else:
-              * self.data as a bitarray
-              * self.data_format to "bitarray"
+        if Optimize is True:
+          * self.length
+          * self._entropy and self._rel_entropy
+          * self.data_format to "bitarray" or "compressed_str" or "compressed_array" depending on what takes less
+            memory
+          * self.data as a bitarray, a str or an array
+        else:
+          * self.data as a bitarray
+          * self.data_format to "bitarray"
 
         """
 
@@ -135,7 +202,6 @@ class Activation(ABC):
         self.length = len(value)
         self._sizeof_bitarray = sys.getsizeof(value) / 1e6
         self._nones = value.count(1)
-        self._ones = value.search(1)
 
         if optimize:
             t0 = time()
@@ -172,7 +238,6 @@ class Activation(ABC):
         Will set
             if Optimize is True:
               * self._nones (number of ones in the activation)
-              * self._ones (index of ones)
               * self.length
               * if optimize is True : self._entropy and self._rel_entropy
               * self.data_format to "integer" or "compressed_str" or "compressed_array" depending on what takes less
@@ -194,7 +259,6 @@ class Activation(ABC):
             raw = self._integer_to_raw(value)
             self._sizeof_raw = sys.getsizeof(raw) / 1e6
             self._nones = np.count_nonzero(raw == 1)
-            self._ones = np.where(raw == 1)[0].tolist()
             t0 = time()
             compressed = self._compress(raw, dtype=dtype)
             self._time_integer_to_compressed = time() - t0
@@ -264,7 +328,6 @@ class Activation(ABC):
           * self._entropy and self._rel_entropy
           * self.length
           * self._nones
-          * self._ones
         """
         if value.dtype != np.ubyte:
             value = value.astype(np.ubyte)
@@ -272,7 +335,6 @@ class Activation(ABC):
         self._sizeof_raw = sys.getsizeof(value) / 1e6
         self.length = len(value)
         self._nones = np.count_nonzero(value == 1)
-        self._ones = np.where(value == 1)[0].tolist()
         t0 = time()
         compressed = self._compress(value, dtype=dtype)
         self._time_raw_to_compressed = time() - t0
@@ -305,16 +367,17 @@ class Activation(ABC):
             self.data_format = "bitarray"
             self.data = inbitarray
 
-    def __and__(self, other: "Activation") -> "Activation":
-        if self.length != other.length:
-            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
+    @staticmethod
+    def logical_and(r1: "Activation", r2: "Activation", name: str = None) -> "Activation":
+        if r1.length != r2.length:
+            raise ValueError(f"Activations have different lengths. Left is {r1.length}, right is {r2.length}")
 
-        if (self.data_format == "bitarray" and other.data_format == "bitarray") or (
-            self.data_format == "integer" and other.data_format == "integer"
+        if (r1.data_format == "bitarray" and r2.data_format == "bitarray") or (
+            r1.data_format == "integer" and r2.data_format == "integer"
         ):
-            return Activation(self.data & other.data)
+            return Activation(r1.data & r2.data, name_for_file=name)
         else:
-            return Activation(self.raw * other.raw)
+            return Activation(r1.raw * r2.raw, name_for_file=name)
 
     def __or__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
@@ -354,21 +417,28 @@ class Activation(ABC):
     def __len__(self):
         return self.length
 
-    def _integer_to_raw(self, value: int = None, out: bool = True) -> np.ndarray:
+    def _integer_to_raw(self, value: Union[int, Path] = None, out: bool = True) -> np.ndarray:
         """From a value of the form 45786542 (int), which is the base 10 representation of the binary form of an
         activation vector, returns the initial vector.
         """
         t0 = time()
         if value is None:
             out = False
-            value = self.data
+            if self.data_format == "file":
+                value = self._read(out=False)
+            else:
+                value = self.data
+
         if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
             if not out:
                 self._time_integer_to_raw = time() - t0
                 self._n_integer_to_raw += 1
             return value
-        elif not isinstance(value, int):
-            raise TypeError("Can not apply _integer_to_raw on a compressed vector or bitarray")
+
+        if isinstance(value, (bitarray, np.ndarray, str, Path)):
+            raise TypeError("Can not apply _integer_to_raw on a bitarray, raw, compressed or a path")
+        if not isinstance(value, int):
+            raise TypeError(f"Invalid format {type(value)}")
         act = np.fromiter(bin(value)[2:], dtype=np.ubyte)
         if self._sizeof_integer == -1 and not out:
             self._sizeof_integer = sys.getsizeof(value) / 1e6
@@ -389,24 +459,28 @@ class Activation(ABC):
             self._n_integer_to_raw += 1
             if self._nones is None:
                 self._nones = np.count_nonzero(act_bis == 1)
-            if self._ones is None:
-                self._ones = np.where(act_bis == 1)[0].tolist()
         return act_bis
 
-    def _bitarray_to_raw(self, value: bitarray = None, out=True) -> np.ndarray:
-        """Transforms a bitarray to a nparray
-        """
+    def _bitarray_to_raw(self, value: Union[bitarray, Path] = None, out=True) -> np.ndarray:
+        """Transforms a bitarray to a nparray"""
         t0 = time()
         if value is None:
             out = False
-            value = self.data
+            if self.data_format == "file":
+                value = self._read(out=False)
+            else:
+                value = self.data
+
         if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
             if not out:
                 self._time_bitarray_to_raw = time() - t0
                 self._n_bitarray_to_raw += 1
             return value
-        elif not isinstance(value, bitarray):
-            raise TypeError("Can not apply _bitarray_to_raw on a compressed vector or integer")
+
+        if isinstance(value, (int, np.ndarray, str, Path)):
+            raise TypeError("Can not apply _bitarray_to_raw on a raw, integer, compressed or a path")
+        if not isinstance(value, bitarray):
+            raise TypeError(f"Invalid format {type(value)}")
         act = np.array(list(value), dtype=np.ubyte)
 
         if not out:
@@ -418,8 +492,10 @@ class Activation(ABC):
             self._n_bitarray_to_raw += 1
         return act
 
-    def _decompress(self, value: Union[str, np.ndarray] = None, raw=True, out=True) -> Union[np.ndarray, bitarray]:
-        """Will return the original activation vector, and set self._nones and self._ones
+    def _decompress(
+        self, value: Union[str, np.ndarray, Path] = None, raw=True, out=True
+    ) -> Union[np.ndarray, bitarray]:
+        """Will return the original activation vector, and set self._nones
 
         If raw is True (default), returns it as a np.ndarray, else as a bitarray
         """
@@ -427,10 +503,15 @@ class Activation(ABC):
 
         if value is None:
             out = False
-            value = self.data
+            if self.data_format == "file":
+                value = self._read(out=False)
+            else:
+                value = self.data
 
+        if isinstance(value, (int, bitarray, Path)):
+            raise TypeError("Can not apply _decompress on a bitarray, integer or Path")
         if not isinstance(value, (str, np.ndarray)):
-            raise TypeError("Can not apply _decompress on a bitarray or integer vector")
+            raise TypeError(f"Invalid format {type(value)}")
 
         if value[-1] == 0 or value[-1] == 1:
             if not out:
@@ -469,8 +550,7 @@ class Activation(ABC):
             if not out:
                 if self._sizeof_raw == -1:
                     self._sizeof_raw = sys.getsizeof(act) / 1e6
-                if self._ones is None:
-                    self._ones = np.where(act == 1)[0].tolist()
+                if self._nones is None:
                     self._nones = np.count_nonzero(act == 1)
                 self._time_compressed_to_raw = time() - t0
                 self._n_compressed_to_raw += 1
@@ -500,14 +580,12 @@ class Activation(ABC):
                     self._sizeof_bitarray = sys.getsizeof(act) / 1e6
                 self._time_compressed_to_bitarray = time() - t0
                 self._n_compressed_to_bitarray += 1
-        if self._ones is None:
-            self._ones = np.where(act == 1)[0].tolist()
+        if self._nones is None:
             self._nones = np.count_nonzero(act == 1)
         return act
 
     def __contains__(self, other: "Activation") -> bool:
-        # TODO : pytests (for vmargot)
-        nones_intersection = (self & other).nones
+        nones_intersection = (Activation.logical_and(self, other)).nones
         if nones_intersection < min(self.nones, other.nones):
             return False
         return True
@@ -550,8 +628,7 @@ class Activation(ABC):
 
     @staticmethod
     def _raw_to_bitarray(value: np.ndarray) -> bitarray:
-        """Casts a raw activation vector into a bitarray
-        """
+        """Casts a raw activation vector into a bitarray"""
         if isinstance(value, bitarray):
             return value
         elif not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
@@ -586,15 +663,20 @@ class Activation(ABC):
             return self._bitarray_to_raw()
         elif self.data_format == "integer":
             return self._integer_to_raw()
+        elif self.data_format == "file":
+            return self._read(out=False)
+        elif "compressed" in self.data_format:
+            return self._decompress()
         else:
-            return self._decompress()  # will also set self._ones and self._nones
+            raise ValueError(f"Unkown activation format {self.data_format}")
 
     @property
-    def ones(self) -> int:
-        """self._ones might not be set since it can only be set when decompressing a compressed vector"""
-        if self._ones is None:
-            _ = self.raw  # calling raw will compute nones and ones
-        return self._ones
+    def ones(self) -> np.ndarray:
+        """ Contrary to other @properties, do not store 'ones' in array. Since it is the list of indexes where the
+        vector is one, 'ones' can be big : several MB or more. """
+        raw = self.raw
+        ones = np.where(raw == 1)[0].tolist()
+        return ones
 
     @property
     def nones(self) -> int:
@@ -611,7 +693,11 @@ class Activation(ABC):
         if self._entropy is None:
             t0 = time()
             fmt = self.data_format
-            compressed = self._compress(self.data)
+            if self.data_format == "file":
+                data = self._read(out=False)
+            else:
+                data = self.data
+            compressed = self._compress(data)
 
             if fmt == "bitarray":
                 self._time_bitarray_to_compressed = time() - t0
@@ -657,7 +743,7 @@ class Activation(ABC):
             if self._sizeof_bitarray == -1:
                 self._sizeof_bitarray = sys.getsizeof(to_ret)
             return to_ret
-        else:
+        elif "compressed" in self.data_format:
             t0 = time()
             to_ret = self._decompress(raw=False)
             self._time_compressed_to_bitarray = time() - t0
@@ -665,6 +751,11 @@ class Activation(ABC):
             if self._sizeof_bitarray == -1:
                 self._sizeof_bitarray = sys.getsizeof(to_ret)
             return to_ret
+        elif self.data_format == "file":
+            data = self._read(out=False)
+            return self._raw_to_bitarray(data)
+        else:
+            raise ValueError(f"Unkown activation format {self.data_format}")
 
     @property
     def as_integer(self):
@@ -693,7 +784,6 @@ class Activation(ABC):
             return self.data
         elif self.data_format == "integer":
             raw = self._integer_to_raw()
-            self._ones = np.where(raw == 1)[0].tolist()
             self._nones = np.count_nonzero(raw == 1)
             t0 = time()
             to_ret = self._compress(raw)
@@ -714,6 +804,12 @@ class Activation(ABC):
             elif self.data_format == "compressed_str" and self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(self.data)
             return to_ret
+        elif self.data_format == "file":
+            data = self._read(out=False)
+            to_ret = self._compress(data)
+            return to_ret
+        else:
+            raise ValueError(f"Unkown activation format {self.data_format}")
 
     @property
     def as_compressed_array(self):
@@ -721,9 +817,13 @@ class Activation(ABC):
             if self._sizeof_compressed_array == -1:
                 self._sizeof_compressed_array = sys.getsizeof(self.data)
             return self.data
+        if self.data_format == "compressed_str":
+            to_ret = np.array(ast.literal_eval(self.data))
+            if self._sizeof_compressed_array == -1:
+                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+            return to_ret
         elif self.data_format == "integer":
             raw = self._integer_to_raw()
-            self._ones = np.where(raw == 1)[0].tolist()
             self._nones = np.count_nonzero(raw == 1)
             t0 = time()
             to_ret = self._compress(raw, dtype=np.ndarray)
@@ -732,7 +832,7 @@ class Activation(ABC):
             if self._sizeof_compressed_array == -1:
                 self._sizeof_compressed_array = sys.getsizeof(to_ret)
             return to_ret
-        else:
+        elif self.data_format == "bitarray":
             t0 = time()
             to_ret = self._compress(self.data, dtype=np.ndarray)
             self._time_bitarray_to_compressed = time() - t0
@@ -740,6 +840,12 @@ class Activation(ABC):
             if self._sizeof_compressed_array == -1:
                 self._sizeof_compressed_array = sys.getsizeof(to_ret)
             return to_ret
+        elif self.data_format == "file":
+            data = self._read(out=False)
+            to_ret = self._compress(data, dtype=np.ndarray)
+            return to_ret
+        else:
+            raise ValueError(f"Unkown activation format {self.data_format}")
 
     @property
     def as_compressed_str(self):
@@ -747,9 +853,13 @@ class Activation(ABC):
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(self.data)
             return self.data
+        if self.data_format == "compressed_array":
+            to_ret = str(self.data).replace(" ", "").replace("[", "").replace("]", "")
+            if self._sizeof_compressed_str == -1:
+                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+            return to_ret
         elif self.data_format == "integer":
             raw = self._integer_to_raw()
-            self._ones = np.where(raw == 1)[0].tolist()
             self._nones = np.count_nonzero(raw == 1)
             t0 = time()
             to_ret = self._compress(raw, dtype=str)
@@ -758,14 +868,28 @@ class Activation(ABC):
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
             return to_ret
-        else:
+        elif self.data_format == "bitarray":
             t0 = time()
             to_ret = self._compress(self.data, dtype=str)
             self._time_bitarray_to_compressed = time() - t0
             self._n_bitarray_to_compressed += 1
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
+            return
+        elif self.data_format == "file":
+            data = self._read(out=False)
+            to_ret = self._compress(data, dtype=str)
             return to_ret
+        else:
+            raise ValueError(f"Unkown activation format {self.data_format}")
+
+    @property
+    def sizeof_path(self):  # Can not force stat for file
+        return self._sizeof_path
+
+    @property
+    def sizeof_file(self):  # Can not force stat for file
+        return self._sizeof_file
 
     @property
     def sizeof_raw(self):
@@ -796,6 +920,14 @@ class Activation(ABC):
         if self._sizeof_compressed_str == -1 and Activation.FORCE_STAT:
             _ = self.as_compressed_str
         return self._sizeof_compressed_str
+
+    @property
+    def time_write(self):  # Can not force write : would need to provide a name
+        return self._time_write
+
+    @property
+    def time_read(self):  # Can not force read : file might not exist
+        return self._time_read
 
     @property
     def time_raw_to_compressed(self):
@@ -867,6 +999,14 @@ class Activation(ABC):
             self._time_integer_to_compressed = time() - t0
             self._n_integer_to_compressed += 1
         return self._time_integer_to_compressed
+
+    @property
+    def n_written(self):
+        return self._n_written
+
+    @property
+    def n_read(self):
+        return self._n_read
 
     @property
     def n_raw_to_compressed(self):

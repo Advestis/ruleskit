@@ -42,7 +42,7 @@ class Condition(ABC):
         return len(self._features_indexes)
 
     @staticmethod
-    def evaluate(xs: np.ndarray) -> Activation:
+    def evaluate(xs: np.ndarray) -> np.ndarray:
         """
         Evaluates where a condition if fullfilled
 
@@ -57,7 +57,7 @@ class Condition(ABC):
              Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
         """
         activation = np.ones(xs.shape[0])
-        return Activation(activation)
+        return activation
 
     def intersect_condition(self, other):
         """To be implemented in daughter class"""
@@ -207,7 +207,7 @@ class HyperrectangleCondition(Condition):
                     f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}"
                 )
 
-    def evaluate(self, xs: np.ndarray) -> Activation:
+    def evaluate(self, xs: np.ndarray) -> np.ndarray:
         """
         Evaluates where a condition if fullfilled
 
@@ -241,4 +241,4 @@ class HyperrectangleCondition(Condition):
             not_nan &= np.isfinite(xs[:, j])
         activation = geq_min & leq_min & not_nan
 
-        return Activation(activation.astype(int))
+        return activation
