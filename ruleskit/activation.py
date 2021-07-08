@@ -159,7 +159,7 @@ class Activation(ABC):
             self._sizeof_file = stat["st_size"] / 1e6
         else:
             self._sizeof_file = stat.st_size / 1e6
-        self._sizeof_path = sys.getsizeof(self.data)
+        self._sizeof_path = sys.getsizeof(self.data) / 1e6
         self._time_write = time() - t0
         self._n_written += 1
 
