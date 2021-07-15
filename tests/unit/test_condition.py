@@ -26,7 +26,7 @@ import pytest
 def test_evaluate(x, condition, output):
     res = condition.evaluate(x)
     # noinspection PyUnresolvedReferences
-    np.testing.assert_equal(res.raw, output)
+    np.testing.assert_equal(res, output)
 
 
 @pytest.mark.parametrize(

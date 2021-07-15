@@ -7,6 +7,7 @@ import numpy as np
 from collections import OrderedDict
 from .rule import Rule
 from .condition import HyperrectangleCondition
+from .activation import Activation
 
 
 class RuleSet(ABC):
@@ -137,7 +138,7 @@ class RuleSet(ABC):
                 # noinspection PyProtectedMember
                 rs_activation = rule._activation
             else:
-                rs_activation = rule.condition.evaluate(xs)
+                rs_activation = rule.evaluate(xs)
         else:
             if xs is not None:
                 [rule.calc_activation(xs) for rule in self.rules]

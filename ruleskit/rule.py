@@ -9,7 +9,11 @@ from .utils import rfunctions as functions
 
 
 class Rule(ABC):
-    def __init__( self, condition: Optional[Condition] = None, activation: Optional[Activation] = None):
+    LOCAL_ACTIVATION = False
+
+    def __init__(
+        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
+    ):
 
         if condition is not None and not isinstance(condition, Condition):
             raise TypeError("Argument 'condition' must derive from Condition or be None.")
@@ -26,7 +30,11 @@ class Rule(ABC):
 
     def __and__(self, other: "Rule") -> "Rule":
         condition = self._condition + other._condition
-        activation = self._activation & other._activation
+        activation = Activation.logical_and(
+            self._activation,
+            other._activation,
+            condition.__hash__() if Rule.LOCAL_ACTIVATION else None
+        )
         return self.__class__(condition, activation)
 
     def __add__(self, other: "Rule") -> "Rule":
@@ -97,8 +105,10 @@ class Rule(ABC):
         return len(self._condition)
 
     def evaluate(self, xs: np.ndarray) -> Activation:
-        return self._condition.evaluate(xs)
+        arr = self._condition.evaluate(xs)
+        return Activation(arr, name_for_file=self.__hash__() if Rule.LOCAL_ACTIVATION else None)
 
+    # noinspection PyUnusedLocal
     def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
         """Computes activation, prediction, std and criteria of the rule for a given xs and y."""
         t0 = time()
@@ -129,7 +139,9 @@ class Rule(ABC):
 
 
 class RegressionRule(Rule):
-    def __init__(self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,):
+    def __init__(
+        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
+    ):
         super().__init__(condition, activation)
 
         self._coverage = None
@@ -208,7 +220,9 @@ class RegressionRule(Rule):
 
 
 class ClassificationRule(Rule):
-    def __init__(self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,):
+    def __init__(
+        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
+    ):
         super().__init__(condition, activation)
 
         self._criterion = None

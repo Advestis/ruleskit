@@ -42,6 +42,31 @@ def test_init(vector, cs, ca, b, i, n):
     Activation.WILL_COMPARE = False
 
 
+def test_file():
+    exp = np.array([1, 0, 1])
+    Activation.USE_FILE = True
+    res = Activation(exp, name_for_file="dummy")
+    assert res.data.is_file()
+    np.testing.assert_equal(exp, res.raw)
+    np.testing.assert_equal(exp, res._read())
+    Activation.USE_FILE = False
+    assert res.ones is not None
+    assert res.nones is not None
+    assert res.sizeof_raw > 0
+    assert res.coverage > 0
+    assert res.entropy > 0
+    assert res.rel_entropy > 0
+    assert res.sizeof_file > 0
+    assert res.sizeof_path > 0
+    _ = res.as_bitarray
+    _ = res.as_integer
+    _ = res.as_compressed
+    _ = res.as_compressed_array
+    _ = res.as_compressed_str
+    Activation.clean_files()
+    assert not res.data.is_file()
+
+
 @pytest.mark.parametrize(
     "vector",
     [
@@ -101,7 +126,7 @@ def test_diff(vector1, vector2, diff):
 def test_and(vector1, vector2, and_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal((act1 & act2).raw, and_vector)
+    np.testing.assert_equal(Activation.logical_and(act1, act2).raw, and_vector)
 
 
 @pytest.mark.parametrize(
