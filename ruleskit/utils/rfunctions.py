@@ -1,11 +1,12 @@
 import numpy as np
 from collections import Counter
-from typing import Union, Tuple
+from typing import Union, Tuple, List
+from ..logger.logger import log
 
 
 def most_common_class(
     activation: Union[np.ndarray, None], y: np.ndarray
-) -> Tuple[str, float]:
+) -> List[Tuple[str, float]]:
     if activation is None:
         return np.bincount(y).argmax()
 
@@ -32,7 +33,11 @@ def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> floa
         y_conditional = np.extract(activation, y)
     else:
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
-    return float(np.nanmean(y_conditional))
+    non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
+    if len(non_nans_conditional_y) == 0:
+        log.warning("None of the activated points have a non-nan value in target y. Conditional mean is set to 0.")
+        return 0
+    return float(np.mean(non_nans_conditional_y))
 
 
 def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
