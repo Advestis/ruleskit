@@ -141,7 +141,7 @@ class Activation(ABC):
     def delete(self):
         """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data"""
         if self.data_format == "file":
-            if self.data.isfile():
+            if self.data.is_file():
                 self.data.unlink()
         else:
             del self.data
