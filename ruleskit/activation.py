@@ -138,6 +138,13 @@ class Activation(ABC):
                 f" {type(activation)}."
             )
 
+    def delete(self):
+        """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data"""
+        if self.data_format == "file":
+            self.data.unlink()
+        else:
+            del self.data
+
     def _write(self, value: np.ndarray, name: str):
 
         logger.debug(f"Activation vector is raw, store it in a file")
