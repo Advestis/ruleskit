@@ -141,9 +141,11 @@ class Activation(ABC):
     def delete(self):
         """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data"""
         if self.data_format == "file":
-            self.data.unlink()
+            if self.data.isfile():
+                self.data.unlink()
         else:
             del self.data
+            self.data = None
 
     def _write(self, value: np.ndarray, name: str):
 
