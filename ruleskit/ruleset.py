@@ -7,7 +7,6 @@ import numpy as np
 from collections import OrderedDict
 from .rule import Rule
 from .condition import HyperrectangleCondition
-from .activation import Activation
 
 
 class RuleSet(ABC):
@@ -54,6 +53,10 @@ class RuleSet(ABC):
                 + ["..."]
                 + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
             )
+
+    def del_activations(self):
+        for r in self:
+            r.del_activation()
 
     def append(self, rule: Rule):
         if not isinstance(rule, Rule):
