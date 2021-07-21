@@ -46,6 +46,15 @@ class Rule(ABC):
         self._activation.delete()
 
     @property
+    def activation_available(self):
+        if self._activation is None:
+            return False
+        if self._activation.data_format == "file":
+            return self._activation.data.is_file()
+        else:
+            return self._activation.data
+
+    @property
     def condition(self) -> Condition:
         return copy(self._condition)
 

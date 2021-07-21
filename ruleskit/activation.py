@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Union
+from typing import Union, List
 import numpy as np
 import ast
 import sys
@@ -377,26 +377,38 @@ class Activation(ABC):
             self.data = inbitarray
 
     @staticmethod
-    def logical_and(r1: "Activation", r2: "Activation", name: str = None) -> "Activation":
-        if r1.length != r2.length:
-            raise ValueError(f"Activations have different lengths. Left is {r1.length}, right is {r2.length}")
+    def logical_and(a1: "Activation", a2: "Activation", name: str = None) -> "Activation":
+        if a1.length != a2.length:
+            raise ValueError(f"Activations have different lengths. Left is {a1.length}, right is {a2.length}")
 
-        if (r1.data_format == "bitarray" and r2.data_format == "bitarray") or (
-            r1.data_format == "integer" and r2.data_format == "integer"
+        if (a1.data_format == "bitarray" and a2.data_format == "bitarray") or (
+                a1.data_format == "integer" and a2.data_format == "integer"
         ):
-            return Activation(r1.data & r2.data, name_for_file=name)
+            return Activation(a1.data & a2.data, name_for_file=name)
         else:
-            return Activation(r1.raw * r2.raw, name_for_file=name)
+            return Activation(a1.raw * a2.raw, name_for_file=name)
 
-    def __or__(self, other: "Activation") -> "Activation":
-        if self.length != other.length:
-            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
-        if (self.data_format == "bitarray" and other.data_format == "bitarray") or (
-            self.data_format == "integer" and other.data_format == "integer"
+    @staticmethod
+    def multi_logical_and(acs: List["Activation"], name: str = None):
+        """Do logical and on many activation vectors at once. Uses raw version to gain time."""
+        return Activation(np.logical_and(*[a.raw for a in acs]), name_for_file=name)
+
+    @staticmethod
+    def logical_or(a1: "Activation", a2: "Activation", name: str = None) -> "Activation":
+        if a1.length != a2.length:
+            raise ValueError(f"Activations have different lengths. Left is {a1.length}, right is {a2.length}")
+
+        if (a1.data_format == "bitarray" and a2.data_format == "bitarray") or (
+                a1.data_format == "integer" and a2.data_format == "integer"
         ):
-            return Activation(self.data or other.data)
+            return Activation(a1.data or a2.data, name_for_file=name)
         else:
-            return Activation(np.logical_or(self.raw, other.raw, length=self.length).astype("int32"))
+            return Activation(a1.raw | a2.raw, name_for_file=name)
+
+    @staticmethod
+    def multi_logical_or(acs: List["Activation"], name: str = None):
+        """Do logical or on many activation vectors at once. Uses raw version to gain time."""
+        return Activation(np.logical_or(*[a.raw for a in acs]), name_for_file=name)
 
     def __add__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
