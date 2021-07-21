@@ -15,9 +15,10 @@ class RuleSet(ABC):
 
     NLINES = 5
 
-    def __init__(self, rules_list: Union[List[Rule], None] = None):
+    def __init__(self, rules_list: Union[List[Rule], None] = None, remember_activation: bool = True):
         self._rules = []
         self._activation = None
+        self.remember_activation = remember_activation
         if rules_list is not None:
             for rule in rules_list:
                 if not isinstance(rule, Rule) and rule is not None:
@@ -31,15 +32,18 @@ class RuleSet(ABC):
             self._rules.append(other)
         else:
             self._rules += other._rules
-        self._update_activation(other)
+        if self.remember_activation:
+            self._update_activation(other)
         return self
 
     def __add__(self, other: Union["RuleSet", Rule]):
+        remember_activation = self.remember_activation
         if isinstance(other, Rule):
             rules = self.rules + [other]
         else:
+            remember_activation &= other.remember_activation
             rules = list(set(self.rules + other.rules))
-        return self.__class__(rules)
+        return self.__class__(rules, remember_activation=remember_activation)
 
     def __len__(self):
         return len(self.rules)
@@ -89,7 +93,8 @@ class RuleSet(ABC):
     def del_activation(self):
         """Deletes the activation vector's data, but not the object itself, so any computed attribute will remain
         available"""
-        self._activation.delete()
+        if self._activation is not None:
+            self._activation.delete()
 
     def append(self, rule: Rule):
         if not isinstance(rule, Rule):
