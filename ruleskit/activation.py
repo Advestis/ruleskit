@@ -72,6 +72,7 @@ class Activation(ABC):
             If True, then activation vector is stored in a file in
             Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = False)
         """
+        self.optimize = optimize
         self.length = None  # Will be set by init methods
         self._entropy = None  # Will be set if activation is not an integer or if optimize is True
         self.data_format = None  # Will be set by init methods
@@ -139,6 +140,11 @@ class Activation(ABC):
                 f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
                 f" {type(activation)}."
             )
+
+    def __copy__(self):
+        if self.data_format == "integer":
+            return Activation(self.raw, optimize=self.optimize, length=self.length)
+        return Activation(self.raw, optimize=self.optimize, to_file=self.data_format == "file")
 
     def __del__(self):
         if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":

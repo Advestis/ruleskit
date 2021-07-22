@@ -4,7 +4,6 @@ from typing import List, Union
 from functools import reduce
 from collections import Counter
 import numpy as np
-from copy import copy
 from collections import OrderedDict
 from .rule import Rule
 from .condition import HyperrectangleCondition
@@ -94,7 +93,7 @@ class RuleSet(ABC):
         if other.activation_available:
             if self._activation is None:
                 self._activation = Activation(
-                    copy(other.activation), to_file=Rule.LOCAL_ACTIVATION
+                    other.activation, to_file=Rule.LOCAL_ACTIVATION
                 )
             else:
                 self._activation = self._activation | other._activation

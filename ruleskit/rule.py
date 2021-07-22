@@ -1,7 +1,6 @@
 from abc import ABC
 import numpy as np
 from typing import Optional, Union
-from copy import copy
 from time import time
 from .condition import Condition
 from .activation import Activation
@@ -56,7 +55,7 @@ class Rule(ABC):
 
     @property
     def condition(self) -> Condition:
-        return copy(self._condition)
+        return self._condition
 
     @property
     def activation(self) -> Union[None, np.ndarray]:
@@ -125,7 +124,8 @@ class Rule(ABC):
     def evaluate(self, xs: np.ndarray) -> Activation:
         arr = self._condition.evaluate(xs)
         # noinspection PyTypeChecker
-        return Activation(arr, to_file=Rule.LOCAL_ACTIVATION)
+        a = Activation(arr, to_file=Rule.LOCAL_ACTIVATION)
+        return a
 
     # noinspection PyUnusedLocal
     def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
