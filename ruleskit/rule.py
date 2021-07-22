@@ -49,7 +49,7 @@ class Rule(ABC):
         if self._activation.data_format == "file":
             return self._activation.data.is_file()
         else:
-            return self._activation.data
+            return self._activation.data is not None
 
     @property
     def condition(self) -> Condition:
