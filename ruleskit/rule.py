@@ -43,7 +43,17 @@ class Rule(ABC):
     def del_activation(self):
         """Deletes the activation vector's data, but not the object itself, so any computed attribute will remain
         available"""
-        self._activation.delete()
+        if self._activation is not None:
+            self._activation.delete()
+
+    @property
+    def activation_available(self):
+        if self._activation is None:
+            return False
+        if self._activation.data_format == "file":
+            return self._activation.data.is_file()
+        else:
+            return self._activation.data
 
     @property
     def condition(self) -> Condition:

@@ -1,5 +1,6 @@
 import ast
 from abc import ABC
+from copy import copy
 from typing import List, Union
 import numpy as np
 from .activation import Activation
@@ -13,6 +14,7 @@ class Condition(ABC):
             if features_indexes is None:
                 raise ValueError("Must specify features_indexes")
         self._features_indexes = features_indexes
+        self.impossible = False
 
     def __and__(self, other: "Condition") -> "Condition":
         args = [i + j for i, j in zip(self.getattr, other.getattr)]
@@ -64,7 +66,7 @@ class Condition(ABC):
         pass
 
     def normalize_features_indexes(self):
-        self.features_indexes = list(range(len(self.features_indexes)))
+        self._features_indexes = list(range(len(self.features_indexes)))
 
 
 class HyperrectangleCondition(Condition):
@@ -88,7 +90,7 @@ class HyperrectangleCondition(Condition):
         else:
             super().__init__(features_indexes)
             if any([a > b for a, b in zip(bmins, bmaxs)]):
-                raise ValueError("Bmin must be smaller or equal than Bmax")
+                self.impossible = True
             self._bmins = bmins
             self._bmaxs = bmaxs
             if features_names is not None:
@@ -99,7 +101,58 @@ class HyperrectangleCondition(Condition):
                 self.sort()
 
     def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
-        args = [i + j for i, j in zip(self.getattr, other.getattr)]
+
+        self_clone = HyperrectangleCondition(
+            features_indexes=copy(self.features_indexes),
+            bmins=copy(self.bmins),
+            bmaxs=copy(self.bmaxs),
+            features_names=copy(self.features_names),
+        )
+        other_clone = HyperrectangleCondition(
+            features_indexes=copy(other.features_indexes),
+            bmins=copy(other.bmins),
+            bmaxs=copy(other.bmaxs),
+            features_names=copy(other.features_names),
+        )
+
+        common_features = [f for f in self_clone.features_names if f in other_clone.features_names]
+
+        if len(common_features) > 0:
+
+            # If the two conditions have features in common, the new conditon will have as range the intersection of
+            # each condition's range for those features. The new condition can possibly never be met.
+
+            common_features_positions_in_self = [self_clone.features_names.index(f) for f in common_features]
+            common_features_positions_in_other = [other_clone.features_names.index(f) for f in common_features]
+
+            common_features_bmins_in_self = [self_clone.bmins[i] for i in common_features_positions_in_self]
+            common_features_bmins_in_other = [other_clone.bmins[i] for i in common_features_positions_in_other]
+
+            common_features_bmaxs_in_self = [self_clone.bmaxs[i] for i in common_features_positions_in_self]
+            common_features_bmaxs_in_other = [other_clone.bmaxs[i] for i in common_features_positions_in_other]
+
+            common_features_bmins = [max(bmin0, bmin1) for bmin0, bmin1 in
+                                     zip(common_features_bmins_in_self, common_features_bmins_in_other)]
+            common_features_bmaxs = [min(bmax0, bmax1) for bmax0, bmax1 in
+                                     zip(common_features_bmaxs_in_self, common_features_bmaxs_in_other)]
+
+            other_clone.features_indexes = [other_clone.features_indexes[i] for i in range(len(other_clone.features_indexes))
+                                      if i not in common_features_positions_in_other]
+            other_clone.features_names = [f for f in other_clone.features_names if f not in common_features]
+            other_clone.bmins = [other_clone.bmins[i] for i in range(len(other_clone.bmins))
+                           if i not in common_features_positions_in_other]
+            other_clone.bmaxs = [other_clone.bmaxs[i] for i in range(len(other_clone.bmaxs))
+                           if i not in common_features_positions_in_other]
+
+            for i, index in enumerate(common_features_positions_in_self):
+                self_clone.bmins[index] = common_features_bmins[i]
+                self_clone.bmaxs[index] = common_features_bmaxs[i]
+
+        args = [i + j for i, j in zip(self_clone.getattr, other_clone.getattr)]
+
+        if len(set(args[0])) != len(args[0]):
+            args[0] = list(range(len(args[0])))
+
         # noinspection PyTypeChecker
         to_ret = HyperrectangleCondition(
             features_indexes=args[0],
@@ -108,8 +161,6 @@ class HyperrectangleCondition(Condition):
             features_names=args[3],
             empty=False,
         )
-        if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
-            to_ret.normalize_features_indexes()
         return to_ret
 
     def __add__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
@@ -184,7 +235,7 @@ class HyperrectangleCondition(Condition):
     def sort(self):
         if len(self) > 1:
             if HyperrectangleCondition.SORT_ACCORDING_TO == "index":
-                if len(set(self._features_indexes)) != len(self.features_indexes):
+                if len(set(self.features_indexes)) != len(self.features_indexes):
                     raise ValueError(
                         "Can not sort HyperrectangleCondition according to index : there are duplicated indexes"
                     )
@@ -234,7 +285,9 @@ class HyperrectangleCondition(Condition):
         >>> c3.evaluate(xs_)
         np.array([1, 0, 0])
         """
-        geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=bool)
+        if self.impossible:
+            return np.zeros(xs.shape[0], dtype=np.ubyte)
+        geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
         for i, j in enumerate(self._features_indexes):
             geq_min &= np.greater_equal(xs[:, j], self._bmins[i])
             leq_min &= np.less_equal(xs[:, j], self._bmaxs[i])
