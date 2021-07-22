@@ -121,6 +121,7 @@ class Rule(ABC):
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         arr = self._condition.evaluate(xs)
+        # noinspection PyTypeChecker
         return Activation(arr, to_file=Rule.LOCAL_ACTIVATION)
 
     # noinspection PyUnusedLocal
