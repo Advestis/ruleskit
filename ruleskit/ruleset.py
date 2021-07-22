@@ -54,7 +54,10 @@ class RuleSet(ABC):
         return set(self.rules) == set(other.rules)
 
     def __iter__(self):
-        return self.rules.__iter__()
+        if hasattr(self, "_rules"):
+            return self.rules.__iter__()
+        else:
+            return [].__iter__()
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -104,6 +107,10 @@ class RuleSet(ABC):
             # noinspection PyProtectedMember
             self._activation = Activation.multi_logical_or([r._activation for r in self])
 
+    def __del__(self):
+        self.del_activations()
+        self.del_activation()
+
     def del_activations(self):
         for r in self:
             r.del_activation()
@@ -111,7 +118,7 @@ class RuleSet(ABC):
     def del_activation(self):
         """Deletes the activation vector's data, but not the object itself, so any computed attribute will remain
         available"""
-        if self._activation is not None:
+        if hasattr(self, "_activation") and self._activation is not None:
             self._activation.delete()
 
     def append(self, rule: Rule, update_activation: bool = True):

@@ -36,10 +36,13 @@ class Rule(ABC):
     def __add__(self, other: "Rule") -> "Rule":
         return NotImplemented("Can not add rules (seen as 'logical OR'). you can use logical AND however.")
 
+    def __del__(self):
+        self.del_activation()
+
     def del_activation(self):
         """Deletes the activation vector's data, but not the object itself, so any computed attribute will remain
         available"""
-        if self._activation is not None:
+        if hasattr(self, "_activation") and self._activation is not None:
             self._activation.delete()
 
     @property

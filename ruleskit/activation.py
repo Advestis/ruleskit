@@ -140,6 +140,11 @@ class Activation(ABC):
                 f" {type(activation)}."
             )
 
+    def __del__(self):
+        if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":
+            if self.data.is_file():
+                self.data.unlink()
+
     def delete(self):
         """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data"""
         if self.data_format == "file":
