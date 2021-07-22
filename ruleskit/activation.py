@@ -402,7 +402,10 @@ class Activation(ABC):
     @staticmethod
     def multi_logical_and(acs: List["Activation"]):
         """Do logical and on many activation vectors at once. Uses raw version to gain time."""
-        return Activation(np.logical_and(*[a.raw for a in acs]), to_file=all([a.data_format == "file" for a in acs]))
+        if len(acs) == 1:
+            return Activation(acs[0].raw, to_file=acs[0].data_format == "file")
+        return Activation(np.vstack([a.raw for a in acs]).all(axis=0).astype(np.ubyte),
+                          to_file=all([a.data_format == "file" for a in acs]))
 
     def __or__(self, a2: "Activation") -> "Activation":
         if self.length != a2.length:
@@ -420,7 +423,8 @@ class Activation(ABC):
         """Do logical or on many activation vectors at once. Uses raw version to gain time."""
         if len(acs) == 1:
             return Activation(acs[0].raw, to_file=acs[0].data_format == "file")
-        return Activation(np.logical_or(*[a.raw for a in acs]), to_file=all([a.data_format == "file" for a in acs]))
+        return Activation(np.vstack([a.raw for a in acs]).any(axis=0).astype(np.ubyte),
+                          to_file=all([a.data_format == "file" for a in acs]))
 
     def __add__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
