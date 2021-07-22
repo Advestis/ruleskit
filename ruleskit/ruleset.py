@@ -24,7 +24,8 @@ class RuleSet(ABC):
                 if not isinstance(rule, Rule) and rule is not None:
                     raise TypeError(f"Some rules in given iterable were not of type 'Rule' but of type {type(rule)}")
                 if rule is not None:
-                    self.__iadd__(rule)
+                    self.append(rule, update_activation=False)
+                self.compute_self_activation()
 
     # noinspection PyProtectedMember,PyTypeChecker
     def __iadd__(self, other: Union["RuleSet", Rule]):
@@ -91,6 +92,17 @@ class RuleSet(ABC):
                     self._activation, other._activation, name=self.__hash__() if Rule.LOCAL_ACTIVATION else None
                 )
 
+    def compute_self_activation(self):
+        if len(self) == 0:
+            return
+        activation = copy(self[0].activation)
+        if activation is not None:
+            for r in self[1:]:
+                a = r.activation
+                if a is not None:
+                    activation = activation | a
+            self._activation = Activation(activation, name_for_file=self.__hash__() if Rule.LOCAL_ACTIVATION else None)
+
     def del_activations(self):
         for r in self:
             r.del_activation()
@@ -101,10 +113,14 @@ class RuleSet(ABC):
         if self._activation is not None:
             self._activation.delete()
 
-    def append(self, rule: Rule):
+    def append(self, rule: Rule, update_activation: bool = True):
         if not isinstance(rule, Rule):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
+        remember_activation = self.remember_activation
+        if not update_activation:
+            self.remember_activation = False
         self.__iadd__(rule)
+        self.remember_activation = remember_activation
 
     def sort(self) -> None:
         import ast
