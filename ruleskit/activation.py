@@ -418,6 +418,8 @@ class Activation(ABC):
     @staticmethod
     def multi_logical_or(acs: List["Activation"]):
         """Do logical or on many activation vectors at once. Uses raw version to gain time."""
+        if len(acs) == 1:
+            return Activation(acs[0].raw, to_file=acs[0].data_format == "file")
         return Activation(np.logical_or(*[a.raw for a in acs]), to_file=all([a.data_format == "file" for a in acs]))
 
     def __add__(self, other: "Activation") -> "Activation":

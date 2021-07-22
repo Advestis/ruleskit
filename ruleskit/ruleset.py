@@ -98,13 +98,10 @@ class RuleSet(ABC):
     def compute_self_activation(self):
         if len(self) == 0:
             return
-        activation = copy(self[0].activation)
-        if activation is not None:
-            for r in self[1:]:
-                a = r.activation
-                if a is not None:
-                    activation = activation | a
-            self._activation = Activation(activation, to_file=Rule.LOCAL_ACTIVATION)
+        activations_available = all([r.activation_available for r in self])
+        if activations_available:
+            # noinspection PyProtectedMember
+            self._activation = Activation.multi_logical_or([r._activation for r in self])
 
     def del_activations(self):
         for r in self:
