@@ -71,26 +71,29 @@ class RuleSet(ABC):
                 + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
             )
 
+    @property
+    def to_hash(self):
+        if len(self) == 0:
+            return "rs",
+        to_hash = ("rs",)
+        for r in self:
+            rule_hash = r.to_hash[1:]
+            to_hash += rule_hash
+        return to_hash
+
     # noinspection PyProtectedMember
     def __hash__(self) -> hash:
-        if len(self) == 0:
-            return 0
-        if len(self) == 1:
-            return hash(self[0]._condition) + hash("ruleset")
-        # noinspection PyTypeChecker
-        return hash(f"ruleset{''.join([str(r) for r in self])}")
+        return hash(frozenset(self.to_hash))
 
     # noinspection PyProtectedMember,PyTypeChecker
     def _update_activation(self, other: Union[Rule, "RuleSet"]):
         if other.activation_available:
             if self._activation is None:
                 self._activation = Activation(
-                    copy(other.activation), name_for_file=self.__hash__() if Rule.LOCAL_ACTIVATION else None
+                    copy(other.activation), to_file=Rule.LOCAL_ACTIVATION
                 )
             else:
-                self._activation = Activation.logical_or(
-                    self._activation, other._activation, name=self.__hash__() if Rule.LOCAL_ACTIVATION else None
-                )
+                self._activation = self._activation | other._activation
 
     def compute_self_activation(self):
         if len(self) == 0:
@@ -101,7 +104,7 @@ class RuleSet(ABC):
                 a = r.activation
                 if a is not None:
                     activation = activation | a
-            self._activation = Activation(activation, name_for_file=self.__hash__() if Rule.LOCAL_ACTIVATION else None)
+            self._activation = Activation(activation, to_file=Rule.LOCAL_ACTIVATION)
 
     def del_activations(self):
         for r in self:

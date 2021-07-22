@@ -45,7 +45,7 @@ def test_init(vector, cs, ca, b, i, n):
 def test_file():
     exp = np.array([1, 0, 1])
     Activation.USE_FILE = True
-    res = Activation(exp, name_for_file="dummy")
+    res = Activation(exp, to_file=True)
     assert res.data.is_file()
     np.testing.assert_equal(exp, res.raw)
     np.testing.assert_equal(exp, res._read())
@@ -126,7 +126,7 @@ def test_diff(vector1, vector2, diff):
 def test_and(vector1, vector2, and_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
-    np.testing.assert_equal(Activation.logical_and(act1, act2).raw, and_vector)
+    np.testing.assert_equal((act1 & act2).raw, and_vector)
 
 
 @pytest.mark.parametrize(

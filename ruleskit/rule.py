@@ -30,11 +30,7 @@ class Rule(ABC):
 
     def __and__(self, other: "Rule") -> "Rule":
         condition = self._condition + other._condition
-        activation = Activation.logical_and(
-            self._activation,
-            other._activation,
-            condition.__hash__() if Rule.LOCAL_ACTIVATION else None
-        )
+        activation = self._activation & other._activation
         return self.__class__(condition, activation)
 
     def __add__(self, other: "Rule") -> "Rule":
@@ -113,15 +109,19 @@ class Rule(ABC):
             return "empty rule"
         return f"If {self._condition.__str__()} Then {prediction}."
 
+    @property
+    def to_hash(self):
+        return ("r",) + self._condition.to_hash[1:]
+
     def __hash__(self) -> hash:
-        return hash(self._condition)
+        return hash(frozenset(self.to_hash))
 
     def __len__(self):
         return len(self._condition)
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         arr = self._condition.evaluate(xs)
-        return Activation(arr, name_for_file=self.__hash__() if Rule.LOCAL_ACTIVATION else None)
+        return Activation(arr, to_file=Rule.LOCAL_ACTIVATION)
 
     # noinspection PyUnusedLocal
     def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):

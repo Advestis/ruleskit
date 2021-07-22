@@ -27,6 +27,13 @@ class Condition(ABC):
         return self & other
 
     @property
+    def to_hash(self):
+        return ("c",) + tuple(self._features_indexes)
+
+    def __hash__(self):
+        return hash(frozenset(self.to_hash))
+
+    @property
     def getattr(self):
         return [self.features_indexes]
 
@@ -216,10 +223,14 @@ class HyperrectangleCondition(Condition):
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
 
+    @property
+    def to_hash(self):
+        return ("c",) + tuple(
+            (self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))
+        )
+
     def __hash__(self):
-        to_hash = [(self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))]
-        to_hash = frozenset(to_hash)
-        return hash(to_hash)
+        return hash(frozenset(self.to_hash))
 
     def __getitem__(self, item):
         return (
