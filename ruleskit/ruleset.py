@@ -25,7 +25,8 @@ class RuleSet(ABC):
                     raise TypeError(f"Some rules in given iterable were not of type 'Rule' but of type {type(rule)}")
                 if rule is not None:
                     self.append(rule, update_activation=False)
-                self.compute_self_activation()
+                if self.remember_activation:
+                    self.compute_self_activation()
 
     # noinspection PyProtectedMember,PyTypeChecker
     def __iadd__(self, other: Union["RuleSet", Rule]):
