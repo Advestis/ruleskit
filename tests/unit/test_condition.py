@@ -33,9 +33,19 @@ def test_evaluate(x, condition, output):
     "condition1, condition2, output",
     [
         (
-            HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
-            HyperrectangleCondition([1], bmins=[1], bmaxs=[2]),
-            HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 2]),
+            HyperrectangleCondition([0], bmins=[1], bmaxs=[3], features_names=["b"]),
+            HyperrectangleCondition([1], bmins=[1], bmaxs=[2], features_names=["a"]),
+            HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3], features_names=["a", "b"]),
+        ),
+        (
+            HyperrectangleCondition([0, 1], bmins=[0, 0], bmaxs=[10, 2], features_names=["a", "b"]),
+            HyperrectangleCondition([0, 1], bmins=[10, 1], bmaxs=[20, 1], features_names=["a", "c"]),
+            HyperrectangleCondition([0, 1, 2], bmins=[10, 0, 1], bmaxs=[10, 2, 1], features_names=["a", "b", "c"]),
+        ),
+        (
+            HyperrectangleCondition([0, 1], bmins=[0, 0], bmaxs=[10, 2], features_names=["a", "b"]),
+            HyperrectangleCondition([0, 1], bmins=[20, 1], bmaxs=[30, 1], features_names=["a", "c"]),
+            HyperrectangleCondition([0, 1, 2], bmins=[20, 0, 1], bmaxs=[10, 2, 1], features_names=["a", "b", "c"]),
         ),
     ],
 )

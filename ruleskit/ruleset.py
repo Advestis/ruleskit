@@ -70,9 +70,14 @@ class RuleSet(ABC):
                 + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
             )
 
+    # noinspection PyProtectedMember
     def __hash__(self) -> hash:
-        # noinspection PyProtectedMember
-        return sum([hash(r._condition) for r in self])
+        if len(self) == 0:
+            return 0
+        if len(self) == 1:
+            return hash(self[0]._condition) + hash("ruleset")
+        # noinspection PyTypeChecker
+        return hash(f"ruleset{''.join([str(r) for r in self])}")
 
     # noinspection PyProtectedMember,PyTypeChecker
     def _update_activation(self, other: Union[Rule, "RuleSet"]):
@@ -107,9 +112,9 @@ class RuleSet(ABC):
         if len(self) == 0:
             return
         if not (
-            hasattr(self[0].condition, "features_names")
-            and hasattr(self[0].condition, "bmins")
-            and hasattr(self[0].condition, "bmaxs")
+                hasattr(self[0].condition, "features_names")
+                and hasattr(self[0].condition, "bmins")
+                and hasattr(self[0].condition, "bmaxs")
         ):
             return
         # noinspection PyUnresolvedReferences
