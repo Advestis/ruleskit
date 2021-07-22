@@ -106,9 +106,9 @@ class RuleSet(ABC):
             # noinspection PyProtectedMember
             self._activation = Activation.multi_logical_or([r._activation for r in self])
 
-    def __del__(self):
-        self.del_activations()
-        self.del_activation()
+    # def __del__(self):
+    #     self.del_activations()
+    #     self.del_activation()
 
     def del_activations(self):
         for r in self:

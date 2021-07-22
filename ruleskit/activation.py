@@ -146,10 +146,10 @@ class Activation(ABC):
             return Activation(self.raw, optimize=self.optimize, length=self.length)
         return Activation(self.raw, optimize=self.optimize, to_file=self.data_format == "file")
 
-    def __del__(self):
-        if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":
-            if self.data.is_file():
-                self.data.unlink()
+    # def __del__(self):
+    #     if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":
+    #         if self.data.is_file():
+    #             self.data.unlink()
 
     def delete(self):
         """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data"""
