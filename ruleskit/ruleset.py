@@ -1,5 +1,6 @@
 from abc import ABC
 import operator
+import pandas as pd
 from typing import List, Union
 from functools import reduce
 from collections import Counter
@@ -14,10 +15,17 @@ class RuleSet(ABC):
 
     NLINES = 5
 
-    def __init__(self, rules_list: Union[List[Rule], None] = None, remember_activation: bool = True):
+    def __init__(
+        self,
+        rules_list: Union[List[Rule], None] = None,
+        remember_activation: bool = True,
+        stack_activation: bool = False,
+    ):
         self._rules = []
         self._activation = None
+        self.stacked_activations = None
         self.remember_activation = remember_activation
+        self.stack_activation = stack_activation
         if rules_list is not None:
             for rule in rules_list:
                 if not isinstance(rule, Rule) and rule is not None:
@@ -26,6 +34,8 @@ class RuleSet(ABC):
                     self.append(rule, update_activation=False)
                 if self.remember_activation:
                     self.compute_self_activation()
+                if self.stack_activation:
+                    self.compute_stacked_activation()
 
     # noinspection PyProtectedMember,PyTypeChecker
     def __iadd__(self, other: Union["RuleSet", Rule]):
@@ -35,16 +45,20 @@ class RuleSet(ABC):
             self._rules += other._rules
         if self.remember_activation:
             self._update_activation(other)
+        if self.stack_activation:
+            self._update_stacked_activation(other)
         return self
 
     def __add__(self, other: Union["RuleSet", Rule]):
         remember_activation = self.remember_activation
+        stack_activation = self.stack_activation
         if isinstance(other, Rule):
             rules = self.rules + [other]
         else:
             remember_activation &= other.remember_activation
+            stack_activation &= other.stack_activation
             rules = list(set(self.rules + other.rules))
-        return self.__class__(rules, remember_activation=remember_activation)
+        return self.__class__(rules, remember_activation=remember_activation, stack_activation=stack_activation)
 
     def __len__(self):
         return len(self.rules)
@@ -77,7 +91,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self):
         if len(self) == 0:
-            return ("rs",)
+            return "rs",
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -96,6 +110,20 @@ class RuleSet(ABC):
             else:
                 self._activation = self._activation | other._activation
 
+    # noinspection PyProtectedMember,PyTypeChecker
+    def _update_stacked_activation(self, other: Union[Rule, "RuleSet"]):
+        if other.activation_available:
+            if self._activation is None:
+                if isinstance(other, Rule):
+                    self.stacked_activations = pd.DataFrame(data=np.array(other.activation).T, columns=[str(other)])
+                else:
+                    self.stacked_activations = other.stacked_activations
+            else:
+                if isinstance(other, Rule):
+                    self.stacked_activations[str(other)] = other.activation
+                else:
+                    self.stacked_activations = pd.concat([self.stacked_activations, other.stacked_activations], axis=1)
+
     def compute_self_activation(self):
         if len(self) == 0:
             return
@@ -103,6 +131,16 @@ class RuleSet(ABC):
         if activations_available:
             # noinspection PyProtectedMember
             self._activation = Activation.multi_logical_or([r._activation for r in self])
+
+    def compute_stacked_activation(self):
+        if len(self) == 0:
+            return
+        activations_available = all([r.activation_available for r in self])
+        if activations_available:
+            # noinspection PyProtectedMember
+            self.stacked_activations = pd.DataFrame(
+                data=np.array([r.activation for r in self]).T, columns=[str(r.condition) for r in self]
+            )
 
     # def __del__(self):
     #     self.del_activations()
@@ -118,14 +156,22 @@ class RuleSet(ABC):
         if hasattr(self, "_activation") and self._activation is not None:
             self._activation.delete()
 
+    def del_stacked_activations(self):
+        if hasattr(self, "stacked_activations") and self.stacked_activations is not None:
+            del self.stacked_activations
+            self.stacked_activations = None
+
     def append(self, rule: Rule, update_activation: bool = True):
         if not isinstance(rule, Rule):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
         remember_activation = self.remember_activation
+        stack_activation = self.stack_activation
         if not update_activation:
             self.remember_activation = False
+            self.stack_activation = False
         self.__iadd__(rule)
         self.remember_activation = remember_activation
+        self.stack_activation = stack_activation
 
     def sort(self, criterion: str = None, reverse: bool = False) -> None:
         if len(self) == 0:
@@ -173,6 +219,8 @@ class RuleSet(ABC):
             self._rules = sorted(self, key=lambda x: getattr(x, criterion), reverse=reverse)
         else:
             raise ValueError(f"Can not sort RuleSet according to criterion {criterion}")
+        if self.stack_activation:
+            self.stacked_activations = self.stacked_activations[[str(r.condition) for r in self]]
 
     @property
     def activation_available(self):
@@ -181,7 +229,13 @@ class RuleSet(ABC):
         if self._activation.data_format == "file":
             return self._activation.data.is_file()
         else:
-            return self._activation.data
+            return self._activation.data is not None
+
+    @property
+    def stacked_activations_available(self):
+        if self.stack_activation is None:
+            return False
+        return True
 
     @property
     def activation(self) -> Union[None, np.ndarray]:
@@ -202,10 +256,17 @@ class RuleSet(ABC):
 
     def calc_activation(self, xs: np.ndarray):
         if len(self) == 0:
-            raise ValueError("The rule set is empty!")
+            raise ValueError("Can not use calc_activation : The ruleset is empty!")
         [rule.calc_activation(xs) for rule in self.rules]
         self._activation = None
-        [self._update_activation(r) for r in self]
+        self.compute_self_activation()
+
+    def calc_stacked_activations(self, xs: np.ndarray):
+        if len(self) == 0:
+            raise ValueError("Can not use calc_stacked_activations : The ruleset is empty!")
+        [rule.calc_activation(xs) for rule in self.rules]
+        self._activation = None
+        self.compute_stacked_activation()
 
     @property
     def coverage(self) -> float:
