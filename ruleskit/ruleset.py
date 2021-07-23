@@ -77,7 +77,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self):
         if len(self) == 0:
-            return "rs",
+            return ("rs",)
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -92,9 +92,7 @@ class RuleSet(ABC):
     def _update_activation(self, other: Union[Rule, "RuleSet"]):
         if other.activation_available:
             if self._activation is None:
-                self._activation = Activation(
-                    other.activation, to_file=Rule.LOCAL_ACTIVATION
-                )
+                self._activation = Activation(other.activation, to_file=Rule.LOCAL_ACTIVATION)
             else:
                 self._activation = self._activation | other._activation
 
@@ -136,9 +134,9 @@ class RuleSet(ABC):
 
         if criterion is None or criterion == "":
             if not (
-                    hasattr(self[0].condition, "features_names")
-                    and hasattr(self[0].condition, "bmins")
-                    and hasattr(self[0].condition, "bmaxs")
+                hasattr(self[0].condition, "features_names")
+                and hasattr(self[0].condition, "bmins")
+                and hasattr(self[0].condition, "bmaxs")
             ):
                 return
             # noinspection PyUnresolvedReferences
@@ -165,7 +163,8 @@ class RuleSet(ABC):
                 v = str(rule.features_names)
                 rules_by_fnames[v].append(rule)
             rules_by_fnames = {
-                n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
+                n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs)
+                for n in rules_by_fnames
             }
             self._rules = []
             for n in rules_by_fnames:
