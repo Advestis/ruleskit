@@ -129,46 +129,51 @@ class RuleSet(ABC):
         self.__iadd__(rule)
         self.remember_activation = remember_activation
 
-    def sort(self) -> None:
-        import ast
-
+    def sort(self, criterion: str = None, reverse: bool = False) -> None:
         if len(self) == 0:
             return
-        if not (
-                hasattr(self[0].condition, "features_names")
-                and hasattr(self[0].condition, "bmins")
-                and hasattr(self[0].condition, "bmaxs")
-        ):
-            return
-        # noinspection PyUnresolvedReferences
-        fnames = list(set([str(r.features_names) for r in self]))
-        dict_names = {}
-        lmax = 1
-        for f in fnames:
-            l_ = len(ast.literal_eval(f))
-            if l_ > lmax:
-                lmax = l_
-            if l_ not in dict_names:
-                dict_names[l_] = []
-            dict_names[l_].append(f)
-        for l_ in dict_names:
-            dict_names[l_].sort()
-        fnames = []
-        for l_ in range(1, lmax + 1):
-            if l_ in dict_names:
-                fnames += dict_names[l_]
+        import ast
 
-        rules_by_fnames = OrderedDict({f: [] for f in fnames})
-        for rule in self:
+        if criterion is None or criterion == "":
+            if not (
+                    hasattr(self[0].condition, "features_names")
+                    and hasattr(self[0].condition, "bmins")
+                    and hasattr(self[0].condition, "bmaxs")
+            ):
+                return
             # noinspection PyUnresolvedReferences
-            v = str(rule.features_names)
-            rules_by_fnames[v].append(rule)
-        rules_by_fnames = {
-            n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
-        }
-        self._rules = []
-        for n in rules_by_fnames:
-            self._rules += rules_by_fnames[n]
+            fnames = list(set([str(r.features_names) for r in self]))
+            dict_names = {}
+            lmax = 1
+            for f in fnames:
+                l_ = len(ast.literal_eval(f))
+                if l_ > lmax:
+                    lmax = l_
+                if l_ not in dict_names:
+                    dict_names[l_] = []
+                dict_names[l_].append(f)
+            for l_ in dict_names:
+                dict_names[l_].sort(reverse=reverse)
+            fnames = []
+            for l_ in range(1, lmax + 1):
+                if l_ in dict_names:
+                    fnames += dict_names[l_]
+
+            rules_by_fnames = OrderedDict({f: [] for f in fnames})
+            for rule in self:
+                # noinspection PyUnresolvedReferences
+                v = str(rule.features_names)
+                rules_by_fnames[v].append(rule)
+            rules_by_fnames = {
+                n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs) for n in rules_by_fnames
+            }
+            self._rules = []
+            for n in rules_by_fnames:
+                self._rules += rules_by_fnames[n]
+        elif hasattr(self[0], criterion):
+            self._rules = sorted(self, key=lambda x: getattr(x, criterion), reverse=reverse)
+        else:
+            raise ValueError(f"Can not sort RuleSet according to criterion {criterion}")
 
     @property
     def activation_available(self):
