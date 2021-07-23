@@ -27,6 +27,13 @@ class Condition(ABC):
         return self & other
 
     @property
+    def to_hash(self):
+        return ("c",) + tuple(self._features_indexes)
+
+    def __hash__(self):
+        return hash(frozenset(self.to_hash))
+
+    @property
     def getattr(self):
         return [self.features_indexes]
 
@@ -131,18 +138,29 @@ class HyperrectangleCondition(Condition):
             common_features_bmaxs_in_self = [self_clone.bmaxs[i] for i in common_features_positions_in_self]
             common_features_bmaxs_in_other = [other_clone.bmaxs[i] for i in common_features_positions_in_other]
 
-            common_features_bmins = [max(bmin0, bmin1) for bmin0, bmin1 in
-                                     zip(common_features_bmins_in_self, common_features_bmins_in_other)]
-            common_features_bmaxs = [min(bmax0, bmax1) for bmax0, bmax1 in
-                                     zip(common_features_bmaxs_in_self, common_features_bmaxs_in_other)]
+            common_features_bmins = [
+                max(bmin0, bmin1) for bmin0, bmin1 in zip(common_features_bmins_in_self, common_features_bmins_in_other)
+            ]
+            common_features_bmaxs = [
+                min(bmax0, bmax1) for bmax0, bmax1 in zip(common_features_bmaxs_in_self, common_features_bmaxs_in_other)
+            ]
 
-            other_clone.features_indexes = [other_clone.features_indexes[i] for i in range(len(other_clone.features_indexes))
-                                      if i not in common_features_positions_in_other]
+            other_clone.features_indexes = [
+                other_clone.features_indexes[i]
+                for i in range(len(other_clone.features_indexes))
+                if i not in common_features_positions_in_other
+            ]
             other_clone.features_names = [f for f in other_clone.features_names if f not in common_features]
-            other_clone.bmins = [other_clone.bmins[i] for i in range(len(other_clone.bmins))
-                           if i not in common_features_positions_in_other]
-            other_clone.bmaxs = [other_clone.bmaxs[i] for i in range(len(other_clone.bmaxs))
-                           if i not in common_features_positions_in_other]
+            other_clone.bmins = [
+                other_clone.bmins[i]
+                for i in range(len(other_clone.bmins))
+                if i not in common_features_positions_in_other
+            ]
+            other_clone.bmaxs = [
+                other_clone.bmaxs[i]
+                for i in range(len(other_clone.bmaxs))
+                if i not in common_features_positions_in_other
+            ]
 
             for i, index in enumerate(common_features_positions_in_self):
                 self_clone.bmins[index] = common_features_bmins[i]
@@ -216,10 +234,14 @@ class HyperrectangleCondition(Condition):
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
 
+    @property
+    def to_hash(self):
+        return ("c",) + tuple(
+            (self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))
+        )
+
     def __hash__(self):
-        to_hash = [(self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))]
-        to_hash = frozenset(to_hash)
-        return hash(to_hash)
+        return hash(frozenset(self.to_hash))
 
     def __getitem__(self, item):
         return (
