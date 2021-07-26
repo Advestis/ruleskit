@@ -128,6 +128,21 @@ class Rule(ABC):
         else:
             raise AttributeError(f"'AdvRule' object has no attribute '{item}'.")
 
+    def __setattr__(self, item, value):
+        """If item is private (starts with _), then default behavior. Else, if the item is not yet known by the rule
+        but is known by its condition or activation, will set it to the condition or the activation. Else,
+        raises AttributeError."""
+        if item.startswith("_"):
+            super(Rule, self).__setattr__(item, value)
+            return
+        if not hasattr(self, item):
+            if hasattr(self._activation, item):
+                setattr(self._activation, item, value)
+            elif hasattr(self._condition, item):
+                setattr(self._condition, item, value)
+            return
+        raise AttributeError(f"Can not set attribute '{item}' in object Rule.")
+
     def __eq__(self, other) -> bool:
         """Two rules are equal if their conditions are equal."""
         if not isinstance(other, Rule):
