@@ -27,11 +27,8 @@ class Condition(ABC):
         self.impossible = False
 
     def __and__(self, other: "Condition") -> "Condition":
-        args = [i + j for i, j in zip(self.getattr, other.getattr)]
-        to_ret = Condition(features_indexes=args[0], empty=False)
-        if len(set(to_ret.features_indexes)) < len(to_ret.features_indexes):
-            to_ret.normalize_features_indexes()
-        return to_ret
+        """To be implemented in daughter classes"""
+        pass
 
     def __add__(self, other: "Condition") -> "Condition":
         return self & other
@@ -79,11 +76,9 @@ class Condition(ABC):
         activation = np.ones(xs.shape[0], dtype=np.ubyte)
         return activation
 
-    def intersect_condition(self, other):
-        """To be implemented in daughter class"""
-        pass
-
     def normalize_features_indexes(self):
+        """In some daughter classes, features indexes are optional. however since the attribute 'features_indexes'
+        must be specified, a default value is set automatically"""
         self._features_indexes = list(range(len(self.features_indexes)))
 
 
@@ -227,10 +222,6 @@ class HyperrectangleCondition(Condition):
             empty=False,
         )
         return to_ret
-
-    def __add__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
-        """Synonym of __and__"""
-        return self & other
 
     @property
     def getattr(self) -> List[list]:
