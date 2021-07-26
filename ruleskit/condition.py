@@ -1,7 +1,7 @@
 import ast
 from abc import ABC
 from copy import copy
-from typing import List, Union
+from typing import List, Union, Tuple
 import numpy as np
 from .activation import Activation
 
@@ -277,7 +277,7 @@ class HyperrectangleCondition(Condition):
         return self.__hash__() == other.__hash__()
 
     @property
-    def to_hash(self):
+    def to_hash(self) -> Tuple[str]:
         return ("c",) + tuple(
             (self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))
         )

@@ -1,6 +1,6 @@
 from abc import ABC
 import numpy as np
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 from time import time
 from .condition import Condition
 from .activation import Activation
@@ -166,7 +166,7 @@ class Rule(ABC):
         return f"If {self._condition.__str__()} Then {prediction}."
 
     @property
-    def to_hash(self):
+    def to_hash(self) -> Tuple[str]:
         return ("r",) + self._condition.to_hash[1:]
 
     def __hash__(self) -> hash:
