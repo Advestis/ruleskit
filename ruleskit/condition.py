@@ -7,6 +7,16 @@ from .activation import Activation
 
 
 class Condition(ABC):
+
+    """Abstract class for Condition object. Used by Rule objets.
+    A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
+    variables.
+    A condition can be "imossible" to meet, in that case self.impossible is True. This is set automatically.
+
+    One can add conditions and use logical AND (&) operations on two conditions (same thing as add). In that case, the
+    two conditions are combined into a new one.
+    """
+
     def __init__(self, features_indexes: Union[List[int], None] = None, empty: bool = False):
         if empty:
             self._features_indexes = None
@@ -44,7 +54,7 @@ class Condition(ABC):
     @features_indexes.setter
     def features_indexes(self, value: Union[List[int], str]):
         if isinstance(value, str):
-            value = [int(v) for v in value.replace("[", "").replace("]", "").replace(" ", "").split(",")]
+            value = ast.literal_eval(value)
         self._features_indexes = value
 
     def __len__(self):
@@ -53,7 +63,8 @@ class Condition(ABC):
     @staticmethod
     def evaluate(xs: np.ndarray) -> np.ndarray:
         """
-        Evaluates where a condition if fullfilled
+        Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
+        it is always fullfilled.
 
         Parameters
         ----------
@@ -63,7 +74,7 @@ class Condition(ABC):
         Returns
         -------
         activation: Activation
-             Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
+             Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
         """
         activation = np.ones(xs.shape[0])
         return activation
@@ -77,6 +88,25 @@ class Condition(ABC):
 
 
 class HyperrectangleCondition(Condition):
+
+    """Condition class for Hyper Rectangle conditions.
+
+    An Hyper Rectangle condition is a condition where each feature is associated to a min and a max (self.bmins and
+    self.bmaxs). The condition is met when all features are within their respective bmin and bmax.
+
+    For example, if the condition has :
+
+    features_indexes = [0, 1]
+    bminx = [0, 1]
+    mnaxs = [0, 2]
+
+    Then the condition is met when feature 0 is equal to 0 and feature 2 is between 1 and 2.
+
+    In this condition, features indexes are optional if features names are given.
+
+    Such a condition can be sorted either according to features indexes (smaller features first) or by features names in
+    alphabetical order. This is set through the class attribute SORT_ACCORDING_TO that can be either "index" or "name".
+    """
 
     SORT_ACCORDING_TO = "index"
 
@@ -95,8 +125,13 @@ class HyperrectangleCondition(Condition):
             self._bmaxs = None
             self._features_names = None
         else:
+            if features_indexes is None:
+                if features_names is None:
+                    raise ValueError("Must specify at least one of features_indexes and features_names")
+                features_indexes = list(range(len(features_names)))
             super().__init__(features_indexes)
             if any([a > b for a, b in zip(bmins, bmaxs)]):
+                # If a bmin is above its associated bmax, then the rule is impossible.
                 self.impossible = True
             self._bmins = bmins
             self._bmaxs = bmaxs
@@ -108,6 +143,18 @@ class HyperrectangleCondition(Condition):
                 self.sort()
 
     def __and__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
+
+        """Logical and (&) or two HyperrectangleCondition objects
+
+        If the two conditions do not talk about the same features, then the AND is obvious. For common features,
+        the bmin of the feature in the new condition is set to be the greatest of bmins in parent conditions, and the
+        bmax the smallest of bmaxs.
+        This can give impossible conditions : if in condition 1 feature A must be between 0 and 10 and in condition 2 it
+        must be between 20 and 30, then in the new condition it must be between 20 and 10, assumin 20 being the minimum.
+        In that case, the new condition, upon creation, will have self.impossible = True. This does not corrupt the
+        object nor the code : the condition's method "evaluate", which returns the activation vector, will return a
+        vector with only zeros since the condition will never be met.
+        """
 
         self_clone = HyperrectangleCondition(
             features_indexes=copy(self.features_indexes),
@@ -126,7 +173,7 @@ class HyperrectangleCondition(Condition):
 
         if len(common_features) > 0:
 
-            # If the two conditions have features in common, the new conditon will have as range the intersection of
+            # If the two conditions have features in common, the new conditons will have as range the intersection of
             # each condition's range for those features. The new condition can possibly never be met.
 
             common_features_positions_in_self = [self_clone.features_names.index(f) for f in common_features]
@@ -182,6 +229,7 @@ class HyperrectangleCondition(Condition):
         return to_ret
 
     def __add__(self, other: "HyperrectangleCondition") -> "HyperrectangleCondition":
+        """Synonym of __and__"""
         return self & other
 
     @property
@@ -292,7 +340,7 @@ class HyperrectangleCondition(Condition):
         Returns
         -------
         activation: np.ndarray
-            Shape  (n, 1). The activation vector, filled with 0 where the condition is met and 1 where it is not.
+            Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
 
         Examples
         --------
