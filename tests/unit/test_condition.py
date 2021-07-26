@@ -53,5 +53,5 @@ def test_add(condition1, condition2, output):
     res = condition1 & condition2
     np.testing.assert_equal(res, output)
 
-    res = condition1 + condition2
+    res = condition1 & condition2
     np.testing.assert_equal(res, output)

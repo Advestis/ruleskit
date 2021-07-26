@@ -31,7 +31,7 @@ class Condition(ABC):
         pass
 
     def __add__(self, other: "Condition") -> "Condition":
-        return self & other
+        return NotImplemented("Can not add conditions (seen as 'logical OR'). You can use logical AND however.")
 
     @property
     def to_hash(self):

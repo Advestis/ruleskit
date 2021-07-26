@@ -106,7 +106,7 @@ def extract_rules_from_tree(
                 if decision_tree.feature[node] not in condition.features_indexes:
                     # Will concatenate current condition list and new conditions by their
                     # attributes (which are lists)
-                    new_condition = condition + new_condition
+                    new_condition = condition & new_condition
                 else:
                     new_bmaxs = decision_tree.threshold[node]
                     new_condition = copy.deepcopy(condition)
@@ -149,7 +149,7 @@ def extract_rules_from_tree(
             # it was added at the very beginning of the function.
             if condition is not None:
                 if decision_tree.feature[node] not in condition.features_indexes:
-                    new_condition = condition + new_condition
+                    new_condition = condition & new_condition
                 else:
                     new_bmins = decision_tree.threshold[node]
                     new_bmaxs = xmaxs[decision_tree.feature[node]]

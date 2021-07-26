@@ -8,6 +8,30 @@ from .utils import rfunctions as functions
 
 
 class Rule(ABC):
+
+    """An abstract Rule object.
+
+    A Rule is a condition (represented by any daughter class of ruleskit.Condition), applied on real features and target
+    data.
+    The Rule contains, in addition to the Condition object, many attributes dependent on the features data, such as
+    the activation vector (a 1-D np.ndarray with 0 when the rule is activated - condition is met - and 0 when it is not)
+    but also the rule's prediction (a float, the mean value of targets when the rule is activated).
+
+    Daughter classes can remember more attributes.
+
+    Rule also include metrics that can be used for profiling the code : it will remember the time taken to fit the rule
+    (fitting is the computation of the rule's attribute from the condition and the features data), the time taken
+    to compute the activation vector and the time taken to make a prediction.
+
+    To compute those metrics, one must use the rule's "fit" methods.
+
+    The Rule object can access any attribute of its condition as if it was its own : rule.features_indexes will return
+    the features_indexes attribute's value of the condition in the Rule object. See Condition class for more details.
+
+    The Rule object can also access any attribute of its activation vector as if it was its own. See Activation class
+    for more details.
+    """
+
     LOCAL_ACTIVATION = False
 
     def __init__(
@@ -28,18 +52,18 @@ class Rule(ABC):
         self._time_predict = -1
 
     def __and__(self, other: "Rule") -> "Rule":
-        condition = self._condition + other._condition
+        condition = self._condition & other._condition
         activation = self._activation & other._activation
         return self.__class__(condition, activation)
 
     def __add__(self, other: "Rule") -> "Rule":
-        return NotImplemented("Can not add rules (seen as 'logical OR'). you can use logical AND however.")
+        return NotImplemented("Can not add rules (seen as 'logical OR'). You can use logical AND however.")
 
     # def __del__(self):
     #     self.del_activation()
 
     def del_activation(self):
-        """Deletes the activation vector's data, but not the object itself, so any computed attribute will remain
+        """Deletes the activation vector's data, but not the object itself, so any computed attributes will remain
         available"""
         if hasattr(self, "_activation") and self._activation is not None:
             self._activation.delete()
