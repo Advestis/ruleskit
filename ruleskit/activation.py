@@ -21,6 +21,15 @@ MAX_INT_32 = 2 ** 32
 
 class Activation(ABC):
 
+    """An activation vector is a 1-D list of 0 and 1 reprenseting the activation of a rule. Each element corresponds to
+    a line in the features and targets data (typically, a date, or a pair date-object if the data is multi-indexed),
+    and the vector contains 0 if the condition of the rule is not met at this index in the data and 1 if it is.
+
+    When working with lots of data and lots of rules, activation vectors can be hard to keep in memory and can represent
+    bottlenecks in computation time. This class is designed to reduce the size in memory of the vector and to minimize
+    the computation time.
+    """
+
     # dtype for the compressed format. Can be str or np.ndarray
     DTYPE = str
     # When calling a profiling attribute that is None, will force the call of the method to compute them if FORCE_STAT
