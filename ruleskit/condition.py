@@ -76,7 +76,7 @@ class Condition(ABC):
         activation: Activation
              Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
         """
-        activation = np.ones(xs.shape[0])
+        activation = np.ones(xs.shape[0], dtype=np.ubyte)
         return activation
 
     def intersect_condition(self, other):
