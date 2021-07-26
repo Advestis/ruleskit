@@ -222,6 +222,14 @@ class RuleSet(ABC):
         if self.stack_activation:
             self.stacked_activations = self.stacked_activations[[str(r.condition) for r in self]]
 
+    # noinspection PyProtectedMember
+    def __contains__(self, other: Union["RuleSet", Rule]) -> bool:
+        """A RuleSet contains another Rule or RuleSet if the second Rule or RuleSet activated points are also all
+         activated by the first RuleSet."""
+        if not self._activation or not other._activation:
+            return False
+        return other._activation in self._activation
+
     @property
     def activation_available(self):
         if self._activation is None:

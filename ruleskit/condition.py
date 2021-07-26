@@ -55,6 +55,7 @@ class Condition(ABC):
         self._features_indexes = value
 
     def __len__(self):
+        """A Condition's length is the number of features it talks about"""
         return len(self._features_indexes)
 
     @staticmethod
@@ -271,6 +272,8 @@ class HyperrectangleCondition(Condition):
         return str_output
 
     def __eq__(self, other):
+        """Two HyperrectangleConditions are equal if they talk about the same features, and if the bmins and bmaxs
+        are the same from one rule to another. Features indexes can be different."""
         return self.__hash__() == other.__hash__()
 
     @property
@@ -291,6 +294,7 @@ class HyperrectangleCondition(Condition):
         )
 
     def __len__(self):
+        """A HyperrectangleCondition's length is the number of features it talks about"""
         return len(self._features_names)
 
     def sort(self):
