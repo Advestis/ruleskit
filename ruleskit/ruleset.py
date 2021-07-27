@@ -1,13 +1,12 @@
 from abc import ABC
-import operator
+import ast
 import pandas as pd
-from typing import List, Union, Tuple
-from functools import reduce
+from typing import List, Union, Tuple, Any
 from collections import Counter
 import numpy as np
+import itertools
 from collections import OrderedDict
 from .rule import Rule
-from .condition import HyperrectangleCondition
 from .activation import Activation
 
 
@@ -79,17 +78,17 @@ class RuleSet(ABC):
             if self.stack_activation:
                 self.compute_stacked_activation()
             if names_available:
-                self.features_names = list(set([rule.features_names for rule in self]))
+                self.features_names = list(set(itertools.chain(*[rule.features_names for rule in self])))
             self.set_features_indexes()
         if RuleSet.CHECK_DUPLICATED:
             self.check_duplicated_rules(self.rules, name_or_index="name" if len(self.features_names) > 0 else "index")
 
     @property
-    def rules(self):
+    def rules(self) -> List[Rule]:
         return self._rules
 
     @rules.setter
-    def rules(self, rules):
+    def rules(self, rules: Union[List[Rule], None]):
         ruleset = RuleSet(rules, remember_activation=self.remember_activation, stack_activation=self.stack_activation)
         self._rules = ruleset._rules
         self.features_names = ruleset.features_names
@@ -104,7 +103,7 @@ class RuleSet(ABC):
                 # noinspection PyProtectedMember
                 r._condition._features_indexes = [RuleSet.all_features_indexes[f] for f in r.features_names]
         else:
-            list(set([rule.features_indexes for rule in self]))
+            list(set(itertools.chain(*[rule.features_indexes for rule in self])))
 
     # noinspection PyProtectedMember,PyTypeChecker
     def __iadd__(self, other: Union["RuleSet", Rule]):
@@ -266,17 +265,19 @@ class RuleSet(ABC):
         self.remember_activation = remember_activation
         self.stack_activation = stack_activation
 
-    def sort(self, criterion: str = None, reverse: bool = False) -> None:
+    def sort(self, criterion: str = None, reverse: bool = False):
         """Sorts the RuleSet.
 
         * If criterion is not speficied:
-        Will sort the rules according to :
-            1. the number of features they talk about
-            2. For a same number of features, the bmins and bmaxs of the rules
+            Will sort the rules according to :
+                1. The number of features they talk about
+                2. For a same number of features (sorted in alphabetical order, or index if names are not available,
+                    optionally reversed), the bmins and bmaxs of the rules
+        * If criterion is specified, it must be an float or interger attribute of rule, condition or activation. Then
+            sorts according to this criterion, optionally reversed.
         """
         if len(self) == 0:
             return
-        import ast
 
         if criterion is None or criterion == "":
             if not (
@@ -285,10 +286,12 @@ class RuleSet(ABC):
             ):
                 return
             # The set of all the features the RuleSet talks about
+            which = "index"
             if len(self.features_names) > 0:
-                fnames_or_indexes = self.features_names
+                which = "name"
+                fnames_or_indexes = list(set([str(r.features_names) for r in self]))
             else:
-                fnames_or_indexes = self.features_indexes
+                fnames_or_indexes = list(set([str(r.features_indexes) for r in self]))
             dict_names = {}
             lmax = 1
             for f in fnames_or_indexes:
@@ -308,7 +311,10 @@ class RuleSet(ABC):
             rules_by_fnames = OrderedDict({f: [] for f in fnames_or_indexes})
             for rule in self:
                 # noinspection PyUnresolvedReferences
-                v = str(rule.features_names)
+                if which == "name":
+                    v = str(rule.features_names)
+                else:
+                    v = str(rule.features_indexes)
                 rules_by_fnames[v].append(rule)
             rules_by_fnames = {
                 n: sorted(rules_by_fnames[n], key=lambda x: x.condition.bmins + x.condition.bmaxs)
@@ -333,7 +339,8 @@ class RuleSet(ABC):
         return other._activation in self._activation
 
     @property
-    def activation_available(self):
+    def activation_available(self) -> bool:
+        """Returns True if the RuleSet has an activation vector, and if this Activation's object data is available."""
         if self._activation is None:
             return False
         if self._activation.data_format == "file":
@@ -342,68 +349,63 @@ class RuleSet(ABC):
             return self._activation.data is not None
 
     @property
-    def stacked_activations_available(self):
+    def stacked_activations_available(self) -> bool:
+        """Returns True is the RuleSet has its rules' stacked activations."""
         if self.stack_activation is None:
             return False
         return True
 
     @property
     def activation(self) -> Union[None, np.ndarray]:
-        """Decompress activation vector
+        """Returns the Activation vector's data in a form of a 1-D np.ndarray, or None if not available.
 
-        Returns
-        -------
-        np.ndarray
-            of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1]
+        Returns:
+        --------
+        Union[None, np.ndarray]
+            of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, ...]
         """
         if self._activation:
             return self._activation.raw
         return None
 
-    @property
-    def rules(self) -> List[Rule]:
-        return self._rules
-
     def calc_activation(self, xs: np.ndarray):
+        """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
+        activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
         if len(self) == 0:
             raise ValueError("Can not use calc_activation : The ruleset is empty!")
         [rule.calc_activation(xs) for rule in self.rules]
-        self._activation = None
-        self.compute_self_activation()
 
-    def calc_stacked_activations(self, xs: np.ndarray):
-        if len(self) == 0:
-            raise ValueError("Can not use calc_stacked_activations : The ruleset is empty!")
-        [rule.calc_activation(xs) for rule in self.rules]
-        self._activation = None
-        self.compute_stacked_activation()
+        if self.remember_activation:
+            self._activation = None
+            self.compute_self_activation()
+        if self.stack_activation:
+            self._activation = None
+            self.compute_stacked_activation()
 
     @property
     def coverage(self) -> float:
+        """Coverage is the fraction of points equal to 1 in the activation vector"""
         if not self.activation_available:
             return 0.0
         else:
             return self._activation.coverage
 
-    def get_variables_count(self):
+    def get_features_count(self) -> List[Tuple[Any, int]]:
         """
-        Get a counter of all different features in the ruleset
-        Parameters
-        ----------
-        Return
-        ------
-        count : {Counter type}
+        Get a counter of all different features in the ruleset. If names are not available, will use indexes.
+
+        Returns:
+        --------
+        count : List[Tuple[Any, int]]
             Counter of all different features in the ruleset
         """
         # noinspection PyUnresolvedReferences
-        var_in = [
-            rule.condition.features_names
-            if isinstance(rule.condition, HyperrectangleCondition)
-            else rule.condition.features_indexes
-            for rule in self
-        ]
-        if len(var_in) > 1:
-            var_in = reduce(operator.add, var_in)
+        if len(self) == 0:
+            return []
+        if len(self.features_names) > 0:
+            var_in = list(itertools.chain(*[rule.features_names for rule in self]))
+        else:
+            var_in = list(itertools.chain(*[rule.feautres_indexes for rule in self]))
         count = Counter(var_in)
 
         count = count.most_common()
