@@ -55,10 +55,6 @@ class Condition(ABC):
         return hash(frozenset(self.to_hash))
 
     @property
-    def getattr(self):
-        return [self.features_indexes]
-
-    @property
     def features_indexes(self) -> List[int]:
         return self._features_indexes
 
@@ -66,6 +62,10 @@ class Condition(ABC):
     def features_indexes(self, value: Union[List[int], str]):
         if isinstance(value, str):
             value = ast.literal_eval(value)
+        if len(set(value)) != len(value):
+            raise DuplicatedFeatures
+        if len(self) > 0 and len(self) != len(value):
+            raise IndexError(f"Condition has {len(self)} features but you gave {len(value)} indexes")
         self._features_indexes = value
 
     def __len__(self):
@@ -194,14 +194,8 @@ class HyperrectangleCondition(Condition):
             bmaxs=copy(self.bmaxs),
             features_names=copy(self.features_names),
         )
-        other_clone = HyperrectangleCondition(
-            features_indexes=copy(other.features_indexes),
-            bmins=copy(other.bmins),
-            bmaxs=copy(other.bmaxs),
-            features_names=copy(other.features_names),
-        )
 
-        common_features = [f for f in self_clone.features_names if f in other_clone.features_names]
+        common_features = [f for f in self_clone.features_names if f in other.features_names]
 
         if len(common_features) > 0:
 
@@ -209,7 +203,7 @@ class HyperrectangleCondition(Condition):
             # each condition's range for those features. The new condition can possibly never be met.
 
             common_features_positions_in_self = [self_clone.features_names.index(f) for f in common_features]
-            common_features_positions_in_other = [other_clone.features_names.index(f) for f in common_features]
+            common_features_positions_in_other = [other.features_names.index(f) for f in common_features]
 
             (common_features_indexes_in_self, common_features_bmins_in_self, common_features_bmaxs_in_self) = list(zip(
                 *[
@@ -226,9 +220,9 @@ class HyperrectangleCondition(Condition):
                 zip(
                     *[
                         (
-                            other_clone.features_indexes[i],
-                            other_clone.bmins[i],
-                            other_clone.bmaxs[i]
+                            other.features_indexes[i],
+                            other.bmins[i],
+                            other.bmaxs[i]
                         )
                         for i in common_features_positions_in_other
                     ]
@@ -247,26 +241,35 @@ class HyperrectangleCondition(Condition):
                 min(bmax0, bmax1) for bmax0, bmax1 in zip(common_features_bmaxs_in_self, common_features_bmaxs_in_other)
             ]
 
-            other_clone.features_indexes = [
-                other_clone.features_indexes[i]
-                for i in range(len(other_clone.features_indexes))
+            features_indexes = [
+                other.features_indexes[i]
+                for i in range(len(other.features_indexes))
                 if i not in common_features_positions_in_other
             ]
-            other_clone.features_names = [f for f in other_clone.features_names if f not in common_features]
-            other_clone.bmins = [
-                other_clone.bmins[i]
-                for i in range(len(other_clone.bmins))
+            features_names = [f for f in other.features_names if f not in common_features]
+            bmins = [
+                other.bmins[i]
+                for i in range(len(other.bmins))
                 if i not in common_features_positions_in_other
             ]
-            other_clone.bmaxs = [
-                other_clone.bmaxs[i]
-                for i in range(len(other_clone.bmaxs))
+            bmaxs = [
+                other.bmaxs[i]
+                for i in range(len(other.bmaxs))
                 if i not in common_features_positions_in_other
             ]
+
+            other_clone = HyperrectangleCondition(
+                features_indexes=features_indexes,
+                bmins=bmins,
+                bmaxs=bmaxs,
+                features_names=features_names,
+            )
 
             for i, index in enumerate(common_features_positions_in_self):
                 self_clone.bmins[index] = common_features_bmins[i]
                 self_clone.bmaxs[index] = common_features_bmaxs[i]
+        else:
+            other_clone = other
 
         args = [i + j for i, j in zip(self_clone.getattr, other_clone.getattr)]
         if len(set(args[0])) != len(args[0]):
@@ -299,22 +302,36 @@ class HyperrectangleCondition(Condition):
         return self._bmaxs
 
     @features_names.setter
-    def features_names(self, values: Union[List[str], str]):
-        if isinstance(values, str):
-            values = ast.literal_eval(values)
-        self._features_names = values
+    def features_names(self, value: Union[List[str], str]):
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
+        if len(set(value)) != len(value):
+            raise DuplicatedFeatures
+        if len(self) > 0 and len(self) != len(value):
+            raise IndexError(f"Condition has {len(self)} features but you gave {len(value)} names")
+        self._features_names = value
 
     @bmins.setter
-    def bmins(self, values: Union[List[Union[int, float]], str]):
-        if isinstance(values, str):
-            values = [int(v) for v in ast.literal_eval(values)]
-        self._bmins = values
+    def bmins(self, value: Union[List[Union[int, float]], str]):
+        if isinstance(value, str):
+            value = [int(v) for v in ast.literal_eval(value)]
+        if len(self) > 0 and len(self) != len(value):
+            raise IndexError(f"Condition has {len(self)} features but you gave {len(value)} bmins")
+        self._bmins = value
+        if any([a > b for a, b in zip(self.bmins, self.bmaxs)]):
+            # If a bmin is above its associated bmax, then the rule is impossible.
+            self.impossible = True
 
     @bmaxs.setter
-    def bmaxs(self, values: Union[List[Union[int, float]], str]):
-        if isinstance(values, str):
-            values = [int(v) for v in ast.literal_eval(values)]
-        self._bmaxs = values
+    def bmaxs(self, value: Union[List[Union[int, float]], str]):
+        if isinstance(value, str):
+            value = [int(v) for v in ast.literal_eval(value)]
+        if len(self) > 0 and len(self) != len(value):
+            raise IndexError(f"Condition has {len(self)} features but you gave {len(value)} bmaxs")
+        self._bmaxs = value
+        if any([a > b for a, b in zip(self.bmins, self.bmaxs)]):
+            # If a bmin is above its associated bmax, then the rule is impossible.
+            self.impossible = True
 
     def __repr__(self):
         return self.__str__()
@@ -351,9 +368,17 @@ class HyperrectangleCondition(Condition):
             self._bmaxs[item],
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         """A HyperrectangleCondition's length is the number of features it talks about"""
-        return len(self._features_names)
+        if self._features_names is not None:
+            return len(self._features_names)
+        if self._features_indexes is not None:
+            return len(self._features_indexes)
+        if self._bmins is not None:
+            return len(self._bmins)
+        if self._bmaxs is not None:
+            return len(self._bmaxs)
+        return 0
 
     def sort(self):
         if len(self) > 1:

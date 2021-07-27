@@ -180,3 +180,30 @@ def test_and(condition1, condition2, output):
     else:
         res = condition1 & condition2
         np.testing.assert_equal(res, output)
+
+
+@pytest.mark.parametrize(
+    "attr, value, impossible_or_raise",
+    [
+        ("bmins", [0, 1], False),
+        ("bmaxs", [0, 1], False),
+        ("features_indexes", [0, 2], False),
+        ("features_names", ["C", "D"], False),
+        ("bmins", [0, 1, 2], f"Condition has 2 features but you gave 3 bmins"),
+        ("bmaxs", [0, 1, 2], f"Condition has 2 features but you gave 3 bmaxs"),
+        ("features_indexes", [0, 1, 2], f"Condition has 2 features but you gave 3 indexes"),
+        ("features_names", ["C", "D", "E"], f"Condition has 2 features but you gave 3 names"),
+        ("bmins", [2, 1], True),
+        ("bmaxs", [1, 0], True),
+    ]
+)
+def test_set_attr(attr, value, impossible_or_raise):
+    cond = HyperrectangleCondition(features_indexes=[0, 1], features_names=["A", "B"], bmins=[0, 1], bmaxs=[1, 2])
+    if isinstance(impossible_or_raise, str):
+        with pytest.raises(IndexError) as e:
+            setattr(cond, attr, value)
+            assert impossible_or_raise in str(e)
+    else:
+        setattr(cond, attr, value)
+        assert getattr(cond, attr) == value
+        assert cond.impossible is impossible_or_raise
