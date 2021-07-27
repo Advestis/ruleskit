@@ -218,9 +218,8 @@ class Rule(ABC):
         self._time_fit = time() - t0
 
     def calc_attributes(self, xs: np.ndarray, y: np.ndarray, **kwargs):
-        """Implement in daughter class. Must set self.prediction."""
+        """Implement in daughter class. Must set self._prediction."""
         self._prediction = 0
-        pass
 
     def calc_activation(self, xs: np.ndarray):
         """Uses self.evaluate to set self._activation.

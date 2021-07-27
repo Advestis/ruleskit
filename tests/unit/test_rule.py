@@ -5,6 +5,11 @@ import numpy as np
 import pytest
 
 
+# TODO (pcotte)
+def test_init(condition, activation, theclass):
+    r = theclass(condition, activation)
+
+
 @pytest.mark.parametrize(
     "x, y, condition, activation, compressed_activation",
     [
