@@ -234,7 +234,7 @@ class RuleSet(ABC):
     #     self.del_activation()
 
     def del_activations(self):
-        """Deletes the data, btu not the relevent attributes, of the activation vector or each rules in self."""
+        """Deletes the data, but not the relevent attributes, of the activation vector or each rules in self."""
         for r in self:
             r.del_activation()
 
