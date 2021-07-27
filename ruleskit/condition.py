@@ -3,11 +3,15 @@ from abc import ABC
 from copy import copy
 from typing import List, Union, Tuple
 import numpy as np
+from numbers import Number
 from .activation import Activation
 
 
-class Condition(ABC):
+class DuplicatedFeatures(Exception):
+    pass
 
+
+class Condition(ABC):
     """Abstract class for Condition object. Used by Rule objets.
     A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
     variables.
@@ -23,8 +27,18 @@ class Condition(ABC):
         else:
             if features_indexes is None:
                 raise ValueError("Must specify features_indexes")
-        self._features_indexes = features_indexes
+            if any([not np.issubdtype(type(a), np.integer) for a in features_indexes]):
+                raise TypeError(
+                    f"features_indexes must be integers. You gave {[(f, type(f)) for f in features_indexes]}"
+                )
+            self._features_indexes = features_indexes
+            if len(set(self._features_indexes)) != len(self._features_indexes):
+                raise DuplicatedFeatures
+
         self.impossible = False
+
+    def sort(self):
+        self._features_indexes = sorted(self._features_indexes)
 
     def __and__(self, other: "Condition") -> "Condition":
         """To be implemented in daughter classes"""
@@ -84,7 +98,6 @@ class Condition(ABC):
 
 
 class HyperrectangleCondition(Condition):
-
     """Condition class for Hyper Rectangle conditions.
 
     An Hyper Rectangle condition is a condition where each feature is associated to a min and a max (self.bmins and
@@ -107,13 +120,13 @@ class HyperrectangleCondition(Condition):
     SORT_ACCORDING_TO = "index"
 
     def __init__(
-        self,
-        features_indexes: Union[List[int], None] = None,
-        bmins: Union[List[Union[int, float]], None] = None,
-        bmaxs: Union[List[Union[int, float]], None] = None,
-        features_names: Union[List[str], None] = None,
-        empty: bool = False,
-        sort: bool = True,
+            self,
+            features_indexes: Union[List[int], None] = None,
+            bmins: Union[List[Union[int, float]], None] = None,
+            bmaxs: Union[List[Union[int, float]], None] = None,
+            features_names: Union[List[str], None] = None,
+            empty: bool = False,
+            sort: bool = True,
     ):
         if empty:
             super().__init__(empty=True)
@@ -121,11 +134,32 @@ class HyperrectangleCondition(Condition):
             self._bmaxs = None
             self._features_names = None
         else:
+            if bmins is None:
+                raise ValueError("bmins can not be None if 'empty' is False")
+            if bmaxs is None:
+                raise ValueError("bmaxs can not be None if 'empty' is False")
             if features_indexes is None:
                 if features_names is None:
                     raise ValueError("Must specify at least one of features_indexes and features_names")
                 features_indexes = list(range(len(features_names)))
+
+            length = len(features_indexes)
+            if len(bmaxs) != length:
+                raise ValueError(f"Specifed {length} features but {len(bmaxs)} bmaxs")
+            if len(bmins) != length:
+                raise ValueError(f"Specifed {length} features but {len(bmins)} bmins")
+            if features_names is not None and len(features_names) != length:
+                raise ValueError(f"Specifed {length} features but {len(features_names)} bmaxs")
+
+            if features_names is not None and any([not isinstance(a, str) for a in features_names]):
+                raise TypeError(f"Names must be strings. You gave {[(f, type(f)) for f in features_names]}")
+            if any([not isinstance(a, Number) for a in bmins]):
+                raise TypeError(f"bmins must be integers or floats. You gave {[(f, type(f)) for f in bmins]}")
+            if any([not isinstance(a, Number) for a in bmaxs]):
+                raise TypeError(f"bmaxs must be integers or floats. You gave {[(f, type(f)) for f in bmaxs]}")
+
             super().__init__(features_indexes)
+
             if any([a > b for a, b in zip(bmins, bmaxs)]):
                 # If a bmin is above its associated bmax, then the rule is impossible.
                 self.impossible = True
@@ -135,6 +169,8 @@ class HyperrectangleCondition(Condition):
                 self._features_names = features_names
             else:
                 self._features_names = ["X_" + str(i) for i in self._features_indexes]
+            if len(set(self._features_names)) != len(self._features_names):
+                raise DuplicatedFeatures
             if sort:
                 self.sort()
 
@@ -175,11 +211,34 @@ class HyperrectangleCondition(Condition):
             common_features_positions_in_self = [self_clone.features_names.index(f) for f in common_features]
             common_features_positions_in_other = [other_clone.features_names.index(f) for f in common_features]
 
-            common_features_bmins_in_self = [self_clone.bmins[i] for i in common_features_positions_in_self]
-            common_features_bmins_in_other = [other_clone.bmins[i] for i in common_features_positions_in_other]
+            (common_features_indexes_in_self, common_features_bmins_in_self, common_features_bmaxs_in_self) = list(zip(
+                *[
+                    (
+                        self_clone.features_indexes[i],
+                        self_clone.bmins[i],
+                        self_clone.bmaxs[i]
+                    )
+                    for i in common_features_positions_in_self
+                ]
+            ))
 
-            common_features_bmaxs_in_self = [self_clone.bmaxs[i] for i in common_features_positions_in_self]
-            common_features_bmaxs_in_other = [other_clone.bmaxs[i] for i in common_features_positions_in_other]
+            (common_features_indexes_in_other, common_features_bmins_in_other, common_features_bmaxs_in_other) = list(
+                zip(
+                    *[
+                        (
+                            other_clone.features_indexes[i],
+                            other_clone.bmins[i],
+                            other_clone.bmaxs[i]
+                        )
+                        for i in common_features_positions_in_other
+                    ]
+                )
+            )
+
+            if common_features_indexes_in_self != common_features_indexes_in_other:
+                raise IndexError("Some features present in both conditions in __and__ have different indexes : \n "
+                                 f"{common_features_indexes_in_self}\n "
+                                 f"{common_features_indexes_in_other}")
 
             common_features_bmins = [
                 max(bmin0, bmin1) for bmin0, bmin1 in zip(common_features_bmins_in_self, common_features_bmins_in_other)
@@ -210,11 +269,10 @@ class HyperrectangleCondition(Condition):
                 self_clone.bmaxs[index] = common_features_bmaxs[i]
 
         args = [i + j for i, j in zip(self_clone.getattr, other_clone.getattr)]
-
         if len(set(args[0])) != len(args[0]):
-            args[0] = list(range(len(args[0])))
+            raise IndexError("Some features with different names had same index in both conditions in __and__:\n "
+                             f"{args}")
 
-        # noinspection PyTypeChecker
         to_ret = HyperrectangleCondition(
             features_indexes=args[0],
             bmins=args[1],
@@ -300,19 +358,11 @@ class HyperrectangleCondition(Condition):
     def sort(self):
         if len(self) > 1:
             if HyperrectangleCondition.SORT_ACCORDING_TO == "index":
-                if len(set(self.features_indexes)) != len(self.features_indexes):
-                    raise ValueError(
-                        "Can not sort HyperrectangleCondition according to index : there are duplicated indexes"
-                    )
                 self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
                 self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
                 self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
                 self._features_indexes = sorted(self._features_indexes)
             elif HyperrectangleCondition.SORT_ACCORDING_TO == "name":
-                if len(set(self._features_names)) != len(self._features_names):
-                    raise ValueError(
-                        "Can not sort HyperrectangleCondition according to names : there are duplicated names"
-                    )
                 self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
                 self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
                 self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
@@ -325,7 +375,7 @@ class HyperrectangleCondition(Condition):
 
     def evaluate(self, xs: np.ndarray) -> np.ndarray:
         """
-        Evaluates where a condition if fullfilled
+        Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
 
         Parameters
         ----------

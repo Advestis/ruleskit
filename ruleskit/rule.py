@@ -119,14 +119,13 @@ class Rule(ABC):
     def __getattr__(self, item):
         """If item is not found in self, try to fetch it from its activation or condition."""
         if item == "_activation" or item == "_condition":
-            raise AttributeError(f"'AdvRule' object has no attribute '{item}'.")
+            raise AttributeError(f"'Rule' object has no attribute '{item}'.")
 
         if hasattr(self._activation, item):
             return getattr(self._activation, item)
         if hasattr(self._condition, item):
             return getattr(self._condition, item)
-        else:
-            raise AttributeError(f"'AdvRule' object has no attribute '{item}'.")
+        raise AttributeError(f"'Rule' object has no attribute '{item}'.")
 
     def __setattr__(self, item, value):
         """If item is private (starts with _), then default behavior. Else, if the item is not yet known by the rule

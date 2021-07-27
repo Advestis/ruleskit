@@ -379,7 +379,7 @@ class RuleSet(ABC):
             self._activation = None
             self.compute_self_activation()
         if self.stack_activation:
-            self._activation = None
+            self.stacked_activations = None
             self.compute_stacked_activation()
 
     @property
