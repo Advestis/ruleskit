@@ -59,20 +59,29 @@ class Activation(ABC):
         format.
 
         stored data will be either compressed str(list) or np.ndarray, depending on Activation.DTYPE:
-            Compression is done : First element of the list is the first value of the array, last element of the list is
+            Compressed data is : First element of the list is the first value of the array, last element of the list is
             the length of the array. The other elements are the coordinates where the array changed values. This is the
             best solution regarding the RAM if the vector does not change often. However, it is often slower than the
             other methods, particularly if the code will apply logical AND between vectors since it requieres a
             decompression of both vectors.
+            The vector is stored that was if compression is more memory-efficient than integer or bitarray format
+            OR if optimize is False, or if 'activation' is already a compressed vector.
+             It is never stored this way if to_file is True.
         or an bitarray:
             The input vector [1 0 0 1 0 0 0 1 1...] where each entry uses up one bit of memory. Takes more RAM than
             compressed format if the vector does not change often, but is much quicker, both in conversion and in
             computing a logical AND.
+            The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
+            Activation.WILL_COMPARE is False : converting to bitarray is faster than to integer, but computing
+            logical AND on integers is faster. Size is equivalent to integer : one bit per entry. It is also stored this
+            way if 'activation' is already a bitarray or a string and Activation.WILL_COMPARE is False.
+            It is never stored this way if to_file is True.
         or an integer
             taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
-            "100100011..." then casts it into int using int(s, 2). This is done if Activation.WILL_COMPARE is True :
-            converting to int is slower than to bit array, but comparing ints is faster. Size is equivalent to
-            bitarray : one bit per entry.
+            "100100011..." then casts it into int using int(s, 2).
+            The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
+            Activation.WILL_COMPARE is True. It is also stored this way if 'activation' is already an integer or a
+            string and Activation.WILL_COMPARE is True. It is never stored this way if to_file is True.
         or in a file stored locally.
             This is done if to_file is True. It is often the best solution, and is the default one. Indeed the I/O
             operations using np.save and np.load are very fast, and the only thing in RAM is the path to the vector's
@@ -88,14 +97,14 @@ class Activation(ABC):
         -----------
         activation: Union[np.ndarray, bitarray, str, int, Path]
             If np.ndarray : Of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1], or compressed vector
-            If str : compressed vector
+            If str : compressed vector, or '010011100011111'
             If bitarray : same as np.array but takes 8x less memory (each entry is stored in one bit only)
             If int : as an integer
-            If Path : only remembers the path to the file containing the np.ndarray
+            If Path : read raw np.ndarray vector from path.
         optimize: bool
-            Only relevent if 'value' is an bitarray or integer. In that case, will check whether using compression saves
-            up memory. Else, does not check and uses bitarray or integer. Note that if optimize is True, entropy is
-            computed no matter the chosen format.
+            Only relevent if 'value' is a bitarray or an integer. In that case, will check whether using compression
+            saves up memory. Else, does not check and uses bitarray or integer. Note that if optimize is True, entropy
+            is computed no matter the chosen format.
         length: Optional[int]
             Only valid if 'value' is an integer. An activation vector stored as an integer has lost the information
             about its size : [0 0 0 1 0 0 0 1 1...] to int gives 100011... which in turn gives back [1 0 0 0 1 1...].
@@ -130,9 +139,12 @@ class Activation(ABC):
         self._time_bitarray_to_raw = -1
         self._time_raw_to_bitarray = -1
         self._time_compressed_to_bitarray = -1
+        self._time_compressed_to_integer = -1
         self._time_bitarray_to_compressed = -1
         self._time_integer_to_compressed = -1
         self._time_integer_to_raw = -1
+        self._time_bitarray_to_integer = -1
+        self._time_integer_to_bitarray = -1
         self._n_written = 0
         self._n_read = 0
         self._n_compressed_to_raw = 0
@@ -145,6 +157,8 @@ class Activation(ABC):
         self._n_integer_to_compressed = 0
         self._n_compressed_to_bitarray = 0
         self._n_compressed_to_integer = 0
+        self._n_bitarray_to_integer = 0
+        self._n_integer_to_bitarray = 0
         self._sizeof_compressed_array = -1
         self._sizeof_compressed_str = -1
         self._sizeof_bitarray = -1
@@ -160,6 +174,25 @@ class Activation(ABC):
                 activation = int(activation, 2)
             else:
                 activation = bitarray(activation)
+        elif isinstance(activation, int) and not Activation.WILL_COMPARE:
+            if length is None:
+                raise ValueError("When giving an integer to Activation, you must also specify its length.")
+            t0 = time()
+            s = bin(activation)[2:]
+            if len(s) != length:
+                s = "0" * (length - len(s)) + s
+            activation = bitarray(s)
+            self._time_integer_to_bitarray = time() - t0
+            self._n_integer_to_bitarray += 1
+            self._sizeof_bitarray = sys.getsizeof(activation)
+        elif isinstance(activation, bitarray) and Activation.WILL_COMPARE:
+            t0 = time()
+            if length is None:
+                length = len(activation)
+            activation = int(str(activation).replace("bitarray(", "").replace(")", ""), 2)
+            self._time_bitarray_to_integer = time() - t0
+            self._n_bitarray_to_integer += 1
+            self._sizeof_integer = sys.getsizeof(activation)
         elif isinstance(activation, Path) or TransparentPath is not None and isinstance(activation, TransparentPath):
             activation = self._read(activation, out=False)
 
@@ -341,11 +374,14 @@ class Activation(ABC):
         self._sizeof_integer = sys.getsizeof(value) / 1e6
 
         if self.optimize:
-            raw = self._integer_to_raw(value)
+            t0 = time()
+            raw = self._integer_to_raw(value, out=False)
             self._sizeof_raw = sys.getsizeof(raw) / 1e6
             self._nones = np.count_nonzero(raw == 1)
-            t0 = time()
+            t1 = time()
             compressed = self._compress(raw, dtype=dtype)
+            self._time_raw_to_compressed = time() - t1
+            self._n_raw_to_compressed += 1
             self._time_integer_to_compressed = time() - t0
             self._n_integer_to_compressed += 1
             if isinstance(compressed, str):
@@ -446,11 +482,17 @@ class Activation(ABC):
             self._entropy = len(compressed) - 2
         self._rel_entropy = self._entropy / self.length
         t0 = time()
-        inbitarray = self._raw_to_bitarray(value)
-        self._time_raw_to_bitarray = time() - t0
-        self._n_raw_to_bitarray += 1
-        self._sizeof_bitarray = sys.getsizeof(inbitarray) / 1e6
-        if sys.getsizeof(inbitarray) > size_compressed:
+        if Activation.WILL_COMPARE:
+            inbit = self._raw_to_integer(value)
+            self._time_raw_to_integer = time() - t0
+            self._n_raw_to_integer += 1
+            self._sizeof_integer = sys.getsizeof(inbit) / 1e6
+        else:
+            inbit = self._raw_to_bitarray(value)
+            self._time_raw_to_bitarray = time() - t0
+            self._n_raw_to_bitarray += 1
+            self._sizeof_bitarray = sys.getsizeof(inbit) / 1e6
+        if sys.getsizeof(inbit) > size_compressed:
             logger.debug(f"Using compressed activation representation")
             self.data = compressed
             if dtype == str:
@@ -460,7 +502,7 @@ class Activation(ABC):
         else:
             logger.debug(f"Using bitarray activation representation")
             self.data_format = "bitarray"
-            self.data = inbitarray
+            self.data = inbit
 
     """ Binary operators """
 
@@ -484,7 +526,7 @@ class Activation(ABC):
     @staticmethod
     def multi_logical_and(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL AND on many activation vectors at once. Uses raw np.ndarrays to gain time.
-         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray. """
+        If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
         if len(acs) == 1:
             res = acs[0].raw
         else:
@@ -517,7 +559,7 @@ class Activation(ABC):
     @staticmethod
     def multi_logical_or(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
-         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray. """
+        If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
         if len(acs) == 1:
             res = acs[0].raw
         else:
@@ -550,7 +592,7 @@ class Activation(ABC):
     @staticmethod
     def multi_logical_xor(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL EXCLUSIVE OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
-         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray. """
+        If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
         if len(acs) == 1:
             return Activation(acs[0].raw, optimize=acs[0].optimize, to_file=acs[0].data_format == "file")
         lor = Activation.multi_logical_or(acs, True)
@@ -625,7 +667,7 @@ class Activation(ABC):
     def _integer_to_raw(self, value: Optional[int] = None, out: bool = True) -> np.ndarray:
         """From a value of the form 45786542 (int), which is the base 10 representation of the binary form of an
         activation vector, returns the raw np.ndarray vector of the form [1, 0, 0, 1, 1, 0, ...].
-        
+
         If out is not True or value is None, will set:
             * self._sizeof_integer
             * self._sizeof_raw
@@ -663,7 +705,7 @@ class Activation(ABC):
                 "of x earlier in your code"
             )
         act_bis = np.zeros(self.length).astype(np.ubyte)
-        act_bis[self.length - len(act):] = act
+        act_bis[self.length - len(act) :] = act
 
         if not out:
             self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
@@ -886,7 +928,7 @@ class Activation(ABC):
 
     @property
     def ones(self) -> np.ndarray:
-        """ ones is the list of indexes where the vector is 1
+        """ones is the list of indexes where the vector is 1
         Contrary to other @properties, do not store 'ones' in self, for it can be quit large : several MB or more.
         When running codes with millions of vector, this can be problematic."""
         raw = self.raw
@@ -895,7 +937,7 @@ class Activation(ABC):
 
     @property
     def nones(self) -> int:
-        """ nones is the number of points where the activation vector is 1
+        """nones is the number of points where the activation vector is 1
         self._nones might not be set since it can only be set at object creation if the full array was given or
         accessed at some point
         """
@@ -908,7 +950,7 @@ class Activation(ABC):
 
     @property
     def entropy(self) -> int:
-        """ The entropy of the vector is the length of its compressed reprensentation : the number of times it switched
+        """The entropy of the vector is the length of its compressed reprensentation : the number of times it switched
         from 1 to 0 and vice versa, plus 1 for the information about its initial value, and again 1 for the Information
         about its size.
         Like self._nones, it might not have been computed yet. In that case, compute it.
@@ -926,6 +968,7 @@ class Activation(ABC):
             fmt = self.data_format
             if self.data_format == "file":
                 data = self._read(out=False)
+                fmt = "raw"
             else:
                 data = self.data
             compressed = self._compress(data)
@@ -933,9 +976,12 @@ class Activation(ABC):
             if fmt == "bitarray":
                 self._time_bitarray_to_compressed = time() - t0
                 self._n_bitarray_to_compressed += 1
-            else:
+            elif fmt == "integer":
                 self._time_integer_to_compressed = time() - t0
                 self._n_integer_to_compressed += 1
+            else:
+                self._time_raw_to_compressed = time() - t0
+                self._n_raw_to_compressed += 1
 
             if self.data_format == "compressed_str":
                 self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
@@ -989,21 +1035,18 @@ class Activation(ABC):
                 self._sizeof_bitarray = sys.getsizeof(self.data)
             return self.data
         elif self.data_format == "integer":
-            raw = self.raw
             t0 = time()
-            to_ret = self._raw_to_bitarray(raw)
-            self._time_raw_to_bitarray = time() - t0
-            self._n_raw_to_bitarray += 1
+            s = bin(self.data)[2:]
+            if len(s) != self.length:
+                s = "0" * (self.length - len(s)) + s
+            to_ret = bitarray(s)
+            self._time_integer_to_bitarray = time() - t0
+            self._n_integer_to_bitarray += 1
             if self._sizeof_bitarray == -1:
                 self._sizeof_bitarray = sys.getsizeof(to_ret)
             return to_ret
         elif "compressed" in self.data_format:
-            t0 = time()
-            to_ret = self._decompress(raw=False)
-            self._time_compressed_to_bitarray = time() - t0
-            self._n_compressed_to_bitarray += 1
-            if self._sizeof_bitarray == -1:
-                self._sizeof_bitarray = sys.getsizeof(to_ret)
+            to_ret = self._decompress(raw=False, out=False)
             return to_ret
         elif self.data_format == "file":
             data = self._read(out=False)
@@ -1016,11 +1059,22 @@ class Activation(ABC):
         """Returns the integer representation of the vector. Will set relevant profiling attributes."""
         if self.data_format == "integer":
             return self.data
+        elif self.data_format == "bitarray":
+            t0 = time()
+            to_ret = int(str(self.data).replace("bitarray(", "").replace(")", ""), 2)
+            self._time_bitarray_to_integer = time() - t0
+            self._n_bitarray_to_integer += 1
+            self._sizeof_integer = sys.getsizeof(to_ret)
+            return to_ret
         else:
             t0 = time()
             to_ret = self._raw_to_integer(self.raw)
-            self._time_raw_to_integer = time() - t0
-            self._n_raw_to_integer += 1
+            if "compressed" in self.data_format:
+                self._time_compressed_to_integer = time() - t0
+                self._n_compressed_to_integer += 1
+            else:
+                self._time_raw_to_integer = time() - t0
+                self._n_raw_to_integer += 1
             self._sizeof_integer = sys.getsizeof(to_ret)
             return to_ret
 
@@ -1115,12 +1169,15 @@ class Activation(ABC):
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
             return to_ret
         elif self.data_format == "integer":
+            t0 = time()
             raw = self._integer_to_raw()
             self._nones = np.count_nonzero(raw == 1)
-            t0 = time()
+            t1 = time()
             to_ret = self._compress(raw, dtype=str)
-            self._time_raw_to_compressed = time() - t0
+            self._time_raw_to_compressed = time() - t1
             self._n_raw_to_compressed += 1
+            self._time_integer_to_compressed = time() - t0
+            self._n_integer_to_compressed += 1
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
             return to_ret
@@ -1155,9 +1212,9 @@ class Activation(ABC):
 
     @property
     def sizeof_file(self) -> float:
-        """Returns the size in MB of the path object, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling 
-        attributes. """
+        """Returns the size in MB of the path object, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling
+        attributes."""
         if self._sizeof_file == -1 and Activation.FORCE_STAT:
             fmt = self.data_format
             data = self.data
@@ -1169,54 +1226,54 @@ class Activation(ABC):
 
     @property
     def sizeof_raw(self) -> float:
-        """Returns the size in MB of raw np.ndarray vector, or -1 if it does not exist. In that case and if 
+        """Returns the size in MB of raw np.ndarray vector, or -1 if it does not exist. In that case and if
         Activation.FORCE_STAT is True, will force the object to call self.raw to compute the relevant profiling
-        attributes. """
+        attributes."""
         if self._sizeof_raw == -1 and Activation.FORCE_STAT:
             _ = self.raw
         return self._sizeof_raw
 
     @property
     def sizeof_bitarray(self) -> float:
-        """Returns the size in MB of the vector in bitarray, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self.as_bitarray to compute the relevant 
-        profiling attributes. """
+        """Returns the size in MB of the vector in bitarray, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self.as_bitarray to compute the relevant
+        profiling attributes."""
         if self._sizeof_bitarray == -1 and Activation.FORCE_STAT:
             _ = self.as_bitarray
         return self._sizeof_bitarray
 
     @property
     def sizeof_integer(self) -> float:
-        """Returns the size in MB of the vector in integer, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self.as_integer to compute the relevant 
-        profiling attributes. """
+        """Returns the size in MB of the vector in integer, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self.as_integer to compute the relevant
+        profiling attributes."""
         if self._sizeof_integer == -1 and Activation.FORCE_STAT:
             _ = self.as_integer
         return self._sizeof_integer
 
     @property
     def sizeof_compressed_array(self) -> float:
-        """Returns the size in MB of the vector in compressed array, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self.as_compressed_array to compute the relevant 
-        profiling attributes. """
+        """Returns the size in MB of the vector in compressed array, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self.as_compressed_array to compute the relevant
+        profiling attributes."""
         if self._sizeof_compressed_array == -1 and Activation.FORCE_STAT:
             _ = self.as_compressed_array
         return self._sizeof_compressed_array
 
     @property
     def sizeof_compressed_str(self) -> float:
-        """Returns the size in MB of the vector in compressed str, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self.as_compressed_str to compute the relevant 
-        profiling attributes. """
+        """Returns the size in MB of the vector in compressed str, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self.as_compressed_str to compute the relevant
+        profiling attributes."""
         if self._sizeof_compressed_str == -1 and Activation.FORCE_STAT:
             _ = self.as_compressed_str
         return self._sizeof_compressed_str
 
     @property
     def time_write(self) -> float:
-        """Returns the time in seconds to write the vector to a file, or -1 if it does not exist. In that case and 
-        if Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling 
-        attributes. """
+        """Returns the time in seconds to write the vector to a file, or -1 if it does not exist. In that case and
+        if Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling
+        attributes."""
         if self._time_write == -1 and Activation.FORCE_STAT:
             fmt = self.data_format
             data = self.data
@@ -1228,9 +1285,9 @@ class Activation(ABC):
 
     @property
     def time_read(self) -> float:
-        """Returns the time in seconds to read the vector to a file, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling 
-        attributes. """
+        """Returns the time in seconds to read the vector to a file, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling
+        attributes."""
         if self._time_read == -1 and Activation.FORCE_STAT:
             fmt = self.data_format
             data = self.data
@@ -1243,9 +1300,9 @@ class Activation(ABC):
 
     @property
     def time_raw_to_compressed(self) -> float:
-        """Returns the time in seconds to compress the vector, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self._compress to compute the relevant profiling 
-        attributes. """
+        """Returns the time in seconds to compress the vector, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self._compress to compute the relevant profiling
+        attributes."""
         if self._time_raw_to_compressed == -1 and Activation.FORCE_STAT:
             t0 = time()
             _ = self._compress(self.raw)
@@ -1255,9 +1312,9 @@ class Activation(ABC):
 
     @property
     def time_raw_to_integer(self) -> float:
-        """Returns the time in seconds go from raw to integer, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self._raw_to_integer to compute the relevant 
-        profiling attributes. """
+        """Returns the time in seconds go from raw to integer, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self._raw_to_integer to compute the relevant
+        profiling attributes."""
         if self._time_raw_to_integer == -1 and Activation.FORCE_STAT:
             t0 = time()
             _ = self._raw_to_integer(self.raw)
@@ -1267,9 +1324,9 @@ class Activation(ABC):
 
     @property
     def time_raw_to_bitarray(self) -> float:
-        """Returns the time in seconds go from raw to bitarray, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self._raw_to_bitarray to compute the relevant 
-        profiling attributes. """
+        """Returns the time in seconds go from raw to bitarray, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self._raw_to_bitarray to compute the relevant
+        profiling attributes."""
         if self._time_raw_to_bitarray == -1 and Activation.FORCE_STAT:
             t0 = time()
             _ = self._raw_to_bitarray(self.raw)
@@ -1279,27 +1336,27 @@ class Activation(ABC):
 
     @property
     def time_compressed_to_raw(self) -> float:
-        """Returns the time in seconds to compress the vector, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self._decompress to compute the relevant 
-        profiling attributes. """
+        """Returns the time in seconds to compress the vector, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self._decompress to compute the relevant
+        profiling attributes."""
         if self._time_compressed_to_raw == -1 and Activation.FORCE_STAT:
             _ = self._decompress(self.as_compressed, out=False)
         return self._time_compressed_to_raw
 
     @property
     def time_bitarray_to_raw(self) -> float:
-        """Returns the time in seconds to go from bitarray to raw, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self._bitarray_to_raw to compute the relevant 
-        profiling attributes. """
+        """Returns the time in seconds to go from bitarray to raw, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self._bitarray_to_raw to compute the relevant
+        profiling attributes."""
         if self._time_bitarray_to_raw == -1 and Activation.FORCE_STAT:
             _ = self._bitarray_to_raw(self.as_bitarray, out=False)
         return self._time_bitarray_to_raw
 
     @property
     def time_integer_to_raw(self) -> float:
-        """Returns the time in seconds to go from integer to raw, or -1 if it does not exist. In that case and if 
-        Activation.FORCE_STAT is True, will force the object to call self._integer_to_raw to compute the relevant 
-        profiling attributes. """
+        """Returns the time in seconds to go from integer to raw, or -1 if it does not exist. In that case and if
+        Activation.FORCE_STAT is True, will force the object to call self._integer_to_raw to compute the relevant
+        profiling attributes."""
         if self._time_integer_to_raw == -1 and Activation.FORCE_STAT:
             _ = self._integer_to_raw(self.as_integer, out=False)
         return self._time_integer_to_raw
@@ -1308,7 +1365,7 @@ class Activation(ABC):
     def time_compressed_to_bitarray(self) -> float:
         """Returns the time in seconds to go from compressed to bitarray, or -1 if it does not exist. In that case
         and if Activation.FORCE_STAT is True, will force the object to call self._decompress on self.as_compressed with
-         'raw=False' to compute the relevant profiling attributes. """
+         'raw=False' to compute the relevant profiling attributes."""
         if self._time_compressed_to_bitarray == -1 and Activation.FORCE_STAT:
             _ = self._decompress(self.as_compressed, raw=False)
         return self._time_compressed_to_bitarray
@@ -1317,7 +1374,7 @@ class Activation(ABC):
     def time_bitarray_to_compressed(self) -> float:
         """Returns the time in seconds to go from bitarray to compressed, or -1 if it does not exist. In that case
         and if Activation.FORCE_STAT is True, will force the object to call self._compress on self.as_bitarray to
-        compute the relevant profiling attributes. """
+        compute the relevant profiling attributes."""
         if self._time_bitarray_to_compressed == -1 and Activation.FORCE_STAT:
             b = self.as_bitarray
             t0 = time()
@@ -1330,7 +1387,7 @@ class Activation(ABC):
     def time_integer_to_compressed(self) -> float:
         """Returns the time in seconds to go from integer to compressed, or -1 if it does not exist. In that case
         and if Activation.FORCE_STAT is True, will force the object to call self._compress on
-        self._integer_to_raw(self.as_integer) to compute the relevant profiling attributes. """
+        self._integer_to_raw(self.as_integer) to compute the relevant profiling attributes."""
         if self._time_integer_to_compressed == -1 and Activation.FORCE_STAT:
             t0 = time()
             data = self._integer_to_raw(self.as_integer)
@@ -1338,6 +1395,42 @@ class Activation(ABC):
             self._time_integer_to_compressed = time() - t0
             self._n_integer_to_compressed += 1
         return self._time_integer_to_compressed
+
+    @property
+    def time_bitarray_to_integer(self) -> float:
+        """Returns the time in seconds to go from bitarray to integer, or -1 if it does not exist. In that case
+        and if Activation.FORCE_STAT is True, will force the object to call self._compress on
+        self._integer_to_raw(self.as_integer) to compute the relevant profiling attributes."""
+        if self._time_bitarray_to_integer == -1 and Activation.FORCE_STAT:
+            old_data = self.data
+            self.data = self.as_bitarray
+            _ = self.as_integer
+            self.data = old_data
+        return self._time_bitarray_to_integer
+
+    @property
+    def time_integer_to_bitarray(self) -> float:
+        """Returns the time in seconds to go from bitarray to integer, or -1 if it does not exist. In that case
+        and if Activation.FORCE_STAT is True, will force the object to call self.as_integer on
+        self to compute the relevant profiling attributes."""
+        if self._time_integer_to_bitarray == -1 and Activation.FORCE_STAT:
+            old_data = self.data
+            self.data = self.as_integer
+            _ = self.as_bitarray
+            self.data = old_data
+        return self._time_integer_to_bitarray
+
+    @property
+    def time_compressed_to_integer(self) -> float:
+        """Returns the time in seconds to go from compressed to integer, or -1 if it does not exist. In that case
+        and if Activation.FORCE_STAT is True, will force the object to call self.as_compress on
+        to compute the relevant profiling attributes."""
+        if self._time_compressed_to_integer == -1 and Activation.FORCE_STAT:
+            old_data = self.data
+            self.data = self.as_compressed
+            _ = self.as_integer
+            self.data = old_data
+        return self._time_compressed_to_integer
 
     @property
     def n_written(self) -> int:
@@ -1398,3 +1491,13 @@ class Activation(ABC):
     def n_compressed_to_integer(self) -> int:
         """Returns the number of time the vector was decompressed to integer."""
         return self._n_compressed_to_integer
+
+    @property
+    def n_bitarray_to_integer(self) -> int:
+        """Returns the number of time the vector was decompressed to integer."""
+        return self._n_bitarray_to_integer
+
+    @property
+    def n_integer_to_bitarray(self) -> int:
+        """Returns the number of time the vector was decompressed to integer."""
+        return self._n_integer_to_bitarray
