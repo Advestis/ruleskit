@@ -6,6 +6,11 @@ from .condition import Condition
 from .activation import Activation
 from .utils import rfunctions as functions
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
 
 class Rule(ABC):
 
@@ -33,7 +38,7 @@ class Rule(ABC):
     for more details.
     """
 
-    LOCAL_ACTIVATION = False
+    LOCAL_ACTIVATION = True
 
     def __init__(
         self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
@@ -43,6 +48,8 @@ class Rule(ABC):
             raise TypeError("Argument 'condition' must derive from Condition or be None.")
         if activation is not None and not isinstance(activation, Activation):
             raise TypeError("Argument 'activation' must derive from Activation or be None.")
+        if activation is not None and condition is None:
+            raise ValueError("Condition can not be None if activation is not None")
 
         self._condition = condition
         self._activation = activation
@@ -175,21 +182,18 @@ class Rule(ABC):
         """A Rule's length is the number of features it talks about"""
         return len(self._condition)
 
-    def evaluate(self, xs: np.ndarray) -> Activation:
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> Activation:
         """Computes and returns the activation vector from an array of features.
 
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
 
         Returns
         -------
         Activation
-
-        Examples
-        --------
-        #TODO (pcotte)
         """
         arr = self._condition.evaluate(xs)
         # noinspection PyTypeChecker
@@ -197,14 +201,15 @@ class Rule(ABC):
         return a
 
     # noinspection PyUnusedLocal
-    def fit(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def fit(self, xs: Union[pd.DataFrame, np.ndarray], y: np.ndarray, **kwargs):
         """Computes activation, and other criteria dependant on the nature of the daughter class of the Rule,
         for a given xs and y.
 
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
         y: np.ndarray
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray.
         kwargs: dict
@@ -217,30 +222,32 @@ class Rule(ABC):
             raise ValueError("'fit' did not set 'prediction' : did you overload 'calc_attributes' correctly ?")
         self._time_fit = time() - t0
 
-    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def calc_attributes(self, xs: Union[pd.DataFrame, np.ndarray], y: np.ndarray, **kwargs):
         """Implement in daughter class. Must set self._prediction."""
         self._prediction = 0
 
-    def calc_activation(self, xs: np.ndarray):
+    def calc_activation(self, xs: Union[pd.DataFrame, np.ndarray]):
         """Uses self.evaluate to set self._activation.
 
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
         """
         t0 = time()
         self._activation = self.evaluate(xs)
         self._time_calc_activation = time() - t0
 
-    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
+    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> np.ndarray:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
         Will raise ValueError is xs is None and activation is not yet known.
 
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
 
         Returns
         -------
@@ -297,13 +304,14 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def calc_attributes(self, xs: Union[pd.DataFrame, np.ndarray], y: np.ndarray, **kwargs):
         """Computes prediction, standard deviation, and regression criterion
         
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
         y: np.ndarray
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray.
         kwargs: dict
@@ -357,14 +365,15 @@ class RegressionRule(Rule):
         self._criterion = functions.calc_regression_criterion(p, y, **kwargs)
         self._time_calc_criterion = time() - t0
 
-    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
+    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> np.ndarray:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
         Will raise ValueError is xs is None and activation is not yet known.
 
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
         """
         t0 = time()
         if xs is not None:
@@ -403,12 +412,13 @@ class ClassificationRule(Rule):
     def criterion(self) -> float:
         return self._criterion
 
-    def calc_attributes(self, xs: np.ndarray, y: np.ndarray, **kwargs):
+    def calc_attributes(self, xs: Union[pd.DataFrame, np.ndarray], y: np.ndarray, **kwargs):
         """
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
         y: np.ndarray
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray.
         kwargs: dict
@@ -443,14 +453,15 @@ class ClassificationRule(Rule):
         self._criterion = functions.calc_classification_criterion(self.activation, self.prediction, y, **kwargs)
         self._time_calc_criterion = time() - t0
 
-    def predict(self, xs: Optional[np.ndarray] = None) -> np.ndarray:
+    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> np.ndarray:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
         Will raise ValueError is xs is None and activation is not yet known.
 
         Parameters
         ----------
-        xs: np.ndarray
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
 
         Returns
         -------

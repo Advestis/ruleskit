@@ -40,7 +40,7 @@ def test_add(rule1, rule2, rs):
         ),
     ],
 )
-def test_coverage(xs, y, rule_list, coverage):
+def test_coverage(clean, xs, y, rule_list, coverage):
     [r.fit(xs, y) for r in rule_list]
     res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
     np.testing.assert_equal(res.coverage, coverage)

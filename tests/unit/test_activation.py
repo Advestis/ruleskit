@@ -27,14 +27,14 @@ Activation.FORCE_STAT = True
         ),
     ],
 )
-def test_init(vector, cs, ca, b, i, n):
-    res = Activation(vector, to_file=False)
+def test_init(clean, vector, cs, ca, b, i, n):
+    res = Activation(vector)
     np.testing.assert_equal(res.as_bitarray, b)
     np.testing.assert_equal(res.as_compressed_str, cs)
     np.testing.assert_equal(res.as_compressed_array, ca)
     np.testing.assert_equal(res.length, n)
     Activation.WILL_COMPARE = True
-    res = Activation(vector, to_file=False)
+    res = Activation(vector)
     np.testing.assert_equal(res.as_integer, i)
     np.testing.assert_equal(res.as_compressed_str, cs)
     np.testing.assert_equal(res.as_compressed_array, ca)
@@ -42,14 +42,12 @@ def test_init(vector, cs, ca, b, i, n):
     Activation.WILL_COMPARE = False
 
 
-def test_file():
+def test_file(clean):
     exp = np.array([1, 0, 1])
-    Activation.USE_FILE = True
     res = Activation(exp, to_file=True)
     assert res.data.is_file()
     np.testing.assert_equal(exp, res.raw)
     np.testing.assert_equal(exp, res._read())
-    Activation.USE_FILE = False
     assert res.ones is not None
     assert res.nones is not None
     assert res.sizeof_raw > 0
@@ -74,8 +72,8 @@ def test_file():
         np.array([0, 1, 0, 1]),
     ],
 )
-def test_raw(vector):
-    res = Activation(vector, to_file=False)
+def test_raw(clean, vector):
+    res = Activation(vector)
     np.testing.assert_equal(res.raw, vector)
 
 
@@ -92,8 +90,8 @@ def test_raw(vector):
         ),
     ],
 )
-def test_coverage(vector, coverage):
-    res = Activation(vector, to_file=False)
+def test_coverage(clean, vector, coverage):
+    res = Activation(vector)
     np.testing.assert_equal(res.coverage, coverage)
 
 
@@ -107,7 +105,7 @@ def test_coverage(vector, coverage):
         ),
     ],
 )
-def test_diff(vector1, vector2, diff):
+def test_diff(clean, vector1, vector2, diff):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
     np.testing.assert_equal((act1 - act2).raw, diff)
@@ -123,7 +121,7 @@ def test_diff(vector1, vector2, diff):
         ),
     ],
 )
-def test_and(vector1, vector2, and_vector):
+def test_and(clean, vector1, vector2, and_vector):
     act1 = Activation(vector1)
     act2 = Activation(vector2)
     np.testing.assert_equal((act1 & act2).raw, and_vector)
@@ -139,9 +137,9 @@ def test_and(vector1, vector2, and_vector):
         ),
     ],
 )
-def test_or(vector1, vector2, add_vector):
-    act1 = Activation(vector1, to_file=False)
-    act2 = Activation(vector2, to_file=False)
+def test_or(clean, vector1, vector2, add_vector):
+    act1 = Activation(vector1)
+    act2 = Activation(vector2)
     comb = (act1 | act2).raw
     np.testing.assert_equal(comb, add_vector)
 
@@ -156,9 +154,9 @@ def test_or(vector1, vector2, add_vector):
         ),
     ],
 )
-def test_xor(vector1, vector2, add_vector):
-    act1 = Activation(vector1, to_file=False)
-    act2 = Activation(vector2, to_file=False)
+def test_xor(clean, vector1, vector2, add_vector):
+    act1 = Activation(vector1)
+    act2 = Activation(vector2)
     comb = (act1 ^ act2).raw
     np.testing.assert_equal(comb, add_vector)
 
@@ -173,14 +171,14 @@ def test_xor(vector1, vector2, add_vector):
         ),
     ],
 )
-def test_sub(vector1, vector2, add_vector):
-    act1 = Activation(vector1, to_file=False)
-    act2 = Activation(vector2, to_file=False)
+def test_sub(clean, vector1, vector2, add_vector):
+    act1 = Activation(vector1)
+    act2 = Activation(vector2)
     comb = (act1 - act2).raw
     np.testing.assert_equal(comb, add_vector)
 
 
-def test_sizes():
+def test_sizes(clean):
     act = Activation(np.array([1, 0, 1]), to_file=False)
     assert act.sizeof_raw > 0
     assert act.sizeof_bitarray > 0

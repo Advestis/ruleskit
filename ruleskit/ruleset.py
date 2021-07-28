@@ -1,6 +1,5 @@
 from abc import ABC
 import ast
-import pandas as pd
 from typing import List, Union, Tuple, Any
 from collections import Counter
 import numpy as np
@@ -8,6 +7,13 @@ import itertools
 from collections import OrderedDict
 from .rule import Rule
 from .activation import Activation
+
+try:
+    import pandas as pd
+    pandas_ok = True
+except ImportError:
+    pd = None
+    pandas_ok = False
 
 
 class RuleSet(ABC):
@@ -198,6 +204,8 @@ class RuleSet(ABC):
         """Updates the stacked activation vectors of the RuleSet with the activation vector of a new Rule or
          the stacked activation vectors of another RuleSet."""
         if other.activation_available:
+            if not pandas_ok:
+                raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
             if self._activation is None:
                 if isinstance(other, Rule):
                     self.stacked_activations = pd.DataFrame(data=np.array(other.activation).T, columns=[str(other)])
@@ -222,6 +230,8 @@ class RuleSet(ABC):
         """Computes the stacked activation vectors of self from its rules."""
         if len(self) == 0:
             return
+        if not pandas_ok:
+            raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
         activations_available = all([r.activation_available for r in self])
         if activations_available:
             # noinspection PyProtectedMember

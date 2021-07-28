@@ -6,6 +6,13 @@ import numpy as np
 from numbers import Number
 from .activation import Activation
 
+try:
+    import pandas as pd
+    pandas_ok = True
+except ImportError:
+    pd = None
+    pandas_ok = False
+
 
 class DuplicatedFeatures(Exception):
     pass
@@ -398,14 +405,15 @@ class HyperrectangleCondition(Condition):
                     f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}"
                 )
 
-    def evaluate(self, xs: np.ndarray) -> np.ndarray:
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
         Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
 
         Parameters
         ----------
-        xs: np.ndarray
-            shape (n, d), n number of line, d number of features
+        xs: Union[pd.DataFrame, np.ndarray]
+            shape (n, d), n number of line, d number of features. If is a pd.DataFrame, will use self.features_names to
+            select features to use in xs
 
         Returns
         -------
@@ -427,11 +435,29 @@ class HyperrectangleCondition(Condition):
         """
         if self.impossible:
             return np.zeros(xs.shape[0], dtype=np.ubyte)
-        geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
-        for i, j in enumerate(self._features_indexes):
-            geq_min &= np.greater_equal(xs[:, j], self._bmins[i])
-            leq_min &= np.less_equal(xs[:, j], self._bmaxs[i])
-            not_nan &= np.isfinite(xs[:, j])
-        activation = geq_min & leq_min & not_nan
+
+        if isinstance(xs, np.ndarray):
+            if any([i >= len(xs) for i in self.features_indexes]):
+                raise IndexError("Some features indexes in self are greater than the size of the given xs array")
+            geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+            for i, j in enumerate(self._features_indexes):
+                geq_min &= np.greater_equal(xs[:, j], self._bmins[i])
+                leq_min &= np.less_equal(xs[:, j], self._bmaxs[i])
+                not_nan &= np.isfinite(xs[:, j])
+            activation = geq_min & leq_min & not_nan
+        elif pandas_ok:
+            if not isinstance(xs, pd.DataFrame):
+                raise TypeError("xs should be a np.ndarray or a pd.DataFrame object")
+            if any([i not in xs.columns for i in self.features_names]):
+                raise IndexError("Some features names in self were not in xs DataFrame columns")
+            geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+            for i, n in enumerate(self._features_names):
+                geq_min &= np.greater_equal(xs[n], self._bmins[i])
+                leq_min &= np.less_equal(xs[n], self._bmaxs[i])
+                not_nan &= np.isfinite(xs[n])
+            activation = (geq_min & leq_min & not_nan).values
+        else:
+            raise ImportError("If xs is not a np.ndarray, Condition expects it to be a pd.DataFrame, but pandas is not "
+                              "available. Please run\npip install pandas")
 
         return activation

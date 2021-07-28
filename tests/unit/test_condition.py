@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from ruleskit import HyperrectangleCondition
 import pytest
 
@@ -8,49 +9,21 @@ from ruleskit.condition import DuplicatedFeatures
 @pytest.mark.parametrize(
     "fi, fn, bi, ba, impossible, err",
     [
-        (
-            [0, 1], None, [0, 1], [2, 3], False, None
-        ),
-        (
-            [0, 1], ["A", "B"], [0, 1], [2, 3], False, None
-        ),
-        (
-            None, ["A", "B"], [0, 1], [2, 3], False, None
-        ),
-        (
-            None, None, [0, 1], [2, 3], False, ValueError
-        ),
-        (
-            [0, 1], None, [0, 1, 2], [2, 3], False, ValueError
-        ),
-        (
-            [0, 1], None, [0, 1], [1, 2, 3], False, ValueError
-        ),
-        (
-            [0, 1], ["A", "B", "C"], [1, 2], [2, 3], False, ValueError
-        ),
-        (
-            [0.2, 1], ["A", "B"], [1, 2], [2, 3], False, TypeError
-        ),
-        (
-            [0, 1], [1, "B"], [0, 1], [2, 3], False, TypeError
-        ),
-        (
-            [0, 1], ["A", "B"], ["0", 1], [2, 3], False, TypeError
-        ),
-        (
-            [0, 1], ["A", "B"], [0, 1], [2, "3"], False, TypeError
-        ),
-        (
-            [0, 1], ["A", "B"], [2, 1], [0, 3], True, None
-        ),
-        (
-            [0, 0], ["A", "B"], [2, 1], [0, 3], True, DuplicatedFeatures
-        ),
-        (
-            [0, 1], ["A", "A"], [2, 1], [0, 3], True, DuplicatedFeatures
-        ),
-    ]
+        ([0, 1], None, [0, 1], [2, 3], False, None),
+        ([0, 1], ["A", "B"], [0, 1], [2, 3], False, None),
+        (None, ["A", "B"], [0, 1], [2, 3], False, None),
+        (None, None, [0, 1], [2, 3], False, ValueError),
+        ([0, 1], None, [0, 1, 2], [2, 3], False, ValueError),
+        ([0, 1], None, [0, 1], [1, 2, 3], False, ValueError),
+        ([0, 1], ["A", "B", "C"], [1, 2], [2, 3], False, ValueError),
+        ([0.2, 1], ["A", "B"], [1, 2], [2, 3], False, TypeError),
+        ([0, 1], [1, "B"], [0, 1], [2, 3], False, TypeError),
+        ([0, 1], ["A", "B"], ["0", 1], [2, 3], False, TypeError),
+        ([0, 1], ["A", "B"], [0, 1], [2, "3"], False, TypeError),
+        ([0, 1], ["A", "B"], [2, 1], [0, 3], True, None),
+        ([0, 0], ["A", "B"], [2, 1], [0, 3], True, DuplicatedFeatures),
+        ([0, 1], ["A", "A"], [2, 1], [0, 3], True, DuplicatedFeatures),
+    ],
 )
 def test_init(fi, fn, bi, ba, impossible, err):
     if err is not None:
@@ -68,37 +41,13 @@ def test_init(fi, fn, bi, ba, impossible, err):
 @pytest.mark.parametrize(
     "fi, fn, bi, ba, fie, fne, bie, bae, according_to",
     [
-        (
-            [0, 1], None, [0, 1], [2, 3],
-            [0, 1], ["X_0", "X_1"], [0, 1], [2, 3],
-            "index"
-        ),
-        (
-            [1, 0], None, [1, 0], [3, 2],
-            [0, 1], ["X_0", "X_1"], [0, 1], [2, 3],
-            "index"
-        ),
-        (
-            [0, 1], None, [0, 1], [2, 3],
-            [0, 1], ["X_0", "X_1"], [0, 1], [2, 3],
-            "name"
-        ),
-        (
-            [1, 0], None, [1, 0], [3, 2],
-            [0, 1], ["X_0", "X_1"], [0, 1], [2, 3],
-            "name"
-        ),
-        (
-            [1, 0], ["A", "B"], [1, 0], [3, 2],
-            [1, 0], ["A", "B"], [1, 0], [3, 2],
-            "name"
-        ),
-        (
-            [1, 0], ["A", "B"], [1, 0], [3, 2],
-            [0, 1], ["B", "A"], [0, 1], [2, 3],
-            "index"
-        )
-    ]
+        ([0, 1], None, [0, 1], [2, 3], [0, 1], ["X_0", "X_1"], [0, 1], [2, 3], "index"),
+        ([1, 0], None, [1, 0], [3, 2], [0, 1], ["X_0", "X_1"], [0, 1], [2, 3], "index"),
+        ([0, 1], None, [0, 1], [2, 3], [0, 1], ["X_0", "X_1"], [0, 1], [2, 3], "name"),
+        ([1, 0], None, [1, 0], [3, 2], [0, 1], ["X_0", "X_1"], [0, 1], [2, 3], "name"),
+        ([1, 0], ["A", "B"], [1, 0], [3, 2], [1, 0], ["A", "B"], [1, 0], [3, 2], "name"),
+        ([1, 0], ["A", "B"], [1, 0], [3, 2], [0, 1], ["B", "A"], [0, 1], [2, 3], "index"),
+    ],
 )
 def test_sort(fi, fn, bi, ba, fie, fne, bie, bae, according_to):
     HyperrectangleCondition.SORT_ACCORDING_TO = according_to
@@ -111,29 +60,60 @@ def test_sort(fi, fn, bi, ba, fie, fne, bie, bae, according_to):
 
 
 @pytest.mark.parametrize(
-    "x, condition, output",
+    "x, condition, output, error",
     [
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             HyperrectangleCondition([0], bmins=[1], bmaxs=[2]),
             np.array([1, 0, 1]),
+            None,
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             HyperrectangleCondition([1], bmins=[3], bmaxs=[5]),
             np.array([1, 1, 0]),
+            None,
         ),
         (
             np.array([[1, 3], [3, 4], [2, np.nan]]),
             HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5]),
             np.array([1, 0, 0]),
+            None,
+        ),
+        (
+            np.array([[1, 3], [3, 4], [2, np.nan]]),
+            HyperrectangleCondition([0, 3], bmins=[1, 3], bmaxs=[2, 5]),
+            np.array([1, 0, 0]),
+            IndexError,
+        ),
+        (
+            pd.DataFrame(data=[[1, 3], [3, 4], [2, np.nan]], columns=["A", "B"]),
+            HyperrectangleCondition([0, 3], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
+            np.array([1, 0, 0]),
+            None,
+        ),
+        (
+            pd.DataFrame(data=[[1, 3], [3, 4], [2, np.nan]], columns=["A", "B"]),
+            HyperrectangleCondition([0, 3], features_names=["A", "C"], bmins=[1, 3], bmaxs=[2, 5]),
+            np.array([1, 0, 0]),
+            IndexError,
+        ),
+        (
+            [[1, 3], [3, 4], [2, np.nan]],
+            HyperrectangleCondition([0, 3], features_names=["A", "C"], bmins=[1, 3], bmaxs=[2, 5]),
+            np.array([1, 0, 0]),
+            TypeError,
         ),
     ],
 )
-def test_evaluate(x, condition, output):
-    res = condition.evaluate(x)
-    # noinspection PyUnresolvedReferences
-    np.testing.assert_equal(res, output)
+def test_evaluate(x, condition, output, error):
+    if error is not None:
+        with pytest.raises(error):
+            _ = condition.evaluate(x)
+    else:
+        res = condition.evaluate(x)
+        # noinspection PyUnresolvedReferences
+        np.testing.assert_equal(res, output)
 
 
 @pytest.mark.parametrize(
@@ -176,7 +156,7 @@ def test_and(condition1, condition2, output):
     if isinstance(output, str):
         with pytest.raises(IndexError) as e:
             _ = condition1 & condition2
-            assert output in str(e)
+        assert output in str(e.value)
     else:
         res = condition1 & condition2
         np.testing.assert_equal(res, output)
@@ -195,14 +175,14 @@ def test_and(condition1, condition2, output):
         ("features_names", ["C", "D", "E"], f"Condition has 2 features but you gave 3 names"),
         ("bmins", [2, 1], True),
         ("bmaxs", [1, 0], True),
-    ]
+    ],
 )
 def test_set_attr(attr, value, impossible_or_raise):
     cond = HyperrectangleCondition(features_indexes=[0, 1], features_names=["A", "B"], bmins=[0, 1], bmaxs=[1, 2])
     if isinstance(impossible_or_raise, str):
         with pytest.raises(IndexError) as e:
             setattr(cond, attr, value)
-            assert impossible_or_raise in str(e)
+        assert impossible_or_raise in str(e.value)
     else:
         setattr(cond, attr, value)
         assert getattr(cond, attr) == value
