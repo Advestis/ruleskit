@@ -1,8 +1,9 @@
 from abc import ABC
-from typing import Union
+from typing import Union, List
 import numpy as np
 import ast
 import sys
+import random
 from time import time
 from bitarray import bitarray
 from tempfile import gettempdir
@@ -29,7 +30,7 @@ class Activation(ABC):
         activation: Union[np.ndarray, bitarray, str, int] = None,
         optimize: bool = True,
         length: int = None,
-        name_for_file: str = None,
+        to_file: bool = False,
     ):
         """Compresses an activation vector into a str(list) describing its variations or an bitarray of booleans
 
@@ -67,10 +68,11 @@ class Activation(ABC):
             Only valid if 'value' is an integer. An activation vector stored as an integer has lost the information
             about its size : [0 0 0 1 0 0 0 1 1...] to nit gives 100011... which in turn gives back [1 0 0 0 1 1...].
             To get the leading zeros back, one must specify the length of the activation vector.
-        name_for_file: str
-            If specified, then activation vector is stored in a file in
-            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_name_for_file.txt
+        to_file: bool
+            If True, then activation vector is stored in a file in
+            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = False)
         """
+        self.optimize = optimize
         self.length = None  # Will be set by init methods
         self._entropy = None  # Will be set if activation is not an integer or if optimize is True
         self.data_format = None  # Will be set by init methods
@@ -128,29 +130,58 @@ class Activation(ABC):
             if activation[-1] > 1:
                 self._init_with_compressed_array(activation)
             else:
-                if name_for_file is None:
-                    self._init_with_raw(activation, Activation.DTYPE)
+                if to_file:
+                    if not self._write(activation):
+                        self._init_with_raw(activation, Activation.DTYPE)
                 else:
-                    self._write(activation, name_for_file)
+                    self._init_with_raw(activation, Activation.DTYPE)
         else:
             raise TypeError(
                 f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
                 f" {type(activation)}."
             )
 
-    def _write(self, value: np.ndarray, name: str):
+    def __copy__(self):
+        if self.data_format == "integer":
+            return Activation(self.raw, optimize=self.optimize, length=self.length)
+        return Activation(self.raw, optimize=self.optimize, to_file=self.data_format == "file")
+
+    # def __del__(self):
+    #     if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":
+    #         if self.data.is_file():
+    #             self.data.unlink()
+
+    def delete(self):
+        """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data"""
+        if self.data_format == "file":
+            if self.data.is_file():
+                self.data.unlink()
+        else:
+            del self.data
+            self.data = None
+
+    def _write(self, value: np.ndarray):
 
         logger.debug(f"Activation vector is raw, store it in a file")
-        if name is None:
-            raise ValueError("If storing to file, need to provide a name")
         self._sizeof_raw = sys.getsizeof(value) / 1e6
         self.length = len(value)
         self._nones = np.count_nonzero(value == 1)
         t0 = time()
-        self.data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{name}.txt"
+        arange = (0, int(1e64))
+        number = random.randint(*arange)
+        data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{number}.txt"
+        attempts = 0
+        while data.is_file():
+            if attempts > 99:
+                logger.warning("Failed to save activation vector locally after 100 attempts at finding an available"
+                               " name. Will keep it in RAM.")
+                return False
+            number += 1
+            attempts += 1
+            data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{number}.txt"
+        data.touch()
+        self.data = data
         self.data_format = "file"
-        if self.data.is_file():
-            raise FileExistsError(f"There is already an activation vector with the name {name}")
         with open(self.data, "wb") as f:
             # noinspection PyTypeChecker
             np.save(f, value, allow_pickle=False)
@@ -162,6 +193,7 @@ class Activation(ABC):
         self._sizeof_path = sys.getsizeof(self.data) / 1e6
         self._time_write = time() - t0
         self._n_written += 1
+        return True
 
     def _read(self, path: Path = None, out: bool = True) -> np.ndarray:
         if path is None:
@@ -367,27 +399,43 @@ class Activation(ABC):
             self.data_format = "bitarray"
             self.data = inbitarray
 
+    def __and__(self, a2: "Activation") -> "Activation":
+        if self.length != a2.length:
+            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {a2.length}")
+
+        if (self.data_format == "bitarray" and a2.data_format == "bitarray") or (
+                self.data_format == "integer" and a2.data_format == "integer"
+        ):
+            return Activation(self.data & a2.data, to_file=self.data_format == "file" and a2.data_format == "file")
+        else:
+            return Activation(self.raw * a2.raw, to_file=self.data_format == "file" and a2.data_format == "file")
+
     @staticmethod
-    def logical_and(r1: "Activation", r2: "Activation", name: str = None) -> "Activation":
-        if r1.length != r2.length:
-            raise ValueError(f"Activations have different lengths. Left is {r1.length}, right is {r2.length}")
+    def multi_logical_and(acs: List["Activation"]):
+        """Do logical and on many activation vectors at once. Uses raw version to gain time."""
+        if len(acs) == 1:
+            return Activation(acs[0].raw, to_file=acs[0].data_format == "file")
+        return Activation(np.vstack([a.raw for a in acs]).all(axis=0).astype(np.ubyte),
+                          to_file=all([a.data_format == "file" for a in acs]))
 
-        if (r1.data_format == "bitarray" and r2.data_format == "bitarray") or (
-            r1.data_format == "integer" and r2.data_format == "integer"
-        ):
-            return Activation(r1.data & r2.data, name_for_file=name)
-        else:
-            return Activation(r1.raw * r2.raw, name_for_file=name)
+    def __or__(self, a2: "Activation") -> "Activation":
+        if self.length != a2.length:
+            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {a2.length}")
 
-    def __or__(self, other: "Activation") -> "Activation":
-        if self.length != other.length:
-            raise ValueError(f"Activations have different lengths. Left is {self.length}, right is {other.length}")
-        if (self.data_format == "bitarray" and other.data_format == "bitarray") or (
-            self.data_format == "integer" and other.data_format == "integer"
+        if (self.data_format == "bitarray" and a2.data_format == "bitarray") or (
+                self.data_format == "integer" and a2.data_format == "integer"
         ):
-            return Activation(self.data or other.data)
+            return Activation(self.data or a2.data, to_file=self.data_format == "file" and a2.data_format == "file")
         else:
-            return Activation(np.logical_or(self.raw, other.raw, length=self.length).astype("int32"))
+            return Activation(self.raw | a2.raw, to_file=self.data_format == "file" and a2.data_format == "file")
+
+    @staticmethod
+    def multi_logical_or(acs: List["Activation"]):
+        """Do logical or on many activation vectors at once. Uses raw version to gain time."""
+        if len(acs) == 1:
+            return Activation(acs[0].raw, to_file=acs[0].data_format == "file")
+        return Activation(np.vstack([a.raw for a in acs]).any(axis=0).astype(np.ubyte),
+                          to_file=all([a.data_format == "file" for a in acs]))
 
     def __add__(self, other: "Activation") -> "Activation":
         if self.length != other.length:
@@ -585,7 +633,9 @@ class Activation(ABC):
         return act
 
     def __contains__(self, other: "Activation") -> bool:
-        nones_intersection = (Activation.logical_and(self, other)).nones
+        intersection = self and other
+        nones_intersection = intersection.nones
+        intersection.delete()
         if nones_intersection < min(self.nones, other.nones):
             return False
         return True

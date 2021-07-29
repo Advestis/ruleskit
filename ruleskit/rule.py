@@ -1,7 +1,6 @@
 from abc import ABC
 import numpy as np
 from typing import Optional, Union
-from copy import copy
 from time import time
 from .condition import Condition
 from .activation import Activation
@@ -30,19 +29,33 @@ class Rule(ABC):
 
     def __and__(self, other: "Rule") -> "Rule":
         condition = self._condition + other._condition
-        activation = Activation.logical_and(
-            self._activation,
-            other._activation,
-            condition.__hash__() if Rule.LOCAL_ACTIVATION else None
-        )
+        activation = self._activation & other._activation
         return self.__class__(condition, activation)
 
     def __add__(self, other: "Rule") -> "Rule":
         return NotImplemented("Can not add rules (seen as 'logical OR'). you can use logical AND however.")
 
+    # def __del__(self):
+    #     self.del_activation()
+
+    def del_activation(self):
+        """Deletes the activation vector's data, but not the object itself, so any computed attribute will remain
+        available"""
+        if hasattr(self, "_activation") and self._activation is not None:
+            self._activation.delete()
+
+    @property
+    def activation_available(self):
+        if self._activation is None:
+            return False
+        if self._activation.data_format == "file":
+            return self._activation.data.is_file()
+        else:
+            return self._activation.data is not None
+
     @property
     def condition(self) -> Condition:
-        return copy(self._condition)
+        return self._condition
 
     @property
     def activation(self) -> Union[None, np.ndarray]:
@@ -98,15 +111,21 @@ class Rule(ABC):
             return "empty rule"
         return f"If {self._condition.__str__()} Then {prediction}."
 
+    @property
+    def to_hash(self):
+        return ("r",) + self._condition.to_hash[1:]
+
     def __hash__(self) -> hash:
-        return hash(self._condition)
+        return hash(frozenset(self.to_hash))
 
     def __len__(self):
         return len(self._condition)
 
     def evaluate(self, xs: np.ndarray) -> Activation:
         arr = self._condition.evaluate(xs)
-        return Activation(arr, name_for_file=self.__hash__() if Rule.LOCAL_ACTIVATION else None)
+        # noinspection PyTypeChecker
+        a = Activation(arr, to_file=Rule.LOCAL_ACTIVATION)
+        return a
 
     # noinspection PyUnusedLocal
     def fit(self, xs: np.ndarray, y: np.ndarray, crit: str = "mse", **kwargs):
