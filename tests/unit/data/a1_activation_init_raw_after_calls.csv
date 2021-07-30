@@ -1,0 +1,40 @@
+optimize,will_compare_False_store_raw_False_to_file_False,will_compare_True_store_raw_True_to_file_True,will_compare_True_store_raw_False_to_file_False,will_compare_False_store_raw_True_to_file_False,will_compare_False_store_raw_False_to_file_True,will_compare_False_store_raw_True_to_file_True,will_compare_True_store_raw_False_to_file_True,will_compare_True_store_raw_True_to_file_False
+_nones,not None,not None,not None,not None,not None,not None,not None,not None
+_entropy,not None,not None,not None,not None,not None,not None,not None,not None
+_rel_entropy,not None,not None,not None,not None,not None,not None,not None,not None
+sizeof_path,-1,>0,-1,-1,>0,>0,>0,-1
+sizeof_file,-1,>0,-1,-1,>0,>0,>0,-1
+sizeof_raw,>0,>0,>0,>0,>0,>0,>0,>0
+sizeof_bitarray,>0,>0,>0,>0,>0,>0,>0,>0
+sizeof_integer,>0,>0,>0,>0,>0,>0,>0,>0
+sizeof_compressed_str,>0,>0,>0,>0,>0,>0,>0,>0
+sizeof_compressed_array,>0,>0,>0,>0,>0,>0,>0,>0
+time_write,-1,>0,-1,-1,>0,>0,>0,-1
+time_read,-1,>0,-1,-1,>0,>0,>0,-1
+time_raw_to_compressed,>0,>0,>0,>0,>0,>0,>0,>0
+time_compressed_to_raw,>0,-1,>0,-1,-1,-1,-1,-1
+time_raw_to_bitarray,>0,>0,>0,>0,>0,>0,>0,>0
+time_raw_to_integer,>0,>0,>0,>0,>0,>0,>0,>0
+time_bitarray_to_raw,-1,-1,-1,-1,-1,-1,-1,-1
+time_integer_to_raw,-1,-1,-1,-1,-1,-1,-1,-1
+time_bitarray_to_compressed,-1,-1,-1,-1,-1,-1,-1,-1
+time_integer_to_compressed,-1,-1,-1,-1,-1,-1,-1,-1
+time_compressed_to_bitarray,>0,-1,>0,-1,-1,-1,-1,-1
+time_compressed_to_integer,>0,-1,>0,-1,-1,-1,-1,-1
+time_bitarray_to_integer,-1,-1,-1,-1,-1,-1,-1,-1
+time_integer_to_bitarray,-1,-1,-1,-1,-1,-1,-1,-1
+n_written,0,1,0,0,1,1,1,0
+n_read,0,4,0,0,4,4,4,0
+n_raw_to_compressed,1,2,1,2,2,2,2,2
+n_compressed_to_raw,4,0,4,0,0,0,0,0
+n_raw_to_bitarray,2,1,1,1,1,1,1,1
+n_raw_to_integer,1,1,2,1,1,1,1,1
+n_bitarray_to_raw,0,0,0,0,0,0,0,0
+n_integer_to_raw,0,0,0,0,0,0,0,0
+n_bitarray_to_compressed,0,0,0,0,0,0,0,0
+n_integer_to_compressed,0,0,0,0,0,0,0,0
+n_compressed_to_bitarray,1,0,1,0,0,0,0,0
+n_compressed_to_integer,1,0,1,0,0,0,0,0
+n_bitarray_to_integer,0,0,0,0,0,0,0,0
+n_integer_to_bitarray,0,0,0,0,0,0,0,0
+data_format,compressed_str,file,compressed_str,raw,file,file,file,raw
