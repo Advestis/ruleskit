@@ -147,6 +147,7 @@ class RuleSet(ABC):
 
         if self._activation is not None and hasattr(self._activation, item):
             return getattr(self._activation, item)
+        raise AttributeError(f"'RuleSet' object has no attribute '{item}'")
 
     def __len__(self):
         """The length of a RuleSet its the number of rules stored in it."""
