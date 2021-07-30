@@ -139,9 +139,9 @@ def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     return error_vector / median_error
 
 
-def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, method: str, cond: bool = True) -> float:
+def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, **kwargs) -> float:
     """
-    Compute the criteria
+    Compute the criterion
 
     Parameters
     ----------
@@ -151,17 +151,19 @@ def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, meth
     y : np.ndarray
         The real target values (real numbers)
 
-    method : str
-        The method mse_function or mse_function criterion
-
-    cond : bool
-        To evaluate the criterion only if the rule is activated
+    kwargs : dict
+        Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
+         to evaluate the criterion only if the rule is activated (default is True)
 
     Return
     ------
     criterion : float
         Criteria value
     """
+
+    method = kwargs.get("method", "mse")
+    cond = kwargs.get("cond", True)
+
     if cond:
         sub_y = np.extract(prediction_vector != 0, y)
         sub_pred = np.extract(prediction_vector != 0, prediction_vector)
@@ -190,10 +192,10 @@ def success_rate(prediction: Union[int, str], y: np.ndarray):
 
 
 def calc_classification_criterion(
-    activation_vector: np.ndarray, prediction: Union[int, str], y: np.ndarray, method: str, cond: bool = True,
+    activation_vector: np.ndarray, prediction: Union[int, str], y: np.ndarray, **kwargs
 ) -> float:
     """
-    Compute the criteria
+    Computes the criterion
 
     Parameters
     ----------
@@ -206,17 +208,19 @@ def calc_classification_criterion(
     y : np.ndarray
         The real target values (real numbers)
 
-    method : str
-        The method mse_function or mse_function criterion
-
-    cond : bool
-        To evaluate the criterion only if the rule is activated
+    kwargs : dict
+        Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
+         to evaluate the criterion only if the rule is activated (default is True)
 
     Return
     ------
     criterion : float
         Criteria value
     """
+
+    method = kwargs.get("method", "success_rate")
+    cond = kwargs.get("cond", True)
+
     if cond:
         sub_y = np.extract(activation_vector != 0, y)
     else:
