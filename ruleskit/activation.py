@@ -1301,12 +1301,12 @@ class Activation(ABC):
         In that case and if Activation.FORCE_STAT is True, will force the object to write the file to compute the
          relevant profiling attributes."""
         if self._sizeof_path == -1 and Activation.FORCE_STAT:
-            fmt = self.data_format
             data = self.data
+            fmt = self.data_format
             self._write(self.raw)
             self.data.unlink()
-            self.data_format = fmt
             self.data = data
+            self.data_format = fmt
         return self._sizeof_path
 
     @property
@@ -1315,12 +1315,12 @@ class Activation(ABC):
         Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling
         attributes."""
         if self._sizeof_file == -1 and Activation.FORCE_STAT:
-            fmt = self.data_format
             data = self.data
+            fmt = self.data_format
             self._write(self.raw)
             self.data.unlink()
-            self.data_format = fmt
             self.data = data
+            self.data_format = fmt
         return self._sizeof_file
 
     @property
@@ -1374,12 +1374,12 @@ class Activation(ABC):
         if Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling
         attributes."""
         if self._time_write == -1 and Activation.FORCE_STAT:
-            fmt = self.data_format
             data = self.data
+            fmt = self.data_format
             self._write(self.raw)
             self.data.unlink()
-            self.data_format = fmt
             self.data = data
+            self.data_format = fmt
         return self._time_write
 
     @property
@@ -1388,13 +1388,13 @@ class Activation(ABC):
         Activation.FORCE_STAT is True, will force the object to write the file to compute the relevant profiling
         attributes."""
         if self._time_read == -1 and Activation.FORCE_STAT:
-            fmt = self.data_format
             data = self.data
+            fmt = self.data_format
             self._write(self.raw)
             _ = self._read(self.data, out=False)
             self.data.unlink()
-            self.data_format = fmt
             self.data = data
+            self.data_format = fmt
         return self._time_read
 
     @property
@@ -1403,18 +1403,13 @@ class Activation(ABC):
         Activation.FORCE_STAT is True, will force the object to call self._compress to compute the relevant profiling
         attributes."""
         if self._time_raw_to_compressed == -1 and Activation.FORCE_STAT:
-            t0 = time()
-            raw = self.raw
-            t1 = time()
-            _ = self._compress(raw)
-            self._time_raw_to_compressed = time() - t1
-            self._n_raw_to_compressed += 1
-            if self.data_format == "integer":
-                self._n_integer_to_compressed += 1
-                self._time_integer_to_compressed = time() - t0
-            elif self.data_format == "bitarray":
-                self._n_bitarray_to_compressed += 1
-                self._time_bitarray_to_compressed = time() - t0
+            data = self.data
+            fmt = self.data_format
+            self.data = self.raw
+            self.data_format = "raw"
+            _ = self.as_compressed
+            self.data = data
+            self.data_format = fmt
         return self._time_raw_to_compressed
 
     @property
@@ -1423,18 +1418,13 @@ class Activation(ABC):
         Activation.FORCE_STAT is True, will force the object to call self._raw_to_integer to compute the relevant
         profiling attributes."""
         if self._time_raw_to_integer == -1 and Activation.FORCE_STAT:
-            t0 = time()
-            raw = self.raw
-            t1 = time()
-            _ = self._raw_to_integer(raw)
-            self._time_raw_to_integer = time() - t1
-            self._n_raw_to_integer += 1
-            if self.data_format == "compressed":
-                self._n_compressed_to_integer += 1
-                self._time_compressed_to_integer = time() - t0
-            elif self.data_format == "bitarray":
-                self._n_bitarray_to_integer += 1
-                self._time_bitarray_to_integer = time() - t0
+            data = self.data
+            fmt = self.data_format
+            self.data = self.raw
+            self.data_format = "raw"
+            _ = self.as_integer
+            self.data = data
+            self.data_format = fmt
         return self._time_raw_to_integer
 
     @property
@@ -1443,18 +1433,13 @@ class Activation(ABC):
         Activation.FORCE_STAT is True, will force the object to call self._raw_to_bitarray to compute the relevant
         profiling attributes."""
         if self._time_raw_to_bitarray == -1 and Activation.FORCE_STAT:
-            t0 = time()
-            raw = self.raw
-            t1 = time()
-            _ = self._raw_to_bitarray(raw)
-            self._time_raw_to_bitarray = time() - t1
-            self._n_raw_to_bitarray += 1
-            if self.data_format == "compressed":
-                self._n_compressed_to_bitarray += 1
-                self._time_compressed_to_bitarray = time() - t0
-            elif self.data_format == "integer":
-                self._n_integer_to_bitarray += 1
-                self._time_integer_to_bitarray = time() - t0
+            data = self.data
+            fmt = self.data_format
+            self.data = self.raw
+            self.data_format = "raw"
+            _ = self.as_bitarray
+            self.data = data
+            self.data_format = fmt
         return self._time_raw_to_bitarray
 
     @property
@@ -1462,9 +1447,17 @@ class Activation(ABC):
         """Returns the time in seconds to compress the vector, or -1 if it does not exist. In that case and if
         Activation.FORCE_STAT is True, will force the object to call self._decompress to compute the relevant
         profiling attributes."""
-        # TODO (pcotte) : detect format to update all relevant profiling attributes
         if self._time_compressed_to_raw == -1 and Activation.FORCE_STAT:
-            _ = self._decompress(self.as_compressed, out=False)
+            data = self.data
+            fmt = self.data_format
+            self.data = self.as_compressed
+            if isinstance(self.data, str):
+                self.data_format = "compressed_str"
+            else:
+                self.data_format = "compressed_array"
+            _ = self.raw
+            self.data = data
+            self.data_format = fmt
         return self._time_compressed_to_raw
 
     @property
@@ -1472,9 +1465,14 @@ class Activation(ABC):
         """Returns the time in seconds to go from bitarray to raw, or -1 if it does not exist. In that case and if
         Activation.FORCE_STAT is True, will force the object to call self._bitarray_to_raw to compute the relevant
         profiling attributes."""
-        # TODO (pcotte) : detect format to update all relevant profiling attributes
         if self._time_bitarray_to_raw == -1 and Activation.FORCE_STAT:
-            _ = self._bitarray_to_raw(self.as_bitarray, out=False)
+            data = self.data
+            fmt = self.data_format
+            self.data = self.as_bitarray
+            self.data_format = "bitarray"
+            _ = self.raw
+            self.data = data
+            self.data_format = fmt
         return self._time_bitarray_to_raw
 
     @property
@@ -1482,9 +1480,14 @@ class Activation(ABC):
         """Returns the time in seconds to go from integer to raw, or -1 if it does not exist. In that case and if
         Activation.FORCE_STAT is True, will force the object to call self._integer_to_raw to compute the relevant
         profiling attributes."""
-        # TODO (pcotte) : detect format to update all relevant profiling attributes
         if self._time_integer_to_raw == -1 and Activation.FORCE_STAT:
-            _ = self._integer_to_raw(self.as_integer, out=False)
+            data = self.data
+            fmt = self.data_format
+            self.data = self.as_integer
+            self.data_format = "integer"
+            _ = self.raw
+            self.data = data
+            self.data_format = fmt
         return self._time_integer_to_raw
 
     @property
@@ -1492,9 +1495,17 @@ class Activation(ABC):
         """Returns the time in seconds to go from compressed to bitarray, or -1 if it does not exist. In that case
         and if Activation.FORCE_STAT is True, will force the object to call self._decompress on self.as_compressed with
          'raw=False' to compute the relevant profiling attributes."""
-        # TODO (pcotte) : detect format to update all relevant profiling attributes
         if self._time_compressed_to_bitarray == -1 and Activation.FORCE_STAT:
-            _ = self._decompress(self.as_compressed, raw=False)
+            data = self.data
+            fmt = self.data_format
+            self.data = self.as_compressed
+            if isinstance(self.data, str):
+                self.data_format = "compressed_str"
+            else:
+                self.data_format = "compressed_array"
+            _ = self.as_bitarray
+            self.data = data
+            self.data_format = fmt
         return self._time_compressed_to_bitarray
 
     @property
@@ -1502,17 +1513,14 @@ class Activation(ABC):
         """Returns the time in seconds to go from bitarray to compressed, or -1 if it does not exist. In that case
         and if Activation.FORCE_STAT is True, will force the object to call self._compress on self.as_bitarray to
         compute the relevant profiling attributes."""
-        # TODO (pcotte) : detect format to update all relevant profiling attributes
         if self._time_bitarray_to_compressed == -1 and Activation.FORCE_STAT:
-            t0 = time()
-            b = self.as_bitarray
-            raw = self._bitarray_to_raw(b, out=False)
-            t1 = time()
-            _ = self._compress(raw)
-            self._time_raw_to_compressed = time() - t1
-            self._n_raw_to_compressed += 1
-            self._time_bitarray_to_compressed = time() - t0
-            self._n_bitarray_to_compressed += 1
+            data = self.data
+            fmt = self.data_format
+            self.data = self.as_bitarray
+            self.data_format = "bitarray"
+            _ = self.as_compressed
+            self.data = data
+            self.data_format = fmt
         return self._time_bitarray_to_compressed
 
     @property
@@ -1520,17 +1528,14 @@ class Activation(ABC):
         """Returns the time in seconds to go from integer to compressed, or -1 if it does not exist. In that case
         and if Activation.FORCE_STAT is True, will force the object to call self._compress on
         self._integer_to_raw(self.as_integer) to compute the relevant profiling attributes."""
-        # TODO (pcotte) : detect format to update all relevant profiling attributes
         if self._time_integer_to_compressed == -1 and Activation.FORCE_STAT:
-            t0 = time()
-            i = self.as_integer
-            raw = self._integer_to_raw(i, out=False)
-            t1 = time()
-            _ = self._compress(raw)
-            self._time_raw_to_compressed = time() - t1
-            self._n_raw_to_compressed += 1
-            self._time_integer_to_compressed = time() - t0
-            self._n_integer_to_compressed += 1
+            data = self.data
+            fmt = self.data_format
+            self.data = self.as_integer
+            self.data_format = "integer"
+            _ = self.as_compressed
+            self.data = data
+            self.data_format = fmt
         return self._time_integer_to_compressed
 
     @property
@@ -1539,10 +1544,13 @@ class Activation(ABC):
         and if Activation.FORCE_STAT is True, will force the object to call self._compress on
         self._integer_to_raw(self.as_integer) to compute the relevant profiling attributes."""
         if self._time_bitarray_to_integer == -1 and Activation.FORCE_STAT:
-            old_data = self.data
+            data = self.data
+            fmt = self.data_format
             self.data = self.as_bitarray
+            self.data_format = "bitarray"
             _ = self.as_integer
-            self.data = old_data
+            self.data = data
+            self.data_format = fmt
         return self._time_bitarray_to_integer
 
     @property
@@ -1551,10 +1559,13 @@ class Activation(ABC):
         and if Activation.FORCE_STAT is True, will force the object to call self.as_integer on
         self to compute the relevant profiling attributes."""
         if self._time_integer_to_bitarray == -1 and Activation.FORCE_STAT:
-            old_data = self.data
+            data = self.data
+            fmt = self.data_format
             self.data = self.as_integer
+            self.data_format = "integer"
             _ = self.as_bitarray
-            self.data = old_data
+            self.data = data
+            self.data_format = fmt
         return self._time_integer_to_bitarray
 
     @property
@@ -1563,10 +1574,16 @@ class Activation(ABC):
         and if Activation.FORCE_STAT is True, will force the object to call self.as_compress on
         to compute the relevant profiling attributes."""
         if self._time_compressed_to_integer == -1 and Activation.FORCE_STAT:
-            old_data = self.data
+            data = self.data
+            fmt = self.data_format
             self.data = self.as_compressed
+            if isinstance(self.data, str):
+                self.data_format = "compressed_str"
+            else:
+                self.data_format = "compressed_array"
             _ = self.as_integer
-            self.data = old_data
+            self.data = data
+            self.data_format = fmt
         return self._time_compressed_to_integer
 
     @property
