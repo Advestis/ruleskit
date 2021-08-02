@@ -205,10 +205,11 @@ class Activation(ABC):
             self._sizeof_bitarray = sys.getsizeof(activation)
         elif isinstance(activation, bitarray) and Activation.WILL_COMPARE:
             self._sizeof_bitarray = sys.getsizeof(activation)
+            self._nones = activation.count(1)
             t0 = time()
             if length is None:
                 length = len(activation)
-            activation = int(str(activation).replace("bitarray(", "").replace(")", ""), 2)
+            activation = int(str(activation).replace("bitarray(", "").replace(")", "").replace("'", "").replace('"', ""), 2)
             self._time_bitarray_to_integer = time() - t0
             self._n_bitarray_to_integer += 1
             self._sizeof_integer = sys.getsizeof(activation)

@@ -96,7 +96,7 @@ def compare_column(res, df, column):
         [True, False],
         [True, False],
         [True, False],
-        ["raw", "integer"]  # "bitarray", "compressed_str", "compressed_array", "file"],
+        ["raw", "integer", "bitarray"]  # "compressed_str", "compressed_array", "file"],
     )
 )
 def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_raw, to_file, withwhat):
@@ -128,9 +128,6 @@ def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_
             ignore = [ignore]
 
     column = make_column(will_compare, optimize, store_raw, to_file, ignore)
-
-    if column == "will_compare_True_optimize_True_store_raw_True_to_file_False" and "a2" in str(p):
-        print("coucou")
 
     res = Activation(value, optimize=optimize, to_file=to_file, length=n)
     Activation.WILL_COMPARE = False
