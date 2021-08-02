@@ -194,6 +194,7 @@ class Activation(ABC):
         elif isinstance(activation, int) and not Activation.WILL_COMPARE:
             if length is None:
                 raise ValueError("When giving an integer to Activation, you must also specify its length.")
+            self._sizeof_integer = sys.getsizeof(activation)
             t0 = time()
             s = bin(activation)[2:]
             if len(s) != length:
@@ -203,6 +204,7 @@ class Activation(ABC):
             self._n_integer_to_bitarray += 1
             self._sizeof_bitarray = sys.getsizeof(activation)
         elif isinstance(activation, bitarray) and Activation.WILL_COMPARE:
+            self._sizeof_bitarray = sys.getsizeof(activation)
             t0 = time()
             if length is None:
                 length = len(activation)
@@ -360,7 +362,10 @@ class Activation(ABC):
         if self.optimize:
             t0 = time()
             raw = self._bitarray_to_raw(value, out=False)
+            t1 = time()
             compressed = self._compress(raw, dtype=dtype)
+            self._time_raw_to_compressed = time() - t1
+            self._n_raw_to_compressed += 1
             self._time_bitarray_to_compressed = time() - t0
             self._n_bitarray_to_compressed += 1
             if isinstance(compressed, str):
