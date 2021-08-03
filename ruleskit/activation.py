@@ -86,8 +86,8 @@ class Activation(ABC):
             computing a logical AND.
             The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
             Activation.WILL_COMPARE is False (converting to bitarray is faster than to integer, but computing
-            logical AND on integers is faster). Size is equivalent to integer : one bit per entry. It is also stored this
-            way if 'activation' is a string and Activation.WILL_COMPARE is False.
+            logical AND on integers is faster). Size is equivalent to integer : one bit per entry. It is also stored
+            this way if 'activation' is a string and Activation.WILL_COMPARE is False.
             It is never stored this way if to_file is True.
         Integer :
             taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
@@ -209,7 +209,9 @@ class Activation(ABC):
             t0 = time()
             if length is None:
                 length = len(activation)
-            activation = int(str(activation).replace("bitarray(", "").replace(")", "").replace("'", "").replace('"', ""), 2)
+            activation = int(
+                str(activation).replace("bitarray(", "").replace(")", "").replace("'", "").replace('"', ""), 2
+            )
             self._time_bitarray_to_integer = time() - t0
             self._n_bitarray_to_integer += 1
             self._sizeof_integer = sys.getsizeof(activation)
@@ -761,7 +763,7 @@ class Activation(ABC):
                 "of x earlier in your code"
             )
         act_bis = np.zeros(self.length).astype(np.ubyte)
-        act_bis[self.length - len(act):] = act
+        act_bis[self.length - len(act) :] = act
 
         if not out:
             self._sizeof_raw = sys.getsizeof(act_bis) / 1e6

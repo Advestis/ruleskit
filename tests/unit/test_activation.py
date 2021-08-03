@@ -96,7 +96,7 @@ def compare_column(res, df, column):
         [True, False],
         [True, False],
         [True, False],
-        ["raw", "integer", "bitarray", "compressed_str", "compressed_array"]  # "file"],
+        ["raw", "integer", "bitarray", "compressed_str", "compressed_array", "file"],
     )
 )
 def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_raw, to_file, withwhat):
