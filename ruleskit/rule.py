@@ -9,7 +9,9 @@ from .utils import rfunctions as functions
 try:
     import pandas as pd
 except ImportError:
-    pd = None
+    class pd:
+        DataFrame = None
+        Series = None
 
 
 class Rule(ABC):
