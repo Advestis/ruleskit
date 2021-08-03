@@ -96,7 +96,7 @@ def compare_column(res, df, column):
         [True, False],
         [True, False],
         [True, False],
-        ["raw", "integer", "bitarray"]  # "compressed_str", "compressed_array", "file"],
+        ["raw", "integer", "bitarray", "compressed_str", "compressed_array"]  # "file"],
     )
 )
 def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_raw, to_file, withwhat):
@@ -121,11 +121,6 @@ def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_
 
     expected_df = pd.read_csv(data_path / f"{p.stem}_activation_init_{withwhat}.csv", index_col=0)
     ignore = expected_df.index.name
-    if ignore is not None:
-        if "_" in ignore:
-            ignore = ignore.split("_")
-        else:
-            ignore = [ignore]
 
     column = make_column(will_compare, optimize, store_raw, to_file, ignore)
 
@@ -151,11 +146,6 @@ def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_
 
     expected_df = pd.read_csv(data_path / f"{p.stem}_activation_init_{withwhat}_after_calls.csv", index_col=0)
     ignore = expected_df.index.name
-    if ignore is not None:
-        if "_" in ignore:
-            ignore = ignore.split("_")
-        else:
-            ignore = [ignore]
 
     column = make_column(will_compare, optimize, store_raw, to_file, ignore)
 
