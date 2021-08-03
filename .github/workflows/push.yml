@@ -13,11 +13,14 @@ jobs:
         python-version: [ 3.8 ]
     steps:
 
-      # extract repo name
-      - name: Extract repo name
+      # extract branch name
+      - name: Extract branch name
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-        run: echo "::set-env name=REPO_NAME::$(echo ${{ github.repository }} | sed "s/${{ github.repository_owner }}\///g")"
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_REF#refs/heads/})"
+          echo "branch name: $BRANCH_NAME"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2

@@ -79,22 +79,22 @@ class Activation(ABC):
             decompression of both vectors.
             The vector is stored that was if compression is more memory-efficient than integer or bitarray format
             OR if optimize is False, or if 'activation' is already a compressed vector.
-             It is never stored this way if to_file is True.
+            It is never stored this way if to_file is True.
         Bitarray :
             The input vector [1 0 0 1 0 0 0 1 1...] where each entry uses up one bit of memory. Takes more RAM than
             compressed format if the vector does not change often, but is much quicker, both in conversion and in
             computing a logical AND.
             The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
-            Activation.WILL_COMPARE is False : converting to bitarray is faster than to integer, but computing
-            logical AND on integers is faster. Size is equivalent to integer : one bit per entry. It is also stored this
-            way if 'activation' is already a bitarray or a string and Activation.WILL_COMPARE is False.
+            Activation.WILL_COMPARE is False (converting to bitarray is faster than to integer, but computing
+            logical AND on integers is faster). Size is equivalent to integer : one bit per entry. It is also stored
+            this way if 'activation' is a string and Activation.WILL_COMPARE is False.
             It is never stored this way if to_file is True.
         Integer :
             taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
             "100100011..." then casts it into int using int(s, 2).
             The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
-            Activation.WILL_COMPARE is True. It is also stored this way if 'activation' is already an integer or a
-            string and Activation.WILL_COMPARE is True. It is never stored this way if to_file is True.
+            Activation.WILL_COMPARE is True. It is also stored this way if 'activation' is a string and
+            Activation.WILL_COMPARE is True. It is never stored this way if to_file is True.
         File stored locally :
             This is done if to_file is True. It is often the best solution, and is the default one. Indeed the I/O
             operations using np.save and np.load are very fast, and the only thing in RAM is the path to the vector's
@@ -194,6 +194,7 @@ class Activation(ABC):
         elif isinstance(activation, int) and not Activation.WILL_COMPARE:
             if length is None:
                 raise ValueError("When giving an integer to Activation, you must also specify its length.")
+            self._sizeof_integer = sys.getsizeof(activation)
             t0 = time()
             s = bin(activation)[2:]
             if len(s) != length:
@@ -203,10 +204,14 @@ class Activation(ABC):
             self._n_integer_to_bitarray += 1
             self._sizeof_bitarray = sys.getsizeof(activation)
         elif isinstance(activation, bitarray) and Activation.WILL_COMPARE:
+            self._sizeof_bitarray = sys.getsizeof(activation)
+            self._nones = activation.count(1)
             t0 = time()
             if length is None:
                 length = len(activation)
-            activation = int(str(activation).replace("bitarray(", "").replace(")", ""), 2)
+            activation = int(
+                str(activation).replace("bitarray(", "").replace(")", "").replace("'", "").replace('"', ""), 2
+            )
             self._time_bitarray_to_integer = time() - t0
             self._n_bitarray_to_integer += 1
             self._sizeof_integer = sys.getsizeof(activation)
@@ -360,7 +365,10 @@ class Activation(ABC):
         if self.optimize:
             t0 = time()
             raw = self._bitarray_to_raw(value, out=False)
+            t1 = time()
             compressed = self._compress(raw, dtype=dtype)
+            self._time_raw_to_compressed = time() - t1
+            self._n_raw_to_compressed += 1
             self._time_bitarray_to_compressed = time() - t0
             self._n_bitarray_to_compressed += 1
             if isinstance(compressed, str):
@@ -755,7 +763,7 @@ class Activation(ABC):
                 "of x earlier in your code"
             )
         act_bis = np.zeros(self.length).astype(np.ubyte)
-        act_bis[self.length - len(act):] = act
+        act_bis[self.length - len(act) :] = act
 
         if not out:
             self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
@@ -886,7 +894,7 @@ class Activation(ABC):
             self._time_compressed_to_raw = time() - t0
             self._n_compressed_to_raw += 1
             if self._nones is None:
-                np.count_nonzero(s == 1)
+                self._nones = np.count_nonzero(s == 1)
 
         if raw:
             act = s
@@ -1257,7 +1265,7 @@ class Activation(ABC):
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
         elif self.data_format == "compressed_array":
-            to_ret = str(self.data).replace(" ", "").replace("[", "").replace("]", "")
+            to_ret = str(self.data.tolist()).replace(" ", "").replace("[", "").replace("]", "")
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
         elif self.data_format == "integer":

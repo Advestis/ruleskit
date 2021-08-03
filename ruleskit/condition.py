@@ -10,7 +10,9 @@ try:
     import pandas as pd
     pandas_ok = True
 except ImportError:
-    pd = None
+    class pd:
+        DataFrame = None
+        Series = None
     pandas_ok = False
 
 
