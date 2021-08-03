@@ -1,0 +1,40 @@
+store_raw_will_compare_optimize,to_file_False,to_file_True
+_nones,None,not None
+_entropy,not None,not None
+_rel_entropy,not None,not None
+sizeof_path,-1,>0
+sizeof_file,-1,>0
+sizeof_raw,-1,>0
+sizeof_bitarray,-1,-1
+sizeof_integer,-1,-1
+sizeof_compressed_str,>0,>0
+sizeof_compressed_array,-1,-1
+time_write,-1,>0
+time_read,-1,-1
+time_raw_to_compressed,-1,-1
+time_compressed_to_raw,-1,>0
+time_raw_to_bitarray,-1,-1
+time_raw_to_integer,-1,-1
+time_bitarray_to_raw,-1,-1
+time_integer_to_raw,-1,-1
+time_bitarray_to_compressed,-1,-1
+time_integer_to_compressed,-1,-1
+time_compressed_to_bitarray,-1,-1
+time_compressed_to_integer,-1,-1
+time_bitarray_to_integer,-1,-1
+time_integer_to_bitarray,-1,-1
+n_written,0,1
+n_read,0,0
+n_raw_to_compressed,0,0
+n_compressed_to_raw,0,1
+n_raw_to_bitarray,0,0
+n_raw_to_integer,0,0
+n_bitarray_to_raw,0,0
+n_integer_to_raw,0,0
+n_bitarray_to_compressed,0,0
+n_integer_to_compressed,0,0
+n_compressed_to_bitarray,0,0
+n_compressed_to_integer,0,0
+n_bitarray_to_integer,0,0
+n_integer_to_bitarray,0,0
+data_format,compressed_str,file
