@@ -148,8 +148,10 @@ class Rule(ABC):
                 setattr(self._activation, item, value)
             elif hasattr(self._condition, item):
                 setattr(self._condition, item, value)
-            return
-        raise AttributeError(f"Can not set attribute '{item}' in object Rule.")
+            else:
+                raise AttributeError(f"Can not set attribute '{item}' in object Rule.")
+        else:
+            super(Rule, self).__setattr__(item, value)
 
     def __eq__(self, other) -> bool:
         """Two rules are equal if their conditions are equal."""
