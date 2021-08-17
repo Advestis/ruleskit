@@ -10,11 +10,14 @@ from .activation import Activation
 
 try:
     import pandas as pd
+
     pandas_ok = True
 except ImportError:
+
     class pd:
         DataFrame = None
         Series = None
+
     pandas_ok = False
 
 
@@ -183,7 +186,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self) -> Tuple[str]:
         if len(self) == 0:
-            return "rs",
+            return ("rs",)
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -205,18 +208,20 @@ class RuleSet(ABC):
     # noinspection PyProtectedMember,PyTypeChecker
     def _update_stacked_activation(self, other: Union[Rule, "RuleSet"]):
         """Updates the stacked activation vectors of the RuleSet with the activation vector of a new Rule or
-         the stacked activation vectors of another RuleSet."""
+        the stacked activation vectors of another RuleSet."""
         if other.activation_available:
             if not pandas_ok:
                 raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
-            if self._activation is None:
+            if self.stacked_activations is None:
                 if isinstance(other, Rule):
-                    self.stacked_activations = pd.DataFrame(data=np.array(other.activation).T, columns=[str(other)])
+                    self.stacked_activations = pd.DataFrame(
+                        data=np.array(other.activation).T, columns=[str(other.condition)]
+                    )
                 else:
                     self.stacked_activations = other.stacked_activations
             else:
                 if isinstance(other, Rule):
-                    self.stacked_activations[str(other)] = other.activation
+                    self.stacked_activations[str(other.condition)] = other.activation
                 else:
                     self.stacked_activations = pd.concat([self.stacked_activations, other.stacked_activations], axis=1)
 
@@ -250,10 +255,7 @@ class RuleSet(ABC):
             return
 
         if criterion is None or criterion == "":
-            if not (
-                hasattr(self[0].condition, "bmins")
-                and hasattr(self[0].condition, "bmaxs")
-            ):
+            if not (hasattr(self[0].condition, "bmins") and hasattr(self[0].condition, "bmaxs")):
                 return
             # The set of all the features the RuleSet talks about
             which = "index"
@@ -303,7 +305,7 @@ class RuleSet(ABC):
     # noinspection PyProtectedMember
     def __contains__(self, other: Union["RuleSet", Rule]) -> bool:
         """A RuleSet contains another Rule or RuleSet if the second Rule or RuleSet activated points are also all
-         activated by the first RuleSet."""
+        activated by the first RuleSet."""
         if not self._activation or not other._activation:
             return False
         return other._activation in self._activation
