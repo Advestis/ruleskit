@@ -220,49 +220,6 @@ class RuleSet(ABC):
                 else:
                     self.stacked_activations = pd.concat([self.stacked_activations, other.stacked_activations], axis=1)
 
-    def compute_self_activation(self):
-        """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
-        if len(self) == 0:
-            return
-        activations_available = all([r.activation_available for r in self])
-        if activations_available:
-            # noinspection PyProtectedMember
-            self._activation = Activation.multi_logical_or([r._activation for r in self])
-
-    def compute_stacked_activation(self):
-        """Computes the stacked activation vectors of self from its rules."""
-        if len(self) == 0:
-            return
-        if not pandas_ok:
-            raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
-        activations_available = all([r.activation_available for r in self])
-        if activations_available:
-            # noinspection PyProtectedMember
-            self.stacked_activations = pd.DataFrame(
-                data=np.array([r.activation for r in self]).T, columns=[str(r.condition) for r in self]
-            )
-
-    # def __del__(self):
-    #     self.del_activations()
-    #     self.del_activation()
-
-    def del_activations(self):
-        """Deletes the data, but not the relevent attributes, of the activation vector or each rules in self."""
-        for r in self:
-            r.del_activation()
-
-    def del_activation(self):
-        """Deletes the activation vector's data of self, but not the object itself, so any computed attribute remains
-        available"""
-        if hasattr(self, "_activation") and self._activation is not None:
-            self._activation.delete()
-
-    def del_stacked_activations(self):
-        """Deletes stacked activation vectors of self. Set it to None."""
-        if hasattr(self, "stacked_activations") and self.stacked_activations is not None:
-            del self.stacked_activations
-            self.stacked_activations = None
-
     def append(self, rule: Rule, update_activation: bool = True):
         """Appends a new rule to self. The updates of activation vector and the stacked activation vectors can be
         blocked by specifying update_activation=False. Otherwise, will use self.remember_activation and
@@ -381,6 +338,75 @@ class RuleSet(ABC):
             return self._activation.raw
         return None
 
+    @property
+    def coverage(self) -> float:
+        """Coverage is the fraction of points equal to 1 in the activation vector"""
+        if not self.activation_available:
+            return 0.0
+        else:
+            return self._activation.coverage
+
+    def compute_self_activation(self):
+        """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
+        if len(self) == 0:
+            return
+        activations_available = all([r.activation_available for r in self])
+        if activations_available:
+            # noinspection PyProtectedMember
+            self._activation = Activation.multi_logical_or([r._activation for r in self])
+
+    def compute_stacked_activation(self):
+        """Computes the stacked activation vectors of self from its rules."""
+        if len(self) == 0:
+            return
+        if not pandas_ok:
+            raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
+        activations_available = all([r.activation_available for r in self])
+        if activations_available:
+            # noinspection PyProtectedMember
+            self.stacked_activations = pd.DataFrame(
+                data=np.array([r.activation for r in self]).T, columns=[str(r.condition) for r in self]
+            )
+
+    # def __del__(self):
+    #     self.del_activations()
+    #     self.del_activation()
+
+    def del_activations(self):
+        """Deletes the data, but not the relevent attributes, of the activation vector or each rules in self."""
+        for r in self:
+            r.del_activation()
+
+    def del_activation(self):
+        """Deletes the activation vector's data of self, but not the object itself, so any computed attribute remains
+        available"""
+        if hasattr(self, "_activation") and self._activation is not None:
+            self._activation.delete()
+
+    def del_stacked_activations(self):
+        """Deletes stacked activation vectors of self. Set it to None."""
+        if hasattr(self, "stacked_activations") and self.stacked_activations is not None:
+            del self.stacked_activations
+            self.stacked_activations = None
+
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> Activation:
+        """Computes and returns the activation vector from an array of features.
+
+        Parameters
+        ----------
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
+
+        Returns
+        -------
+        Activation
+        """
+        if len(self) == 0:
+            raise ValueError("Can not use evaluate : The ruleset is empty!")
+        activations = [rule.evaluate(xs) for rule in self.rules]
+        return Activation.multi_logical_or(activations)
+
     def calc_activation(self, xs: np.ndarray):
         """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
         activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
@@ -394,14 +420,6 @@ class RuleSet(ABC):
         if self.stack_activation:
             self.stacked_activations = None
             self.compute_stacked_activation()
-
-    @property
-    def coverage(self) -> float:
-        """Coverage is the fraction of points equal to 1 in the activation vector"""
-        if not self.activation_available:
-            return 0.0
-        else:
-            return self._activation.coverage
 
     def get_features_count(self) -> List[Tuple[Any, int]]:
         """
