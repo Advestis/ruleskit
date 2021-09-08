@@ -5,6 +5,8 @@ import ast
 import sys
 from copy import copy
 import random
+import psutil
+from math import ceil
 from time import time
 from bitarray import bitarray
 from tempfile import gettempdir
@@ -585,10 +587,23 @@ class Activation(ABC):
     def multi_logical_and(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL AND on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
+
+        available_memory = psutil.virtual_memory().available / 1e6
+        single_act_size = acs[0].sizeof_raw
+        expected_size = single_act_size * len(acs)
+        nbatches = ceil(expected_size / available_memory)
+        batches = np.array_split(acs, nbatches)
+
         if len(acs) == 1:
             res = acs[0].raw
         else:
-            res = np.vstack([a.raw for a in acs]).all(axis=0).astype(np.ubyte)
+            if 2 * single_act_size > available_memory:
+                raise MemoryError("Will not be able to fit two activation vectors of size"
+                                  f" {acs[0].sizeof_raw} in memory")
+            res = []
+            for batch in batches:
+                res = np.vstack([a.raw for a in batch]).all(axis=0).astype(np.ubyte)
+            res = np.vstack([a for a in res]).all(axis=0).astype(np.ubyte)
         if asarray:
             return res
         return Activation(
@@ -618,10 +633,23 @@ class Activation(ABC):
     def multi_logical_or(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
+
+        available_memory = psutil.virtual_memory().available / 1e6
+        single_act_size = acs[0].sizeof_raw
+        expected_size = single_act_size * len(acs)
+        nbatches = ceil(expected_size / available_memory)
+        batches = np.array_split(acs, nbatches)
+
         if len(acs) == 1:
             res = acs[0].raw
         else:
-            res = np.vstack([a.raw for a in acs]).any(axis=0).astype(np.ubyte)
+            if 2 * single_act_size > available_memory:
+                raise MemoryError("Will not be able to fit two activation vectors of size"
+                                  f" {acs[0].sizeof_raw} in memory")
+            res = []
+            for batch in batches:
+                res.append(np.vstack([a.raw for a in batch]).any(axis=0).astype(np.ubyte))
+            res = np.vstack([a for a in res]).any(axis=0).astype(np.ubyte)
         if asarray:
             return res
         return Activation(
