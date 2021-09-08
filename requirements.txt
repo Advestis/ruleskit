@@ -4,3 +4,4 @@ pathlib
 scikit-learn
 bitarray
 pathlib
+psutil
