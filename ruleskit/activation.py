@@ -50,6 +50,59 @@ class Activation(ABC):
         for path in cls.DEFAULT_TEMPDIR.glob("ACTIVATION_VECTOR_*.txt"):
             path.unlink()
 
+    def _reset_data_related_attributes(self):
+
+        # Analytical attributes
+        self._entropy = None  # Will be set if activation is not an integer or if optimize is True
+        self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
+        self._nones = None  # Will be set if activation is not an integer or if optimize is True
+        self._coverage = None
+
+        # Format attributes
+        self.length = None  # Will be set by init methods
+        self.data = None  # Will be set by init methods
+
+        """
+        Profiling attribtues. All times are in seconds, all sizes in MB. Attributes starting by '_n_' are counts of
+        how many times this or that method triggered.
+        """
+
+        self._time_write = -1
+        self._time_read = -1
+        self._time_compressed_to_raw = -1
+        self._time_raw_to_compressed = -1
+        self._time_raw_to_integer = -1
+        self._time_bitarray_to_raw = -1
+        self._time_raw_to_bitarray = -1
+        self._time_compressed_to_bitarray = -1
+        self._time_compressed_to_integer = -1
+        self._time_bitarray_to_compressed = -1
+        self._time_integer_to_compressed = -1
+        self._time_integer_to_raw = -1
+        self._time_bitarray_to_integer = -1
+        self._time_integer_to_bitarray = -1
+        self._n_written = 0
+        self._n_read = 0
+        self._n_compressed_to_raw = 0
+        self._n_raw_to_compressed = 0
+        self._n_bitarray_to_raw = 0
+        self._n_integer_to_raw = 0
+        self._n_raw_to_bitarray = 0
+        self._n_raw_to_integer = 0
+        self._n_bitarray_to_compressed = 0
+        self._n_integer_to_compressed = 0
+        self._n_compressed_to_bitarray = 0
+        self._n_compressed_to_integer = 0
+        self._n_bitarray_to_integer = 0
+        self._n_integer_to_bitarray = 0
+        self._sizeof_compressed_array = -1
+        self._sizeof_compressed_str = -1
+        self._sizeof_bitarray = -1
+        self._sizeof_integer = -1
+        self._sizeof_raw = -1
+        self._sizeof_file = -1
+        self._sizeof_path = -1
+
     def __init__(
         self,
         activation: Union[np.ndarray, bitarray, str, int, Path],
@@ -127,58 +180,9 @@ class Activation(ABC):
             Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = True)
         """
 
-        # Analytical attributes
-        self._entropy = None  # Will be set if activation is not an integer or if optimize is True
-        self._rel_entropy = None  # Will be set if activation is not an integer or if optimize is True
-        self._nones = None  # Will be set if activation is not an integer or if optimize is True
-        self._coverage = None
-
-        # Format attributes
+        self._reset_data_related_attributes()
         self.optimize = optimize
-        self.length = None  # Will be set by init methods
         self.data_format = None  # Will be set by init methods
-        self.data = None  # Will be set by init methods
-
-        """
-        Profiling attribtues. All times are in seconds, all sizes in MB. Attributes starting by '_n_' are counts of
-        how many times this or that method triggered.
-        """
-
-        self._time_write = -1
-        self._time_read = -1
-        self._time_compressed_to_raw = -1
-        self._time_raw_to_compressed = -1
-        self._time_raw_to_integer = -1
-        self._time_bitarray_to_raw = -1
-        self._time_raw_to_bitarray = -1
-        self._time_compressed_to_bitarray = -1
-        self._time_compressed_to_integer = -1
-        self._time_bitarray_to_compressed = -1
-        self._time_integer_to_compressed = -1
-        self._time_integer_to_raw = -1
-        self._time_bitarray_to_integer = -1
-        self._time_integer_to_bitarray = -1
-        self._n_written = 0
-        self._n_read = 0
-        self._n_compressed_to_raw = 0
-        self._n_raw_to_compressed = 0
-        self._n_bitarray_to_raw = 0
-        self._n_integer_to_raw = 0
-        self._n_raw_to_bitarray = 0
-        self._n_raw_to_integer = 0
-        self._n_bitarray_to_compressed = 0
-        self._n_integer_to_compressed = 0
-        self._n_compressed_to_bitarray = 0
-        self._n_compressed_to_integer = 0
-        self._n_bitarray_to_integer = 0
-        self._n_integer_to_bitarray = 0
-        self._sizeof_compressed_array = -1
-        self._sizeof_compressed_str = -1
-        self._sizeof_bitarray = -1
-        self._sizeof_integer = -1
-        self._sizeof_raw = -1
-        self._sizeof_file = -1
-        self._sizeof_path = -1
 
         # does not use instance to avoid conflicts if using TransparentPath
         if type(activation) == "str" and "," not in activation:
@@ -229,10 +233,11 @@ class Activation(ABC):
             return Activation(copy(self.data), optimize=self.optimize, length=self.length)
         return Activation(copy(self.data), optimize=self.optimize, to_file=self.data_format == "file")
 
-    # def __del__(self):
-    #     if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":
-    #         if self.data.is_file():
-    #             self.data.unlink()
+    def clear(self):
+        """Fill Activation with zeros"""
+        data = np.zeros(self.length)
+        self._reset_data_related_attributes()
+        self._init_with_raw(data, Activation.DTYPE)
 
     def _init_with_any(self, activation: Union[np.ndarray, bitarray, int, str], length: int, to_file: bool):
         if isinstance(activation, bitarray):
@@ -714,7 +719,7 @@ class Activation(ABC):
 
     """ Conversions to raw methods"""
 
-    def _read(self, path: Optional[Path] = None, out: bool = True) -> np.ndarray:
+    def _read(self, path: Optional[TransparentPath] = None, out: bool = True) -> np.ndarray:
         """Read a raw activation vector's np.ndarray, either from given path, or from self.data. In that case, will
         raise ValueError if self.data_format is not "file".
 
@@ -744,6 +749,7 @@ class Activation(ABC):
             if isinstance(stat, dict):
                 self._sizeof_file = stat["st_size"] / 1e6
             else:
+                # noinspection PyUnresolvedReferences
                 self._sizeof_file = stat.st_size / 1e6
             self._sizeof_path = sys.getsizeof(self.data) / 1e6
             self._time_read = time() - t0
@@ -791,7 +797,7 @@ class Activation(ABC):
                 "of x earlier in your code"
             )
         act_bis = np.zeros(self.length).astype(np.ubyte)
-        act_bis[self.length - len(act) :] = act
+        act_bis[self.length - len(act):] = act
 
         if not out:
             self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
