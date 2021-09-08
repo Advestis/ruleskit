@@ -21,6 +21,7 @@ except ImportError:
 MAX_INT_32 = 2 ** 32
 
 
+# noinspection PyAttributeOutsideInit
 class Activation(ABC):
 
     """An activation vector is a 1-D list of 0 and 1 reprenseting the activation of a rule. Each element corresponds to
