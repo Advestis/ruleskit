@@ -233,3 +233,32 @@ def test_sub(clean, vector1, vector2, add_vector):
     act2 = Activation(vector2)
     comb = (act1 - act2).raw
     np.testing.assert_equal(comb, add_vector)
+
+
+@pytest.mark.parametrize(
+    "vector1, vector2, expected",
+    [
+        (
+            np.array([1, 0, 1]),
+            np.array([1, 1, 0]),
+            1/3,
+        ),
+        (
+            np.array([1, 0, 1]),
+            np.array([1, 0, 0]),
+            2/3,
+        ),
+        (
+            np.array([1, 0, 1]),
+            np.array([1, 0, 1]),
+            1.0,
+        ),
+        (
+            np.array([1, 0, 1]),
+            np.array([0, 1, 0]),
+            0.0,
+        ),
+    ],
+)
+def test_correlation(clean, vector1, vector2, expected):
+    assert Activation(vector1, to_file=False).get_correlation(Activation(vector2, to_file=False)) == expected

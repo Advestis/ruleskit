@@ -45,11 +45,15 @@ class Activation(ABC):
     # If no formatting should be done, just store raw np.ndarray in RAM
     STORE_RAW = False
 
+    """ Class methods """
+
     @classmethod
     def clean_files(cls):
         """Removes activation vector files, if any."""
         for path in cls.DEFAULT_TEMPDIR.glob("ACTIVATION_VECTOR_*.txt"):
             path.unlink()
+
+    """Init methods"""
 
     def _reset_data_related_attributes(self):
 
@@ -229,17 +233,6 @@ class Activation(ABC):
 
         self._init_with_any(activation, length, to_file)
 
-    def __copy__(self) -> "Activation":
-        if self.data_format == "integer":
-            return Activation(copy(self.data), optimize=self.optimize, length=self.length)
-        return Activation(copy(self.data), optimize=self.optimize, to_file=self.data_format == "file")
-
-    def clear(self):
-        """Fill Activation with zeros"""
-        data = np.zeros(self.length)
-        self._reset_data_related_attributes()
-        self._init_with_raw(data, Activation.DTYPE)
-
     def _init_with_any(self, activation: Union[np.ndarray, bitarray, int, str], length: int, to_file: bool):
         if isinstance(activation, bitarray):
             self._init_with_bitarray(activation, Activation.DTYPE)
@@ -264,34 +257,6 @@ class Activation(ABC):
                 f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
                 f" {type(activation)}."
             )
-
-    def to_raw_from_any(self, activation, out: bool = True) -> np.ndarray:
-        """Converts any format among integer, bitarray, compressed string or compressed array to raw activation
-        vector np.ndarray"""
-        if isinstance(activation, bitarray):
-            raw = self._bitarray_to_raw(activation, out=out)
-        elif isinstance(activation, int):
-            raw = self._integer_to_raw(activation, out=out)
-        elif isinstance(activation, (str, np.ndarray)):
-            raw = self._decompress(activation, raw=True, out=out)
-        else:
-            raise TypeError(
-                f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
-                f" {type(activation)}."
-            )
-        return raw
-
-    def delete(self):
-        """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data. In
-        the later case, self.data is reset to None."""
-        if self.data_format == "file":
-            if self.data.is_file():
-                self.data.unlink()
-        else:
-            del self.data
-            self.data = None
-
-    """Init methods"""
 
     def _write(self, value: np.ndarray):
         """Writes the activation vector's raw np.ndarray to a file in Activation.DEFAULT_TEMPDIR under the name
@@ -706,6 +671,29 @@ class Activation(ABC):
         """Logical EXCLUSIVE OR then logical AND"""
         return (self ^ other) & self
 
+    """ Other methods """
+
+    def __copy__(self) -> "Activation":
+        if self.data_format == "integer":
+            return Activation(copy(self.data), optimize=self.optimize, length=self.length)
+        return Activation(copy(self.data), optimize=self.optimize, to_file=self.data_format == "file")
+
+    def clear(self):
+        """Fill Activation with zeros"""
+        data = np.zeros(self.length)
+        self._reset_data_related_attributes()
+        self._init_with_raw(data, Activation.DTYPE)
+
+    def delete(self):
+        """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data. In
+        the later case, self.data is reset to None."""
+        if self.data_format == "file":
+            if self.data.is_file():
+                self.data.unlink()
+        else:
+            del self.data
+            self.data = None
+
     def __len__(self):
         """Number of points in the vector"""
         return self.length
@@ -718,7 +706,34 @@ class Activation(ABC):
             return False
         return True
 
+    def get_correlation(self, other: "Activation") -> float:
+        """ Computes the correlation between self and other
+        Correlation is the number of points in common between the two vectors divided by their length.
+        Both vectors must have the same length.
+        """
+        if not len(self) == len(other):
+            raise ValueError("Both vectors must ahve the same length")
+
+        common_points = np.count_nonzero(self.raw == other.raw)
+        return common_points / len(self)
+
     """ Conversions to raw methods"""
+
+    def to_raw_from_any(self, activation, out: bool = True) -> np.ndarray:
+        """Converts any format among integer, bitarray, compressed string or compressed array to raw activation
+        vector np.ndarray"""
+        if isinstance(activation, bitarray):
+            raw = self._bitarray_to_raw(activation, out=out)
+        elif isinstance(activation, int):
+            raw = self._integer_to_raw(activation, out=out)
+        elif isinstance(activation, (str, np.ndarray)):
+            raw = self._decompress(activation, raw=True, out=out)
+        else:
+            raise TypeError(
+                f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
+                f" {type(activation)}."
+            )
+        return raw
 
     def _read(self, path: Optional[TransparentPath] = None, out: bool = True) -> np.ndarray:
         """Read a raw activation vector's np.ndarray, either from given path, or from self.data. In that case, will

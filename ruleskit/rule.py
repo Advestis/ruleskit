@@ -269,6 +269,18 @@ class Rule(ABC):
         self._time_predict = time() - t0
         return to_ret
 
+    def get_correlation(self, other: "Rule") -> float:
+        """ Computes the correlation between self and other
+        Correlation is the number of points in common between the two vectors divided by their length, times the product
+        of the rules' signs.
+        Both vectors must have the same length.
+        """
+        if not len(self) == len(other):
+            raise ValueError("Both vectors must ahve the same length")
+
+        sign = (self.prediction / abs(self.prediction)) * (other.prediction / abs(other.prediction))
+        return self._activation.get_correlation(other._activation) * sign
+
 
 class RegressionRule(Rule):
 
