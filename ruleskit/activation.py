@@ -712,7 +712,7 @@ class Activation(ABC):
         Both vectors must have the same length.
         """
         if not len(self) == len(other):
-            raise ValueError("Both vectors must ahve the same length")
+            raise ValueError("Both vectors must have the same length")
 
         common_points = np.count_nonzero(self.raw == other.raw)
         return common_points / len(self)

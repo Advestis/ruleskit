@@ -276,7 +276,7 @@ class Rule(ABC):
         Both vectors must have the same length.
         """
         if not len(self) == len(other):
-            raise ValueError("Both vectors must ahve the same length")
+            raise ValueError("Both vectors must have the same length")
 
         sign = (self.prediction / abs(self.prediction)) * (other.prediction / abs(other.prediction))
         return self._activation.get_correlation(other._activation) * sign
