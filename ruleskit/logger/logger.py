@@ -13,7 +13,7 @@ class Logger:
             cls.log.setLevel(level)
             ch = logging.StreamHandler()
             ch.setLevel(level)
-            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            formatter = logging.Formatter("%(levelname)8s  in %(filename)s at %(asctime)s - %(message)s")
             ch.setFormatter(formatter)
             cls.log.addHandler(ch)
         return cls.log
