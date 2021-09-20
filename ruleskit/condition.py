@@ -439,7 +439,7 @@ class HyperrectangleCondition(Condition):
             return np.zeros(xs.shape[0], dtype=np.ubyte)
 
         if isinstance(xs, np.ndarray):
-            if any([i >= len(xs) for i in self.features_indexes]):
+            if any([i >= xs.shape[1] for i in self.features_indexes]):
                 raise IndexError("Some features indexes in self are greater than the size of the given xs array")
             geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
             for i, j in enumerate(self._features_indexes):
