@@ -5,6 +5,8 @@ import ast
 import sys
 from copy import copy
 import random
+import psutil
+from math import ceil
 from time import time
 from bitarray import bitarray
 from tempfile import gettempdir
@@ -19,6 +21,7 @@ except ImportError:
 MAX_INT_32 = 2 ** 32
 
 
+# noinspection PyAttributeOutsideInit
 class Activation(ABC):
 
     """An activation vector is a 1-D list of 0 and 1 reprenseting the activation of a rule. Each element corresponds to
@@ -42,88 +45,17 @@ class Activation(ABC):
     # If no formatting should be done, just store raw np.ndarray in RAM
     STORE_RAW = False
 
+    """ Class methods """
+
     @classmethod
     def clean_files(cls):
         """Removes activation vector files, if any."""
         for path in cls.DEFAULT_TEMPDIR.glob("ACTIVATION_VECTOR_*.txt"):
             path.unlink()
 
-    def __init__(
-        self,
-        activation: Union[np.ndarray, bitarray, str, int, Path],
-        optimize: bool = True,
-        length: Optional[int] = None,
-        to_file: bool = True,
-    ):
-        """
-        An activation vector is an array of 0 and 1, possibly millions of points. The whole purpose of this class is
-        to efficiently store the vector and allow to use logcial AND easily between two vectors, no matter the stored
-        format.
+    """Init methods"""
 
-        The possible storing format are : compressed string or array, integer, bitarray or written on disk.
-        Activations are written on disk only if 'to_file' is True. In that case, the raw np.ndarray vector is stored
-        using np.save.
-        If the vector is instantiated with any of compressed string or array, integer, bitarray, then this format is
-        privileged for storing the vector (unless to_file is True), but some other flags like 'optimize' and
-        'Activation.WILL_COMPARE' can determine the chosen format.
-
-        If the raw np.ndarray or a path to it was given and if Activation.STORE_RAW is True, then no formatting is done
-        and the raw np.ndarray is kept in RAM. This flag has no effect if activation is not the raw np.ndarray nor a
-        path to it.
-
-        Compression : can be either compressed str(list) or np.ndarray, depending on Activation.DTYPE:
-            Compressed data is : First element of the list is the first value of the array, last element of the list is
-            the length of the array. The other elements are the coordinates where the array changed values. This is the
-            best solution regarding the RAM if the vector does not change often. However, it is often slower than the
-            other methods, particularly if the code will apply logical AND between vectors since it requieres a
-            decompression of both vectors.
-            The vector is stored that was if compression is more memory-efficient than integer or bitarray format
-            OR if optimize is False, or if 'activation' is already a compressed vector.
-             It is never stored this way if to_file is True.
-        Bitarray :
-            The input vector [1 0 0 1 0 0 0 1 1...] where each entry uses up one bit of memory. Takes more RAM than
-            compressed format if the vector does not change often, but is much quicker, both in conversion and in
-            computing a logical AND.
-            The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
-            Activation.WILL_COMPARE is False : converting to bitarray is faster than to integer, but computing
-            logical AND on integers is faster. Size is equivalent to integer : one bit per entry. It is also stored this
-            way if 'activation' is already a bitarray or a string and Activation.WILL_COMPARE is False.
-            It is never stored this way if to_file is True.
-        Integer :
-            taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
-            "100100011..." then casts it into int using int(s, 2).
-            The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
-            Activation.WILL_COMPARE is True. It is also stored this way if 'activation' is already an integer or a
-            string and Activation.WILL_COMPARE is True. It is never stored this way if to_file is True.
-        File stored locally :
-            This is done if to_file is True. It is often the best solution, and is the default one. Indeed the I/O
-            operations using np.save and np.load are very fast, and the only thing in RAM is the path to the vector's
-            file. One need enough disk space of course. Using this method will save the np.array with dtype=np.ubyte,
-            so taking one byte (8 bits) per entry.
-
-        If compression is used and dtype is np.ndarray, will check that numbers present in the compressed vector can be
-        stored as int32 to gain memory. Else, uses int64.
-
-        Parameters:
-        -----------
-        activation: Union[np.ndarray, bitarray, str, int, Path]
-            If np.ndarray : Of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1], or compressed vector
-            If str : compressed vector, or '010011100011111', or path
-            If bitarray : same as np.array but takes 8x less memory (each entry is stored in one bit only)
-            If int : as an integer
-            If Path : read raw np.ndarray vector from path.
-        optimize: bool
-            Only relevent if 'value' is a bitarray or an integer. In that case, will check whether using compression
-            saves up memory. Else, does not check and uses bitarray or integer. Note that if optimize is True, entropy
-            is computed no matter the chosen format.
-        length: Optional[int]
-            Only valid if 'value' is an integer. An activation vector stored as an integer has lost the information
-            about its size : [0 0 0 1 0 0 0 1 1...] to int gives 100011... which in turn gives back [1 0 0 0 1 1...].
-            To get the leading zeros back, one must specify the length of the activation vector.
-        to_file: bool
-            If True, then activation vector is stored in a file in
-            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = True)
-        """
+    def _reset_data_related_attributes(self):
 
         # Analytical attributes
         self._entropy = None  # Will be set if activation is not an integer or if optimize is True
@@ -132,9 +64,7 @@ class Activation(ABC):
         self._coverage = None
 
         # Format attributes
-        self.optimize = optimize
         self.length = None  # Will be set by init methods
-        self.data_format = None  # Will be set by init methods
         self.data = None  # Will be set by init methods
 
         """
@@ -178,6 +108,87 @@ class Activation(ABC):
         self._sizeof_file = -1
         self._sizeof_path = -1
 
+    def __init__(
+        self,
+        activation: Union[np.ndarray, bitarray, str, int, Path],
+        optimize: bool = True,
+        length: Optional[int] = None,
+        to_file: bool = True,
+    ):
+        """
+        An activation vector is an array of 0 and 1, possibly millions of points. The whole purpose of this class is
+        to efficiently store the vector and allow to use logcial AND easily between two vectors, no matter the stored
+        format.
+
+        The possible storing format are : compressed string or array, integer, bitarray or written on disk.
+        Activations are written on disk only if 'to_file' is True. In that case, the raw np.ndarray vector is stored
+        using np.save.
+        If the vector is instantiated with any of compressed string or array, integer, bitarray, then this format is
+        privileged for storing the vector (unless to_file is True), but some other flags like 'optimize' and
+        'Activation.WILL_COMPARE' can determine the chosen format.
+
+        If the raw np.ndarray or a path to it was given and if Activation.STORE_RAW is True, then no formatting is done
+        and the raw np.ndarray is kept in RAM. This flag has no effect if activation is not the raw np.ndarray nor a
+        path to it.
+
+        Compression : can be either compressed str(list) or np.ndarray, depending on Activation.DTYPE:
+            Compressed data is : First element of the list is the first value of the array, last element of the list is
+            the length of the array. The other elements are the coordinates where the array changed values. This is the
+            best solution regarding the RAM if the vector does not change often. However, it is often slower than the
+            other methods, particularly if the code will apply logical AND between vectors since it requieres a
+            decompression of both vectors.
+            The vector is stored that was if compression is more memory-efficient than integer or bitarray format
+            OR if optimize is False, or if 'activation' is already a compressed vector.
+            It is never stored this way if to_file is True.
+        Bitarray :
+            The input vector [1 0 0 1 0 0 0 1 1...] where each entry uses up one bit of memory. Takes more RAM than
+            compressed format if the vector does not change often, but is much quicker, both in conversion and in
+            computing a logical AND.
+            The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
+            Activation.WILL_COMPARE is False (converting to bitarray is faster than to integer, but computing
+            logical AND on integers is faster). Size is equivalent to integer : one bit per entry. It is also stored
+            this way if 'activation' is a string and Activation.WILL_COMPARE is False.
+            It is never stored this way if to_file is True.
+        Integer :
+            taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
+            "100100011..." then casts it into int using int(s, 2).
+            The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
+            Activation.WILL_COMPARE is True. It is also stored this way if 'activation' is a string and
+            Activation.WILL_COMPARE is True. It is never stored this way if to_file is True.
+        File stored locally :
+            This is done if to_file is True. It is often the best solution, and is the default one. Indeed the I/O
+            operations using np.save and np.load are very fast, and the only thing in RAM is the path to the vector's
+            file. One need enough disk space of course. Using this method will save the np.array with dtype=np.ubyte,
+            so taking one byte (8 bits) per entry.
+
+        If compression is used and dtype is np.ndarray, will check that numbers present in the compressed vector can be
+        stored as int32 to gain memory. Else, uses int64.
+
+        Parameters:
+        -----------
+        activation: Union[np.ndarray, bitarray, str, int, Path]
+            If np.ndarray : Of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1], or compressed vector
+            If str : compressed vector, or '010011100011111', or path
+            If bitarray : same as np.array but takes 8x less memory (each entry is stored in one bit only)
+            If int : as an integer
+            If Path : read raw np.ndarray vector from path.
+        optimize: bool
+            Only relevent if 'value' is a bitarray or an integer. In that case, will check whether using compression
+            saves up memory. Else, does not check and uses bitarray or integer. Note that if optimize is True, entropy
+            is computed no matter the chosen format.
+        length: Optional[int]
+            Only valid if 'value' is an integer. An activation vector stored as an integer has lost the information
+            about its size : [0 0 0 1 0 0 0 1 1...] to int gives 100011... which in turn gives back [1 0 0 0 1 1...].
+            To get the leading zeros back, one must specify the length of the activation vector.
+        to_file: bool
+            If True, then activation vector is stored in a file in
+            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = True)
+        """
+
+        self._reset_data_related_attributes()
+        self.optimize = optimize
+        self.data_format = None  # Will be set by init methods
+
         # does not use instance to avoid conflicts if using TransparentPath
         if type(activation) == "str" and "," not in activation:
             if any([c in activation for c in "abcdefhijklmnopqrstuvwxy./\\"]):  # is a file path
@@ -194,6 +205,7 @@ class Activation(ABC):
         elif isinstance(activation, int) and not Activation.WILL_COMPARE:
             if length is None:
                 raise ValueError("When giving an integer to Activation, you must also specify its length.")
+            self._sizeof_integer = sys.getsizeof(activation)
             t0 = time()
             s = bin(activation)[2:]
             if len(s) != length:
@@ -203,10 +215,14 @@ class Activation(ABC):
             self._n_integer_to_bitarray += 1
             self._sizeof_bitarray = sys.getsizeof(activation)
         elif isinstance(activation, bitarray) and Activation.WILL_COMPARE:
+            self._sizeof_bitarray = sys.getsizeof(activation)
+            self._nones = activation.count(1)
             t0 = time()
             if length is None:
                 length = len(activation)
-            activation = int(str(activation).replace("bitarray(", "").replace(")", ""), 2)
+            activation = int(
+                str(activation).replace("bitarray(", "").replace(")", "").replace("'", "").replace('"', ""), 2
+            )
             self._time_bitarray_to_integer = time() - t0
             self._n_bitarray_to_integer += 1
             self._sizeof_integer = sys.getsizeof(activation)
@@ -216,16 +232,6 @@ class Activation(ABC):
             activation = self._read(activation, out=False)
 
         self._init_with_any(activation, length, to_file)
-
-    def __copy__(self) -> "Activation":
-        if self.data_format == "integer":
-            return Activation(copy(self.data), optimize=self.optimize, length=self.length)
-        return Activation(copy(self.data), optimize=self.optimize, to_file=self.data_format == "file")
-
-    # def __del__(self):
-    #     if hasattr(self, "data") and hasattr(self, "data_format") and self.data_format == "file":
-    #         if self.data.is_file():
-    #             self.data.unlink()
 
     def _init_with_any(self, activation: Union[np.ndarray, bitarray, int, str], length: int, to_file: bool):
         if isinstance(activation, bitarray):
@@ -251,34 +257,6 @@ class Activation(ABC):
                 f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
                 f" {type(activation)}."
             )
-
-    def to_raw_from_any(self, activation, out: bool = True) -> np.ndarray:
-        """Converts any format among integer, bitarray, compressed string or compressed array to raw activation
-        vector np.ndarray"""
-        if isinstance(activation, bitarray):
-            raw = self._bitarray_to_raw(activation, out=out)
-        elif isinstance(activation, int):
-            raw = self._integer_to_raw(activation, out=out)
-        elif isinstance(activation, (str, np.ndarray)):
-            raw = self._decompress(activation, raw=True, out=out)
-        else:
-            raise TypeError(
-                f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
-                f" {type(activation)}."
-            )
-        return raw
-
-    def delete(self):
-        """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data. In
-        the later case, self.data is reset to None."""
-        if self.data_format == "file":
-            if self.data.is_file():
-                self.data.unlink()
-        else:
-            del self.data
-            self.data = None
-
-    """Init methods"""
 
     def _write(self, value: np.ndarray):
         """Writes the activation vector's raw np.ndarray to a file in Activation.DEFAULT_TEMPDIR under the name
@@ -360,7 +338,10 @@ class Activation(ABC):
         if self.optimize:
             t0 = time()
             raw = self._bitarray_to_raw(value, out=False)
+            t1 = time()
             compressed = self._compress(raw, dtype=dtype)
+            self._time_raw_to_compressed = time() - t1
+            self._n_raw_to_compressed += 1
             self._time_bitarray_to_compressed = time() - t0
             self._n_bitarray_to_compressed += 1
             if isinstance(compressed, str):
@@ -577,10 +558,23 @@ class Activation(ABC):
     def multi_logical_and(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL AND on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
+
+        available_memory = psutil.virtual_memory().available / 1e6
+        single_act_size = acs[0].sizeof_raw
+        expected_size = single_act_size * len(acs)
+        nbatches = ceil(expected_size / available_memory)
+        batches = np.array_split(acs, nbatches)
+
         if len(acs) == 1:
             res = acs[0].raw
         else:
-            res = np.vstack([a.raw for a in acs]).all(axis=0).astype(np.ubyte)
+            if 2 * single_act_size > available_memory:
+                raise MemoryError("Will not be able to fit two activation vectors of size"
+                                  f" {acs[0].sizeof_raw} in memory")
+            res = []
+            for batch in batches:
+                res = np.vstack([a.raw for a in batch]).all(axis=0).astype(np.ubyte)
+            res = np.vstack([a for a in res]).all(axis=0).astype(np.ubyte)
         if asarray:
             return res
         return Activation(
@@ -610,10 +604,23 @@ class Activation(ABC):
     def multi_logical_or(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
+
+        available_memory = psutil.virtual_memory().available / 1e6
+        single_act_size = acs[0].sizeof_raw
+        expected_size = single_act_size * len(acs)
+        nbatches = ceil(expected_size / available_memory)
+        batches = np.array_split(acs, nbatches)
+
         if len(acs) == 1:
             res = acs[0].raw
         else:
-            res = np.vstack([a.raw for a in acs]).any(axis=0).astype(np.ubyte)
+            if 2 * single_act_size > available_memory:
+                raise MemoryError("Will not be able to fit two activation vectors of size"
+                                  f" {acs[0].sizeof_raw} in memory")
+            res = []
+            for batch in batches:
+                res.append(np.vstack([a.raw for a in batch]).any(axis=0).astype(np.ubyte))
+            res = np.vstack([a for a in res]).any(axis=0).astype(np.ubyte)
         if asarray:
             return res
         return Activation(
@@ -664,6 +671,29 @@ class Activation(ABC):
         """Logical EXCLUSIVE OR then logical AND"""
         return (self ^ other) & self
 
+    """ Other methods """
+
+    def __copy__(self) -> "Activation":
+        if self.data_format == "integer":
+            return Activation(copy(self.data), optimize=self.optimize, length=self.length)
+        return Activation(copy(self.data), optimize=self.optimize, to_file=self.data_format == "file")
+
+    def clear(self):
+        """Fill Activation with zeros"""
+        data = np.zeros(self.length)
+        self._reset_data_related_attributes()
+        self._init_with_raw(data, Activation.DTYPE)
+
+    def delete(self):
+        """Deletes the activation vector's data, either by deleting the local file or by calling del on self.data. In
+        the later case, self.data is reset to None."""
+        if self.data_format == "file":
+            if self.data.is_file():
+                self.data.unlink()
+        else:
+            del self.data
+            self.data = None
+
     def __len__(self):
         """Number of points in the vector"""
         return self.length
@@ -676,9 +706,36 @@ class Activation(ABC):
             return False
         return True
 
+    def get_correlation(self, other: "Activation") -> float:
+        """ Computes the correlation between self and other
+        Correlation is the number of points in common between the two vectors divided by their length.
+        Both vectors must have the same length.
+        """
+        if not len(self) == len(other):
+            raise ValueError("Both vectors must have the same length")
+
+        common_points = np.count_nonzero(self.raw == other.raw)
+        return common_points / len(self)
+
     """ Conversions to raw methods"""
 
-    def _read(self, path: Optional[Path] = None, out: bool = True) -> np.ndarray:
+    def to_raw_from_any(self, activation, out: bool = True) -> np.ndarray:
+        """Converts any format among integer, bitarray, compressed string or compressed array to raw activation
+        vector np.ndarray"""
+        if isinstance(activation, bitarray):
+            raw = self._bitarray_to_raw(activation, out=out)
+        elif isinstance(activation, int):
+            raw = self._integer_to_raw(activation, out=out)
+        elif isinstance(activation, (str, np.ndarray)):
+            raw = self._decompress(activation, raw=True, out=out)
+        else:
+            raise TypeError(
+                f"An activation can only be a np.ndarray, and bitarray, a str or an integer. Got"
+                f" {type(activation)}."
+            )
+        return raw
+
+    def _read(self, path: Optional[TransparentPath] = None, out: bool = True) -> np.ndarray:
         """Read a raw activation vector's np.ndarray, either from given path, or from self.data. In that case, will
         raise ValueError if self.data_format is not "file".
 
@@ -708,6 +765,7 @@ class Activation(ABC):
             if isinstance(stat, dict):
                 self._sizeof_file = stat["st_size"] / 1e6
             else:
+                # noinspection PyUnresolvedReferences
                 self._sizeof_file = stat.st_size / 1e6
             self._sizeof_path = sys.getsizeof(self.data) / 1e6
             self._time_read = time() - t0
@@ -886,7 +944,7 @@ class Activation(ABC):
             self._time_compressed_to_raw = time() - t0
             self._n_compressed_to_raw += 1
             if self._nones is None:
-                np.count_nonzero(s == 1)
+                self._nones = np.count_nonzero(s == 1)
 
         if raw:
             act = s
@@ -1257,7 +1315,7 @@ class Activation(ABC):
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
         elif self.data_format == "compressed_array":
-            to_ret = str(self.data).replace(" ", "").replace("[", "").replace("]", "")
+            to_ret = str(self.data.tolist()).replace(" ", "").replace("[", "").replace("]", "")
             if self._sizeof_compressed_str == -1:
                 self._sizeof_compressed_str = sys.getsizeof(to_ret)
         elif self.data_format == "integer":

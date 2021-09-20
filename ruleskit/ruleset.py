@@ -10,9 +10,14 @@ from .activation import Activation
 
 try:
     import pandas as pd
+
     pandas_ok = True
 except ImportError:
-    pd = None
+
+    class pd:
+        DataFrame = None
+        Series = None
+
     pandas_ok = False
 
 
@@ -181,7 +186,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self) -> Tuple[str]:
         if len(self) == 0:
-            return "rs",
+            return ("rs",)
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -203,63 +208,22 @@ class RuleSet(ABC):
     # noinspection PyProtectedMember,PyTypeChecker
     def _update_stacked_activation(self, other: Union[Rule, "RuleSet"]):
         """Updates the stacked activation vectors of the RuleSet with the activation vector of a new Rule or
-         the stacked activation vectors of another RuleSet."""
+        the stacked activation vectors of another RuleSet."""
         if other.activation_available:
             if not pandas_ok:
                 raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
-            if self._activation is None:
+            if self.stacked_activations is None:
                 if isinstance(other, Rule):
-                    self.stacked_activations = pd.DataFrame(data=np.array(other.activation).T, columns=[str(other)])
+                    self.stacked_activations = pd.DataFrame(
+                        data=np.array(other.activation).T, columns=[str(other.condition)]
+                    )
                 else:
                     self.stacked_activations = other.stacked_activations
             else:
                 if isinstance(other, Rule):
-                    self.stacked_activations[str(other)] = other.activation
+                    self.stacked_activations[str(other.condition)] = other.activation
                 else:
                     self.stacked_activations = pd.concat([self.stacked_activations, other.stacked_activations], axis=1)
-
-    def compute_self_activation(self):
-        """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
-        if len(self) == 0:
-            return
-        activations_available = all([r.activation_available for r in self])
-        if activations_available:
-            # noinspection PyProtectedMember
-            self._activation = Activation.multi_logical_or([r._activation for r in self])
-
-    def compute_stacked_activation(self):
-        """Computes the stacked activation vectors of self from its rules."""
-        if len(self) == 0:
-            return
-        if not pandas_ok:
-            raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
-        activations_available = all([r.activation_available for r in self])
-        if activations_available:
-            # noinspection PyProtectedMember
-            self.stacked_activations = pd.DataFrame(
-                data=np.array([r.activation for r in self]).T, columns=[str(r.condition) for r in self]
-            )
-
-    # def __del__(self):
-    #     self.del_activations()
-    #     self.del_activation()
-
-    def del_activations(self):
-        """Deletes the data, but not the relevent attributes, of the activation vector or each rules in self."""
-        for r in self:
-            r.del_activation()
-
-    def del_activation(self):
-        """Deletes the activation vector's data of self, but not the object itself, so any computed attribute remains
-        available"""
-        if hasattr(self, "_activation") and self._activation is not None:
-            self._activation.delete()
-
-    def del_stacked_activations(self):
-        """Deletes stacked activation vectors of self. Set it to None."""
-        if hasattr(self, "stacked_activations") and self.stacked_activations is not None:
-            del self.stacked_activations
-            self.stacked_activations = None
 
     def append(self, rule: Rule, update_activation: bool = True):
         """Appends a new rule to self. The updates of activation vector and the stacked activation vectors can be
@@ -291,10 +255,7 @@ class RuleSet(ABC):
             return
 
         if criterion is None or criterion == "":
-            if not (
-                hasattr(self[0].condition, "bmins")
-                and hasattr(self[0].condition, "bmaxs")
-            ):
+            if not (hasattr(self[0].condition, "bmins") and hasattr(self[0].condition, "bmaxs")):
                 return
             # The set of all the features the RuleSet talks about
             which = "index"
@@ -344,7 +305,7 @@ class RuleSet(ABC):
     # noinspection PyProtectedMember
     def __contains__(self, other: Union["RuleSet", Rule]) -> bool:
         """A RuleSet contains another Rule or RuleSet if the second Rule or RuleSet activated points are also all
-         activated by the first RuleSet."""
+        activated by the first RuleSet."""
         if not self._activation or not other._activation:
             return False
         return other._activation in self._activation
@@ -379,6 +340,75 @@ class RuleSet(ABC):
             return self._activation.raw
         return None
 
+    @property
+    def coverage(self) -> float:
+        """Coverage is the fraction of points equal to 1 in the activation vector"""
+        if not self.activation_available:
+            return 0.0
+        else:
+            return self._activation.coverage
+
+    def compute_self_activation(self):
+        """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
+        if len(self) == 0:
+            return
+        activations_available = all([r.activation_available for r in self])
+        if activations_available:
+            # noinspection PyProtectedMember
+            self._activation = Activation.multi_logical_or([r._activation for r in self])
+
+    def compute_stacked_activation(self):
+        """Computes the stacked activation vectors of self from its rules."""
+        if len(self) == 0:
+            return
+        if not pandas_ok:
+            raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
+        activations_available = all([r.activation_available for r in self])
+        if activations_available:
+            # noinspection PyProtectedMember
+            self.stacked_activations = pd.DataFrame(
+                data=np.array([r.activation for r in self]).T, columns=[str(r.condition) for r in self]
+            )
+
+    # def __del__(self):
+    #     self.del_activations()
+    #     self.del_activation()
+
+    def del_activations(self):
+        """Deletes the data, but not the relevent attributes, of the activation vector or each rules in self."""
+        for r in self:
+            r.del_activation()
+
+    def del_activation(self):
+        """Deletes the activation vector's data of self, but not the object itself, so any computed attribute remains
+        available"""
+        if hasattr(self, "_activation") and self._activation is not None:
+            self._activation.delete()
+
+    def del_stacked_activations(self):
+        """Deletes stacked activation vectors of self. Set it to None."""
+        if hasattr(self, "stacked_activations") and self.stacked_activations is not None:
+            del self.stacked_activations
+            self.stacked_activations = None
+
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> Activation:
+        """Computes and returns the activation vector from an array of features.
+
+        Parameters
+        ----------
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
+            or pd.DataFrame.
+
+        Returns
+        -------
+        Activation
+        """
+        if len(self) == 0:
+            raise ValueError("Can not use evaluate : The ruleset is empty!")
+        activations = [rule.evaluate(xs) for rule in self.rules]
+        return Activation.multi_logical_or(activations)
+
     def calc_activation(self, xs: np.ndarray):
         """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
         activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
@@ -392,14 +422,6 @@ class RuleSet(ABC):
         if self.stack_activation:
             self.stacked_activations = None
             self.compute_stacked_activation()
-
-    @property
-    def coverage(self) -> float:
-        """Coverage is the fraction of points equal to 1 in the activation vector"""
-        if not self.activation_available:
-            return 0.0
-        else:
-            return self._activation.coverage
 
     def get_features_count(self) -> List[Tuple[Any, int]]:
         """

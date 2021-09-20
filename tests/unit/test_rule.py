@@ -319,3 +319,86 @@ def test_predict(clean, condition_x_y_x2_expected, theclass):
         np.testing.assert_equal(pred, expected)
     else:
         np.testing.assert_almost_equal(pred, expected)
+
+
+@pytest.mark.parametrize(
+    "rule1, rule2, pred1, pred2, expected",
+    [
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 1, 0]), to_file=False)),
+            0.2,
+            0.3,
+            1/3,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 1, 0]), to_file=False)),
+            0.2,
+            -0.3,
+            -1/3,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 1, 0]), to_file=False)),
+            -0.2,
+            -0.3,
+            1/3,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 0]), to_file=False)),
+            0.2,
+            0.3,
+            2/3,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 0]), to_file=False)),
+            -0.2,
+            0.3,
+            -2/3,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 0]), to_file=False)),
+            -0.2,
+            -0.3,
+            2/3,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            0.2,
+            0.3,
+            1.0,
+        ),
+        (
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([1, 0, 1]), to_file=False)),
+            Rule(condition=HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
+                 activation=Activation(np.array([0, 1, 0]), to_file=False)),
+            0.2,
+            0.3,
+            0.0,
+        ),
+    ],
+)
+def test_correlation(clean, rule1, rule2, pred1, pred2, expected):
+    rule1._prediction = pred1
+    rule2._prediction = pred2
+    assert rule1.get_correlation(rule2) == expected

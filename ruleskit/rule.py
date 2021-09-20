@@ -9,7 +9,9 @@ from .utils import rfunctions as functions
 try:
     import pandas as pd
 except ImportError:
-    pd = None
+    class pd:
+        DataFrame = None
+        Series = None
 
 
 class Rule(ABC):
@@ -146,8 +148,10 @@ class Rule(ABC):
                 setattr(self._activation, item, value)
             elif hasattr(self._condition, item):
                 setattr(self._condition, item, value)
-            return
-        raise AttributeError(f"Can not set attribute '{item}' in object Rule.")
+            else:
+                raise AttributeError(f"Can not set attribute '{item}' in object Rule.")
+        else:
+            super(Rule, self).__setattr__(item, value)
 
     def __eq__(self, other) -> bool:
         """Two rules are equal if their conditions are equal."""
@@ -264,6 +268,18 @@ class Rule(ABC):
         to_ret[act == 1] = self._prediction
         self._time_predict = time() - t0
         return to_ret
+
+    def get_correlation(self, other: "Rule") -> float:
+        """ Computes the correlation between self and other
+        Correlation is the number of points in common between the two vectors divided by their length, times the product
+        of the rules' signs.
+        Both vectors must have the same length.
+        """
+        if not len(self) == len(other):
+            raise ValueError("Both vectors must have the same length")
+
+        sign = (self.prediction / abs(self.prediction)) * (other.prediction / abs(other.prediction))
+        return self._activation.get_correlation(other._activation) * sign
 
 
 class RegressionRule(Rule):

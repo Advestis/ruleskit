@@ -12,6 +12,8 @@ data_path = Path("tests/unit/data")
 
 def make_column(will_compare, optimize, store_raw, to_file, ignore) -> str:
     s = []
+    if ignore is None:
+        return f"will_compare_{will_compare}_optimize_{optimize}_store_raw_{store_raw}_to_file_{to_file}"
     if "will_compare" not in ignore:
         s.append(f"will_compare_{will_compare}")
     if "optimize" not in ignore:
@@ -94,12 +96,12 @@ def compare_column(res, df, column):
         [True, False],
         [True, False],
         [True, False],
-        ["raw"] # , "integer", "bitarray", "compressed_str", "compressed_array", "file"],
+        ["raw", "integer", "bitarray", "compressed_str", "compressed_array", "file"],
     )
 )
 def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_raw, to_file, withwhat):
     vector, cs, ca, b, i, n, p, c, o, no = vector_cs_ca_b_i_n_p_c_o_no
-    print(p)
+    print(withwhat, p)
     Activation.WILL_COMPARE = will_compare
     Activation.STORE_RAW = store_raw
     value = vector
@@ -117,18 +119,14 @@ def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_
     if withwhat == "file":
         value = p
 
+    expected_df = pd.read_csv(data_path / f"{p.stem}_activation_init_{withwhat}.csv", index_col=0)
+    ignore = expected_df.index.name
+
+    column = make_column(will_compare, optimize, store_raw, to_file, ignore)
+
     res = Activation(value, optimize=optimize, to_file=to_file, length=n)
     Activation.WILL_COMPARE = False
     Activation.STORE_RAW = False
-
-    expected_df = pd.read_csv(data_path / f"{p.stem}_activation_init_{withwhat}.csv", index_col=0)
-    ignore = expected_df.index.name
-    if "-" in ignore:
-        ignore = ignore.split("_")
-    else:
-        ignore = [ignore]
-
-    column = make_column(will_compare, optimize, store_raw, to_file, ignore)
 
     compare_column(res, expected_df, column)
 
@@ -148,10 +146,6 @@ def test_init(clean, vector_cs_ca_b_i_n_p_c_o_no, will_compare, optimize, store_
 
     expected_df = pd.read_csv(data_path / f"{p.stem}_activation_init_{withwhat}_after_calls.csv", index_col=0)
     ignore = expected_df.index.name
-    if "_" in ignore:
-        ignore = ignore.split("_")
-    else:
-        ignore = [ignore]
 
     column = make_column(will_compare, optimize, store_raw, to_file, ignore)
 
@@ -239,3 +233,32 @@ def test_sub(clean, vector1, vector2, add_vector):
     act2 = Activation(vector2)
     comb = (act1 - act2).raw
     np.testing.assert_equal(comb, add_vector)
+
+
+@pytest.mark.parametrize(
+    "vector1, vector2, expected",
+    [
+        (
+            np.array([1, 0, 1]),
+            np.array([1, 1, 0]),
+            1/3,
+        ),
+        (
+            np.array([1, 0, 1]),
+            np.array([1, 0, 0]),
+            2/3,
+        ),
+        (
+            np.array([1, 0, 1]),
+            np.array([1, 0, 1]),
+            1.0,
+        ),
+        (
+            np.array([1, 0, 1]),
+            np.array([0, 1, 0]),
+            0.0,
+        ),
+    ],
+)
+def test_correlation(clean, vector1, vector2, expected):
+    assert Activation(vector1, to_file=False).get_correlation(Activation(vector2, to_file=False)) == expected
