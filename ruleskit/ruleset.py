@@ -341,7 +341,7 @@ class RuleSet(ABC):
         return None
 
     @property
-    def coverage(self) -> float:
+    def ruleset_coverage(self) -> float:
         """Coverage is the fraction of points equal to 1 in the activation vector"""
         if not self.activation_available:
             return 0.0
