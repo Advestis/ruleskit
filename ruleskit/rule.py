@@ -5,6 +5,9 @@ from time import time
 from .condition import Condition
 from .activation import Activation
 from .utils import rfunctions as functions
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import pandas as pd

@@ -11,7 +11,9 @@ from time import time
 from bitarray import bitarray
 from tempfile import gettempdir
 from pathlib import Path
-from .logger.logger import log as logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     from transparentpath import TransparentPath
@@ -184,6 +186,8 @@ class Activation(ABC):
             If True, then activation vector is stored in a file in
             Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = True)
         """
+
+        logger.info("coucou")
 
         self._reset_data_related_attributes()
         self.optimize = optimize

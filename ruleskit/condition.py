@@ -5,6 +5,9 @@ from typing import List, Union, Tuple
 import numpy as np
 from numbers import Number
 from .activation import Activation
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import pandas as pd

@@ -1,7 +1,9 @@
 import numpy as np
 from collections import Counter
 from typing import Union, Tuple, List
-from ..logger.logger import log
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def most_common_class(
@@ -35,7 +37,7 @@ def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> floa
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
     non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
     if len(non_nans_conditional_y) == 0:
-        log.debug("None of the activated points have a non-nan value in target y. Conditional mean is set to 0.")
+        logger.debug("None of the activated points have a non-nan value in target y. Conditional mean is set to 0.")
         return 0
     return float(np.mean(non_nans_conditional_y))
 

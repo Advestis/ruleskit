@@ -7,6 +7,9 @@ from ..condition import HyperrectangleCondition
 
 # noinspection PyProtectedMember
 from sklearn.tree import _tree
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def extract_rules_from_tree(

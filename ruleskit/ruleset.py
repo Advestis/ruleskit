@@ -7,6 +7,9 @@ import itertools
 from collections import OrderedDict
 from .rule import Rule
 from .activation import Activation
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import pandas as pd
