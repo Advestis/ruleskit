@@ -74,6 +74,7 @@ class RuleSet(ABC):
         self.features_names = []
         self.features_indexes = []
         self._activation = None
+        self._coverage = None  # in case Activation is not available
         self.stacked_activations = None
         self.remember_activation = remember_activation
         self.stack_activation = stack_activation
@@ -344,7 +345,7 @@ class RuleSet(ABC):
     def ruleset_coverage(self) -> float:
         """Coverage is the fraction of points equal to 1 in the activation vector"""
         if not self.activation_available:
-            return 0.0
+            return self._coverage
         else:
             return self._activation.coverage
 
