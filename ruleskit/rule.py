@@ -301,6 +301,19 @@ class RegressionRule(Rule):
         self._time_calc_std = -1
 
     @property
+    def coverage(self) -> float:
+        if self._activation is not None:
+            self._coverage = self._activation.coverage
+            return self._activation.coverage
+        return self._coverage
+
+    @coverage.setter
+    def coverage(self, value):
+        if self._activation is not None:
+            self._activation.coverage = value
+        self._coverage = value
+
+    @property
     def std(self) -> float:
         return self._std
 
