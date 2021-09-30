@@ -187,8 +187,6 @@ class Activation(ABC):
             Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = True)
         """
 
-        logger.info("coucou")
-
         self._reset_data_related_attributes()
         self.optimize = optimize
         self.data_format = None  # Will be set by init methods
