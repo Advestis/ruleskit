@@ -902,7 +902,7 @@ class Activation(ABC):
 
         if value[-1] == 0 or value[-1] == 1:  # is already raw
             if not out:
-                self._sizeof_raw = sys.getsizeof(value)
+                self._sizeof_raw = sys.getsizeof(value) / 1e6
                 if self._nones is None:
                     self._nones = np.count_nonzero(value == 1)
             return value
