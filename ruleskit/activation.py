@@ -207,7 +207,7 @@ class Activation(ABC):
         elif isinstance(activation, int) and not Activation.WILL_COMPARE:
             if length is None:
                 raise ValueError("When giving an integer to Activation, you must also specify its length.")
-            self._sizeof_integer = sys.getsizeof(activation)
+            self._sizeof_integer = sys.getsizeof(activation) / 1e6
             t0 = time()
             s = bin(activation)[2:]
             if len(s) != length:
@@ -215,9 +215,9 @@ class Activation(ABC):
             activation = bitarray(s)
             self._time_integer_to_bitarray = time() - t0
             self._n_integer_to_bitarray += 1
-            self._sizeof_bitarray = sys.getsizeof(activation)
+            self._sizeof_bitarray = sys.getsizeof(activation) / 1e6
         elif isinstance(activation, bitarray) and Activation.WILL_COMPARE:
-            self._sizeof_bitarray = sys.getsizeof(activation)
+            self._sizeof_bitarray = sys.getsizeof(activation) / 1e6
             self._nones = activation.count(1)
             t0 = time()
             if length is None:
@@ -227,7 +227,7 @@ class Activation(ABC):
             )
             self._time_bitarray_to_integer = time() - t0
             self._n_bitarray_to_integer += 1
-            self._sizeof_integer = sys.getsizeof(activation)
+            self._sizeof_integer = sys.getsizeof(activation) / 1e6
 
         # noinspection PyTypeChecker
         if isinstance(activation, Path) or TransparentPath is not None and isinstance(activation, TransparentPath):
@@ -278,7 +278,7 @@ class Activation(ABC):
         if value.dtype != np.ubyte:  # Saves memory
             value = value.astype(np.ubyte)
         logger.debug(f"Activation vector is raw, store it in a file")
-        self._sizeof_raw = sys.getsizeof(value) / 1e6
+        self._sizeof_raw = value.nbytes / 1e6
         self.length = len(value)
         self._nones = np.count_nonzero(value == 1)
         t0 = time()
@@ -350,7 +350,7 @@ class Activation(ABC):
                 self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
                 size_compressed = self._sizeof_compressed_str
             else:
-                self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
+                self._sizeof_compressed_array = compressed.nbytes / 1e6
                 size_compressed = self._sizeof_compressed_array
             if dtype == str:
                 self._entropy = len(ast.literal_eval(compressed))
@@ -409,7 +409,7 @@ class Activation(ABC):
                 self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
                 size_compressed = self._sizeof_compressed_str
             else:
-                self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
+                self._sizeof_compressed_array = compressed.nbytes / 1e6
                 size_compressed = self._sizeof_compressed_array
             if dtype == str:
                 self._entropy = len(ast.literal_eval(compressed))
@@ -458,7 +458,7 @@ class Activation(ABC):
         """
         logger.debug(f"Activation vector is a compressed array")
         self.data = value
-        self._sizeof_compressed_array = sys.getsizeof(value) / 1e6
+        self._sizeof_compressed_array = value.nbytes / 1e6
         self._entropy = len(value)
         self.length = value[-1]
         self._rel_entropy = self._entropy / self.length
@@ -484,7 +484,7 @@ class Activation(ABC):
         if value.dtype != np.ubyte:
             value = value.astype(np.ubyte)
         logger.debug(f"Activation vector is raw")
-        self._sizeof_raw = sys.getsizeof(value) / 1e6
+        self._sizeof_raw = value.nbytes / 1e6
         self.length = len(value)
         self._nones = np.count_nonzero(value == 1)
 
@@ -501,7 +501,7 @@ class Activation(ABC):
             self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
             size_compressed = self._sizeof_compressed_str
         else:
-            self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
+            self._sizeof_compressed_array =  compressed.nbytes / 1e6
             size_compressed = self._sizeof_compressed_array
         if dtype is str:
             self._entropy = len(ast.literal_eval(compressed))
@@ -760,7 +760,7 @@ class Activation(ABC):
             value = np.load(f)
         if not out:
             if self._sizeof_raw == -1:
-                self._sizeof_raw = sys.getsizeof(value) / 1e6
+                self._sizeof_raw = value.nbytes / 1e6
             if self._nones is None:
                 self._nones = np.count_nonzero(value == 1)
             stat = path.stat()
@@ -818,7 +818,7 @@ class Activation(ABC):
         act_bis[self.length - len(act):] = act
 
         if not out:
-            self._sizeof_raw = sys.getsizeof(act_bis) / 1e6
+            self._sizeof_raw = act_bis.nbytes / 1e6
             self._time_integer_to_raw = time() - t0
             self._n_integer_to_raw += 1
             if self._nones is None:
@@ -858,7 +858,7 @@ class Activation(ABC):
 
         if not out:
             if self._sizeof_raw == -1:
-                self._sizeof_raw = sys.getsizeof(act) / 1e6
+                self._sizeof_raw = act.nbytes / 1e6
             if self._sizeof_bitarray == -1:
                 self._sizeof_bitarray = sys.getsizeof(value) / 1e6
             self._time_bitarray_to_raw = time() - t0
@@ -902,7 +902,7 @@ class Activation(ABC):
 
         if value[-1] == 0 or value[-1] == 1:  # is already raw
             if not out:
-                self._sizeof_raw = sys.getsizeof(value) / 1e6
+                self._sizeof_raw = value.nbytes / 1e6
                 if self._nones is None:
                     self._nones = np.count_nonzero(value == 1)
             return value
@@ -914,7 +914,7 @@ class Activation(ABC):
         elif isinstance(value, np.ndarray):
             act = value
             if not out:
-                self._sizeof_compressed_array = sys.getsizeof(value) / 1e6
+                self._sizeof_compressed_array = value.nbytes / 1e6
         else:
             raise TypeError(f"'value' can not be of type {type(value)}")
 
@@ -942,7 +942,7 @@ class Activation(ABC):
 
         if not out:
             if self._sizeof_raw == -1:
-                self._sizeof_raw = sys.getsizeof(s) / 1e6
+                self._sizeof_raw = s.nbytes / 1e6
             self._time_compressed_to_raw = time() - t0
             self._n_compressed_to_raw += 1
             if self._nones is None:
@@ -1119,7 +1119,7 @@ class Activation(ABC):
             if self.data_format == "compressed_str":
                 self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
             if self.data_format == "compressed_array":
-                self._sizeof_compressed_array = sys.getsizeof(compressed) / 1e6
+                self._sizeof_compressed_array = compressed.nbytes / 1e6
 
             self._entropy = len(ast.literal_eval(compressed))
         if self._rel_entropy is None:
@@ -1172,7 +1172,7 @@ class Activation(ABC):
             self._time_raw_to_bitarray = time() - t0
             self._n_raw_to_bitarray += 1
             if self._sizeof_bitarray == -1:
-                self._sizeof_bitarray = sys.getsizeof(to_ret)
+                self._sizeof_bitarray = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif self.data_format == "raw":
             t0 = time()
@@ -1180,7 +1180,7 @@ class Activation(ABC):
             self._time_raw_to_bitarray = time() - t0
             self._n_raw_to_bitarray += 1
             if self._sizeof_bitarray == -1:
-                self._sizeof_bitarray = sys.getsizeof(to_ret)
+                self._sizeof_bitarray = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif self.data_format == "bitarray":
             return self.data
@@ -1193,7 +1193,7 @@ class Activation(ABC):
             self._time_integer_to_bitarray = time() - t0
             self._n_integer_to_bitarray += 1
             if self._sizeof_bitarray == -1:
-                self._sizeof_bitarray = sys.getsizeof(to_ret)
+                self._sizeof_bitarray = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif "compressed" in self.data_format:
             wc = Activation.WILL_COMPARE
@@ -1215,7 +1215,7 @@ class Activation(ABC):
             self._time_raw_to_integer = time() - t0
             self._n_raw_to_integer += 1
             if self._sizeof_integer == -1:
-                self._sizeof_integer = sys.getsizeof(to_ret)
+                self._sizeof_integer = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif self.data_format == "raw":
             t0 = time()
@@ -1223,7 +1223,7 @@ class Activation(ABC):
             self._time_raw_to_integer = time() - t0
             self._n_raw_to_integer += 1
             if self._sizeof_integer == -1:
-                self._sizeof_integer = sys.getsizeof(to_ret)
+                self._sizeof_integer = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif self.data_format == "integer":
             return self.data
@@ -1232,7 +1232,7 @@ class Activation(ABC):
             to_ret = int(str(self.data).replace("bitarray(", "").replace(")", "").replace("'", "").replace('"', ""), 2)
             self._time_bitarray_to_integer = time() - t0
             self._n_bitarray_to_integer += 1
-            self._sizeof_integer = sys.getsizeof(to_ret)
+            self._sizeof_integer = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif "compressed" in self.data_format:
             wc = Activation.WILL_COMPARE
@@ -1258,15 +1258,15 @@ class Activation(ABC):
             self._time_raw_to_compressed = time() - t0
             self._n_raw_to_compressed += 1
             if self._sizeof_compressed_array == -1:
-                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+                self._sizeof_compressed_array = to_ret.nbytes / 1e6
         elif self.data_format == "compressed_array":
             to_ret = self.data
             if self._sizeof_compressed_array == -1:
-                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+                self._sizeof_compressed_array = to_ret.nbytes / 1e6
         elif self.data_format == "compressed_str":
             to_ret = np.array(ast.literal_eval(self.data))
             if self._sizeof_compressed_array == -1:
-                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+                self._sizeof_compressed_array = to_ret.nbytes / 1e6
         elif self.data_format == "integer":
             t0 = time()
             raw = self.raw
@@ -1277,7 +1277,7 @@ class Activation(ABC):
             self._time_integer_to_compressed = time() - t0
             self._n_integer_to_compressed += 1
             if self._sizeof_compressed_array == -1:
-                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+                self._sizeof_compressed_array = to_ret.nbytes / 1e6
         elif self.data_format == "bitarray":
             t0 = time()
             raw = self.raw
@@ -1288,7 +1288,7 @@ class Activation(ABC):
             self._time_bitarray_to_compressed = time() - t0
             self._n_bitarray_to_compressed += 1
             if self._sizeof_compressed_array == -1:
-                self._sizeof_compressed_array = sys.getsizeof(to_ret)
+                self._sizeof_compressed_array = to_ret.nbytes / 1e6
         elif self.data_format == "file":
             data = self._read(out=False)
             t0 = time()
@@ -1311,15 +1311,15 @@ class Activation(ABC):
             self._time_raw_to_compressed = time() - t0
             self._n_raw_to_compressed += 1
             if self._sizeof_compressed_str == -1:
-                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+                self._sizeof_compressed_str = sys.getsizeof(to_ret) / 1e6
         elif self.data_format == "compressed_str":
             to_ret = self.data
             if self._sizeof_compressed_str == -1:
-                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+                self._sizeof_compressed_str = sys.getsizeof(to_ret) / 1e6
         elif self.data_format == "compressed_array":
             to_ret = str(self.data.tolist()).replace(" ", "").replace("[", "").replace("]", "")
             if self._sizeof_compressed_str == -1:
-                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+                self._sizeof_compressed_str = sys.getsizeof(to_ret) / 1e6
         elif self.data_format == "integer":
             t0 = time()
             raw = self.raw
@@ -1330,7 +1330,7 @@ class Activation(ABC):
             self._time_integer_to_compressed = time() - t0
             self._n_integer_to_compressed += 1
             if self._sizeof_compressed_str == -1:
-                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+                self._sizeof_compressed_str = sys.getsizeof(to_ret) / 1e6
         elif self.data_format == "bitarray":
             t0 = time()
             raw = self.raw
@@ -1341,7 +1341,7 @@ class Activation(ABC):
             self._time_bitarray_to_compressed = time() - t0
             self._n_bitarray_to_compressed += 1
             if self._sizeof_compressed_str == -1:
-                self._sizeof_compressed_str = sys.getsizeof(to_ret)
+                self._sizeof_compressed_str = sys.getsizeof(to_ret) / 1e6
         elif self.data_format == "file":
             t0 = time()
             data = self._read(out=False)
