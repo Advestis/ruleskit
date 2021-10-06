@@ -46,6 +46,8 @@ class Activation(ABC):
     DEFAULT_TEMPDIR = Path(gettempdir())
     # If no formatting should be done, just store raw np.ndarray in RAM
     STORE_RAW = False
+    # Number of processes that will be using Activation class. Used when doing memory-intensive operations.
+    NCPUS = 1
 
     """ Class methods """
 
@@ -563,7 +565,7 @@ class Activation(ABC):
 
         available_memory = psutil.virtual_memory().available / 1e6
         single_act_size = acs[0].sizeof_raw
-        expected_size = single_act_size * len(acs)
+        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.5  # factor 1.5 is just for safety
         nbatches = ceil(expected_size / available_memory)
         batches = np.array_split(acs, nbatches)
 
@@ -609,7 +611,7 @@ class Activation(ABC):
 
         available_memory = psutil.virtual_memory().available / 1e6
         single_act_size = acs[0].sizeof_raw
-        expected_size = single_act_size * len(acs)
+        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.5
         nbatches = ceil(expected_size / available_memory)
         batches = np.array_split(acs, nbatches)
 
