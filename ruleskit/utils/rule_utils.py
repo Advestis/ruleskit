@@ -121,8 +121,10 @@ def extract_rules_from_tree(
             if get_leaf is False:
                 if isinstance(tree, DecisionTreeClassifier):
                     new_rule = ClassificationRule(copy.deepcopy(new_condition))
+                    new_rule._prediction = decision_tree.value[node][0]
                 else:
                     new_rule = RegressionRule(copy.deepcopy(new_condition))
+                    new_rule._prediction = decision_tree.value[node][0][0]
                 rules_list.append(new_rule)
 
             # Execute the current function on the left of the current node
@@ -166,17 +168,23 @@ def extract_rules_from_tree(
             if get_leaf is False:
                 if isinstance(tree, DecisionTreeClassifier):
                     new_rule = ClassificationRule(copy.deepcopy(new_condition))
+                    new_rule._prediction = decision_tree.value[node][0]
                 else:
                     new_rule = RegressionRule(copy.deepcopy(new_condition))
+                    new_rule._prediction = decision_tree.value[node][0][0]
                 rules_list.append(new_rule)
 
             rules_list = visitor(decision_tree.children_right[node], depth + 1, new_condition, rules_list)
 
         elif get_leaf:
             if isinstance(tree, DecisionTreeClassifier):
-                rules_list.append(ClassificationRule(copy.deepcopy(condition)))
+                new_rule = ClassificationRule(copy.deepcopy(condition))
+                new_rule._prediction = decision_tree.value[node][0]
+                rules_list.append(new_rule)
             else:
-                rules_list.append(RegressionRule(copy.deepcopy(condition)))
+                new_rule = RegressionRule(copy.deepcopy(condition))
+                new_rule._prediction = decision_tree.value[node][0][0]
+                rules_list.append(new_rule)
 
         return rules_list
 
