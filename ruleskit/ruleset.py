@@ -1,11 +1,15 @@
 from abc import ABC
 import ast
+from copy import copy
 from typing import List, Union, Tuple, Any
 from collections import Counter
 import numpy as np
 import itertools
 from collections import OrderedDict
-from .rule import Rule
+
+from .condition import HyperrectangleCondition
+
+from .rule import Rule, ClassificationRule, RegressionRule
 from .activation import Activation
 import logging
 
@@ -31,6 +35,11 @@ class RuleSet(ABC):
     NLINES = 5  # half how many rules to show in str(self)
     CHECK_DUPLICATED = False
     all_features_indexes = {}
+
+    condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
+    rule_index = ["prediction"]
+    classification_rule_index = rule_index + ["criterion"]
+    regression_rule_index = classification_rule_index + ["coverage", "prediction", "std"]
 
     @staticmethod
     def check_duplicated_rules(rules, name_or_index: str = "index"):
@@ -81,6 +90,7 @@ class RuleSet(ABC):
         self.stacked_activations = None
         self.remember_activation = remember_activation
         self.stack_activation = stack_activation
+        self.rule_type = None
         if rules_list is not None:
             names_available = all([hasattr(r.condition, "features_names") for r in self])
             for rule in rules_list:
@@ -190,7 +200,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self) -> Tuple[str]:
         if len(self) == 0:
-            return ("rs",)
+            return "rs",
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -235,6 +245,13 @@ class RuleSet(ABC):
         self.stack_activation to determine if the updates should be done or not."""
         if not isinstance(rule, Rule):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
+        if self.rule_type is None:
+            self.rule_type = type(rule)
+        else:
+            if not isinstance(rule, self.rule_type):
+                raise TypeError(
+                    f"Ruleset previously had rules of type {self.rule_type}, so can not add rule of type {type(rule)}"
+                )
         remember_activation = self.remember_activation
         stack_activation = self.stack_activation
         if not update_activation:
@@ -447,3 +464,110 @@ class RuleSet(ABC):
 
         count = count.most_common()
         return count
+
+    def load(self, path, **kwargs):
+        if hasattr("read", path):
+            rules = path.read(**kwargs)
+        else:
+            rules = pd.read_csv(path, **kwargs)
+        self._rules = [self.series_to_rule(rules.loc[r]) for r in rules.index]
+        if len(self._rules) > 0:
+            self.rule_type = type(self._rules[0])
+        if self.remember_activation:
+            self.compute_self_activation()
+        if self.stack_activation:
+            self.compute_stacked_activation()
+        self.features_names = list(set(traverse([rule.features_names for rule in self])))
+
+    def save(self, path):
+        idx = copy(RuleSet.condition_index)
+        if self.rule_type == ClassificationRule:
+            idx += RuleSet.classification_rule_index
+        elif self.rule_type == RegressionRule:
+            idx += RuleSet.regression_rule_index
+        elif self.rule_type == Rule:
+            idx += RuleSet.rule_index
+        else:
+            raise TypeError(f"Impossible to save rule type {self.rule_type}")
+
+        dfs = [
+            self.rule_to_series(
+                (i, r),
+                index=idx,
+            )
+            for i, r in enumerate(self.rules)
+        ]
+        if len(dfs) > 0:
+            df = pd.concat(dfs, axis=1).T
+        else:
+            df = pd.DataFrame(columns=idx)
+        if hasattr("write", path):
+            path.write(df)
+        else:
+            df.to_csv(path)
+
+    # noinspection PyProtectedMember
+    @staticmethod
+    def rule_to_series(irule: Tuple[int, Rule], index: list) -> pd.Series:
+        i = irule[0]
+        rule = irule[1]
+        name = f"R_{i}({len(rule)})"
+        sr = pd.Series(data=[str(getattr(rule, ind)) for ind in index], name=name, index=index, dtype=str)
+        return sr
+
+    @staticmethod
+    def series_to_rule(srule: pd.Series) -> Rule:
+
+        condition_index = {c: None for c in RuleSet.condition_index}
+
+        for ind in srule.index:
+            if ind == "Unnamed: 0":
+                continue
+            if ind not in RuleSet.classification_rule_index + RuleSet.condition_index:
+                raise IndexError(f"Invalid rule attribute '{ind}'")
+
+        if "coverage" in srule.index:
+            rule = RegressionRule()
+            rule_idx = copy(RuleSet.regression_rule_index)
+        elif "criterion" in srule.index:
+            rule = ClassificationRule()
+            rule_idx = copy(RuleSet.classification_rule_index)
+        else:
+            rule = Rule()
+            rule_idx = copy(RuleSet.rule_index)
+
+        for rule_ind in srule.index:
+            str_value = str(srule[rule_ind])
+            if rule_ind in condition_index:
+                condition_index[rule_ind] = ast.literal_eval(str_value)
+                # setattr(condition, rule_ind, ast.literal_eval(str_value))
+            elif rule_ind in rule_idx:
+                if rule_ind == "activation":
+                    setattr(rule, f"_{rule_ind}", Activation(str_value))
+                elif str_value == "nan":
+                    setattr(rule, f"_{rule_ind}", np.nan)
+                elif rule_ind == "sign":
+                    setattr(rule, f"_{rule_ind}", str_value)
+                else:
+                    setattr(rule, f"_{rule_ind}", ast.literal_eval(str_value))
+            else:
+                continue
+
+        rule._condition = HyperrectangleCondition(**condition_index)
+        return rule
+
+
+def traverse(o, tree_types=(list, tuple, RuleSet)):
+    """Yields each elementary elements from nested list or tuple
+
+    Example
+    -------
+    >>> list(traverse([[[1, 2], 3,], [4, 5]]))
+    [1, 2, 3, 4, 5]
+    """
+    if isinstance(o, tree_types):
+        for value in o:
+            for subvalue in traverse(value, tree_types):
+                yield subvalue
+    else:
+        yield o

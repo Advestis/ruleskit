@@ -46,3 +46,40 @@ def test_coverage(clean, xs, y, rule_list, coverage):
     np.testing.assert_equal(res.ruleset_coverage, coverage)
     res.calc_activation(xs)
     np.testing.assert_equal(res.ruleset_coverage, coverage)
+
+
+@pytest.mark.parametrize(
+    "rs",
+    [
+        RuleSet(
+            [
+                Rule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
+                Rule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
+            ]
+        ),
+    ],
+)
+def test_save(rs):
+    rs.save("tests/unit/data/ruleset.csv")
+
+
+@pytest.mark.parametrize(
+    "rs",
+    [
+        RuleSet(
+            [
+                Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3])),
+                Rule(HyperrectangleCondition([1, 2], bmins=[4, 4], bmaxs=[5, 4])),
+            ]
+        ),
+    ],
+)
+def test_save(rs):
+    rs.save("tests/unit/data/ruleset.csv")
+
+
+def test_load():
+    rs = RuleSet()
+    rs.load("tests/unit/data/ruleset_test.csv")
+    for rule in rs:
+        print(rule)
