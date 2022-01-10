@@ -466,7 +466,7 @@ class RuleSet(ABC):
         return count
 
     def load(self, path, **kwargs):
-        if hasattr("read", path):
+        if hasattr(path, "read"):
             rules = path.read(**kwargs)
         else:
             rules = pd.read_csv(path, **kwargs)
@@ -501,7 +501,7 @@ class RuleSet(ABC):
             df = pd.concat(dfs, axis=1).T
         else:
             df = pd.DataFrame(columns=idx)
-        if hasattr("write", path):
+        if hasattr(path, "write"):
             path.write(df)
         else:
             df.to_csv(path)

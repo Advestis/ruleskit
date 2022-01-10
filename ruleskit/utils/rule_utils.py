@@ -18,9 +18,10 @@ def extract_rules_from_tree(
     xmins: Union[List[float], np.ndarray],
     xmaxs: Union[List[float], np.ndarray],
     features_names: List[str] = None,
+    classes_names: List[str] = None,
     get_leaf: bool = False,
     remember_activation: bool = True,
-    stack_activation: bool = False
+    stack_activation: bool = False,
 ) -> RuleSet:
     """To extract rules from a sklearn decision tree
 
@@ -70,6 +71,8 @@ def extract_rules_from_tree(
     tree : Union[sklearn.tree.DecisionTreeRegressor, sklearn.tree.DecisionTreeClassifier]
     features_names: List[str],
         the list of X names
+    classes_names: List[str],
+        the list of Y classes names
     xmins: Union[List[int], List[float], np.ndarray]
         min values of each xs, one entry per x
     xmaxs: Union[List[int], List[float], np.ndarray]
@@ -127,7 +130,12 @@ def extract_rules_from_tree(
             if get_leaf is False:
                 if isinstance(tree, DecisionTreeClassifier):
                     new_rule = ClassificationRule(copy.deepcopy(new_condition))
-                    new_rule._prediction = decision_tree.value[node][0]
+                    if classes_names is None:
+                        new_rule._prediction = [pred for pred in enumerate(decision_tree.value[node][0])]
+                    else:
+                        new_rule._prediction = [
+                            (classes_names[i], pred) for i, pred in enumerate(decision_tree.value[node][0])
+                        ]
                 else:
                     new_rule = RegressionRule(copy.deepcopy(new_condition))
                     new_rule._prediction = decision_tree.value[node][0][0]
@@ -174,7 +182,12 @@ def extract_rules_from_tree(
             if get_leaf is False:
                 if isinstance(tree, DecisionTreeClassifier):
                     new_rule = ClassificationRule(copy.deepcopy(new_condition))
-                    new_rule._prediction = decision_tree.value[node][0]
+                    if classes_names is None:
+                        new_rule._prediction = [pred for pred in enumerate(decision_tree.value[node][0])]
+                    else:
+                        new_rule._prediction = [
+                            (classes_names[i], pred) for i, pred in enumerate(decision_tree.value[node][0])
+                        ]
                 else:
                     new_rule = RegressionRule(copy.deepcopy(new_condition))
                     new_rule._prediction = decision_tree.value[node][0][0]
@@ -185,7 +198,12 @@ def extract_rules_from_tree(
         elif get_leaf:
             if isinstance(tree, DecisionTreeClassifier):
                 new_rule = ClassificationRule(copy.deepcopy(condition))
-                new_rule._prediction = decision_tree.value[node][0]
+                if classes_names is None:
+                    new_rule._prediction = [pred for pred in enumerate(decision_tree.value[node][0])]
+                else:
+                    new_rule._prediction = [
+                        (classes_names[i], pred) for i, pred in enumerate(decision_tree.value[node][0])
+                    ]
                 rules_list.append(new_rule)
             else:
                 new_rule = RegressionRule(copy.deepcopy(condition))
