@@ -2,6 +2,7 @@ from typing import List, Union
 import copy
 import numpy as np
 from ..rule import RegressionRule, ClassificationRule
+from ..ruleset import RuleSet
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..condition import HyperrectangleCondition
 
@@ -18,7 +19,9 @@ def extract_rules_from_tree(
     xmaxs: Union[List[float], np.ndarray],
     features_names: List[str] = None,
     get_leaf: bool = False,
-) -> Union[List[RegressionRule], List[ClassificationRule]]:
+    remember_activation: bool = True,
+    stack_activation: bool = False
+) -> RuleSet:
     """To extract rules from a sklearn decision tree
 
     features are the list of X names.
@@ -65,18 +68,21 @@ def extract_rules_from_tree(
     Parameters
     ----------
     tree : Union[sklearn.tree.DecisionTreeRegressor, sklearn.tree.DecisionTreeClassifier]
-
     features_names: List[str],
         the list of X names
-
     xmins: Union[List[int], List[float], np.ndarray]
         min values of each xs, one entry per x
-
     xmaxs: Union[List[int], List[float], np.ndarray]
         max values of each xs, one entry per x
-
     get_leaf: Boolean type
         To return only the leaf of the tree.
+    remember_activation: bool
+        The activation of the RuleSet is the logical OR of the activation of all its rules. It is only computed
+        if remember_activation is True. (default value = True)
+    stack_activation: bool
+        If True, the RuleSet will keep in memory 2-D np.ndarray containing the activations of all its rules. This
+        can take a lot of memory, but can save time if you apply numpy methods on this stacked vector instead of on
+        each rule separately. (default value = False)
 
     Returns
     -------
@@ -90,7 +96,7 @@ def extract_rules_from_tree(
 
     def visitor(node, depth, condition=None, rules_list=None):
         if rules_list is None:
-            rules_list = []
+            rules_list = RuleSet(remember_activation=remember_activation, stack_activation=stack_activation)
         if decision_tree.feature[node] != _tree.TREE_UNDEFINED:
             # If
             new_condition = HyperrectangleCondition(

@@ -1,8 +1,6 @@
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
-from ruleskit import extract_rules_from_tree
-from ruleskit import HyperrectangleCondition
-from ruleskit import Rule
+from ruleskit import extract_rules_from_tree, HyperrectangleCondition, Rule, RuleSet
 import numpy as np
 import pytest
 
@@ -12,7 +10,7 @@ import pytest
     [
         (
             DecisionTreeRegressor(max_depth=2),
-            [
+            RuleSet([
                 Rule(
                     HyperrectangleCondition(
                         [1], [-0.126097385560409], [-0.0037617861526086926]
@@ -51,12 +49,12 @@ import pytest
                         [0.133598980013008, 0.17055522598066],
                     )
                 ),
-            ],
+            ]),
             False,
         ),
         (
             DecisionTreeRegressor(max_depth=2),
-            [
+            RuleSet([
                 Rule(
                     HyperrectangleCondition(
                         [1, 0],
@@ -85,7 +83,7 @@ import pytest
                         [0.133598980013008, 0.17055522598066],
                     )
                 ),
-            ],
+            ]),
             True,
         ),
     ],
