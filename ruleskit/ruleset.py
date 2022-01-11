@@ -470,7 +470,12 @@ class RuleSet(ABC):
             rules = path.read(**kwargs)
         else:
             rules = pd.read_csv(path, **kwargs)
-        self._rules = [self.series_to_rule(rules.loc[r]) for r in rules.index]
+
+        if rules.empty:
+            self._rules = []
+        else:
+            self._rules = [self.series_to_rule(rules.loc[r]) for r in rules.index]
+
         if len(self._rules) > 0:
             self.rule_type = type(self._rules[0])
         if self.remember_activation:
@@ -480,6 +485,13 @@ class RuleSet(ABC):
         self.features_names = list(set(traverse([rule.features_names for rule in self])))
 
     def save(self, path):
+
+        if len(self) == 0:
+            if hasattr(path, "write"):
+                path.write(pd.DataFrame)
+            else:
+                pd.DataFrame().to_csv(path)
+
         idx = copy(RuleSet.condition_index)
         if self.rule_type == ClassificationRule:
             idx += RuleSet.classification_rule_index
