@@ -491,6 +491,7 @@ class RuleSet(ABC):
                 path.write(pd.DataFrame())
             else:
                 pd.DataFrame().to_csv(path)
+            return
 
         idx = copy(RuleSet.condition_index)
         if self.rule_type == ClassificationRule:
