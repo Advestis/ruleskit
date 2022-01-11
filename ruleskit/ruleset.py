@@ -488,7 +488,7 @@ class RuleSet(ABC):
 
         if len(self) == 0:
             if hasattr(path, "write"):
-                path.write(pd.DataFrame)
+                path.write(pd.DataFrame())
             else:
                 pd.DataFrame().to_csv(path)
 
