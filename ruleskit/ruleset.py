@@ -38,7 +38,7 @@ class RuleSet(ABC):
 
     condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
     rule_index = ["prediction"]
-    classification_rule_index = rule_index + ["coverage", "criterion", "prediction"]
+    classification_rule_index = rule_index + ["coverage", "criterion"]
     regression_rule_index = classification_rule_index + ["std"]
 
     @staticmethod
