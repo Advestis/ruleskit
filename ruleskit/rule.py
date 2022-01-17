@@ -434,6 +434,8 @@ class ClassificationRule(Rule):
     @property
     def prediction(self) -> Union[int, str, None]:
         if self._prediction is not None:
+            if isinstance(self._prediction, (float, int, str)):
+                return self._prediction
             prop = [p[1] for p in self._prediction]
             idx = prop.index(max(prop))
             return self._prediction[idx][0]
