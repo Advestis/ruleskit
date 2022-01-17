@@ -38,8 +38,8 @@ class RuleSet(ABC):
 
     condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
     rule_index = ["prediction"]
-    classification_rule_index = rule_index + ["coverage", "criterion"]
-    regression_rule_index = classification_rule_index + ["prediction", "std"]
+    classification_rule_index = rule_index + ["coverage", "criterion", "prediction"]
+    regression_rule_index = classification_rule_index + ["std"]
 
     @staticmethod
     def check_duplicated_rules(rules, name_or_index: str = "index"):
@@ -539,7 +539,7 @@ class RuleSet(ABC):
             if ind not in RuleSet.classification_rule_index + RuleSet.condition_index:
                 raise IndexError(f"Invalid rule attribute '{ind}'")
 
-        if "coverage" in srule.index:
+        if "std" in srule.index:
             rule = RegressionRule()
             rule_idx = copy(RuleSet.regression_rule_index)
         elif "criterion" in srule.index:
