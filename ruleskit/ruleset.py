@@ -562,7 +562,13 @@ class RuleSet(ABC):
                 elif rule_ind == "sign":
                     setattr(rule, f"_{rule_ind}", str_value)
                 else:
-                    setattr(rule, f"_{rule_ind}", ast.literal_eval(str_value))
+                    if rule_ind == "prediction":  # Prediction can be a str in case of classification
+                        try:
+                            setattr(rule, f"_{rule_ind}", ast.literal_eval(str_value))
+                        except ValueError:
+                            setattr(rule, f"_{rule_ind}", str_value)
+                    else:
+                        setattr(rule, f"_{rule_ind}", ast.literal_eval(str_value))
             else:
                 continue
 
