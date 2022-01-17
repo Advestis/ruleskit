@@ -38,8 +38,8 @@ class RuleSet(ABC):
 
     condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
     rule_index = ["prediction"]
-    classification_rule_index = rule_index + ["criterion"]
-    regression_rule_index = classification_rule_index + ["coverage", "prediction", "std"]
+    classification_rule_index = rule_index + ["coverage", "criterion"]
+    regression_rule_index = classification_rule_index + ["prediction", "std"]
 
     @staticmethod
     def check_duplicated_rules(rules, name_or_index: str = "index"):

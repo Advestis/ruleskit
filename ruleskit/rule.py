@@ -58,11 +58,26 @@ class Rule(ABC):
 
         self._condition = condition
         self._activation = activation
+
+        self._coverage = None
         self._prediction = None
 
         self._time_fit = -1
         self._time_calc_activation = -1
         self._time_predict = -1
+
+    @property
+    def coverage(self) -> float:
+        if self._activation is not None:
+            self._coverage = self._activation.coverage
+            return self._activation.coverage
+        return self._coverage
+
+    @coverage.setter
+    def coverage(self, value):
+        if self._activation is not None:
+            self._activation.coverage = value
+        self._coverage = value
 
     def __and__(self, other: "Rule") -> "Rule":
         """Logical AND (&) of two rules. It is simply the logical AND of the two rule's conditions and activations. """
@@ -293,8 +308,6 @@ class RegressionRule(Rule):
         self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
     ):
         super().__init__(condition, activation)
-
-        self._coverage = None
         self._std = None
         self._criterion = None
 
@@ -302,19 +315,6 @@ class RegressionRule(Rule):
         self._time_calc_criterion = -1
         self._time_calc_prediction = -1
         self._time_calc_std = -1
-
-    @property
-    def coverage(self) -> float:
-        if self._activation is not None:
-            self._coverage = self._activation.coverage
-            return self._activation.coverage
-        return self._coverage
-
-    @coverage.setter
-    def coverage(self, value):
-        if self._activation is not None:
-            self._activation.coverage = value
-        self._coverage = value
 
     @property
     def std(self) -> float:
