@@ -44,9 +44,9 @@ class RuleSet(ABC):
     @staticmethod
     def check_duplicated_rules(rules, name_or_index: str = "index"):
         if name_or_index == "index":
-            str_rules = [str(r.features_indexes) + str(r.bmins) + str(r.bmaxs) for r in rules]
+            str_rules = [str(r.features_indexes) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in rules]
         else:
-            str_rules = [str(r.features_names) + str(r.bmins) + str(r.bmaxs) for r in rules]
+            str_rules = [str(r.features_names) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in rules]
         if len(set(str_rules)) < len(str_rules):
             duplicated = {}
             for r in str_rules:
@@ -324,12 +324,18 @@ class RuleSet(ABC):
             self.stacked_activations = self.stacked_activations[[str(r.condition) for r in self]]
 
     # noinspection PyProtectedMember
-    def __contains__(self, other: Union["RuleSet", Rule]) -> bool:
-        """A RuleSet contains another Rule or RuleSet if the second Rule or RuleSet activated points are also all
-        activated by the first RuleSet."""
-        if not self._activation or not other._activation:
-            return False
-        return other._activation in self._activation
+    def __contains__(self, other: Rule) -> bool:
+        """A RuleSet contains another Rule if the two rule's conditions and predictions are the same"""
+        name_or_index = "name" if len(self.features_names) > 0 else "index"
+
+        if name_or_index == "index":
+            str_rules = [str(r.features_indexes) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in self]
+            str_rule = str(other.features_indexes) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
+        else:
+            str_rules = [str(r.features_names) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in self]
+            str_rule = str(other.features_names) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
+
+        return str_rule in str_rules
 
     @property
     def activation_available(self) -> bool:
