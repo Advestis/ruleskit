@@ -9,20 +9,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-try:
-    import pandas as pd
-    pandas_ok = True
-except ImportError:
-    class pd:
-        DataFrame = None
-        Series = None
-    pandas_ok = False
-
 
 class DuplicatedFeatures(Exception):
     pass
 
 
+# noinspection PyUnresolvedReferences
 class Condition(ABC):
     """Abstract class for Condition object. Used by Rule objets.
     A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
@@ -84,7 +76,7 @@ class Condition(ABC):
         """A Condition's length is the number of features it talks about"""
         return len(self._features_indexes)
 
-    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+    def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
         """
         To be implemented in daughter class.
         Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
@@ -108,6 +100,7 @@ class Condition(ABC):
         self._features_indexes = list(range(len(self.features_indexes)))
 
 
+# noinspection PyUnresolvedReferences
 class HyperrectangleCondition(Condition):
     """Condition class for Hyper Rectangle conditions.
 
@@ -409,7 +402,7 @@ class HyperrectangleCondition(Condition):
                     f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}"
                 )
 
-    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+    def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
         """
         Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
 
@@ -449,9 +442,7 @@ class HyperrectangleCondition(Condition):
                 leq_min &= np.less_equal(xs[:, j], self._bmaxs[i])
                 not_nan &= np.isfinite(xs[:, j])
             activation = geq_min & leq_min & not_nan
-        elif pandas_ok:
-            if not isinstance(xs, pd.DataFrame):
-                raise TypeError("xs should be a np.ndarray or a pd.DataFrame object")
+        else:
             if any([i not in xs.columns for i in self.features_names]):
                 raise IndexError("Some features names in self were not in xs DataFrame columns")
             geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
@@ -460,8 +451,5 @@ class HyperrectangleCondition(Condition):
                 leq_min &= np.less_equal(xs[n], self._bmaxs[i])
                 not_nan &= np.isfinite(xs[n])
             activation = (geq_min & leq_min & not_nan).values
-        else:
-            raise ImportError("If xs is not a np.ndarray, Condition expects it to be a pd.DataFrame, but pandas is not "
-                              "available. Please run\npip install pandas")
 
         return activation

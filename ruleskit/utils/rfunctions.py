@@ -193,15 +193,16 @@ def success_rate(prediction: Union[int, str], y: np.ndarray):
     return success / len(y)
 
 
+# noinspection PyUnresolvedReferences
 def calc_classification_criterion(
-    activation_vector: np.ndarray, prediction: Union[int, str], y: np.ndarray, **kwargs
+    activation_vector: np.ndarray, prediction: Union[int, str], y: Union[np.ndarray, "pd.Series"], **kwargs
 ) -> float:
     """
     Computes the criterion
 
     Parameters
     ----------
-    activation_vector : np.ndarray
+    activation_vector : Union[np.ndarray, pd.Series]
         The prediction vector
 
     prediction: int or str:

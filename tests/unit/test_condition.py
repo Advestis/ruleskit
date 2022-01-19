@@ -102,7 +102,7 @@ def test_sort(fi, fn, bi, ba, fie, fne, bie, bae, according_to):
             [[1, 3], [3, 4], [2, np.nan]],
             HyperrectangleCondition([0, 3], features_names=["A", "C"], bmins=[1, 3], bmaxs=[2, 5]),
             np.array([1, 0, 0]),
-            TypeError,
+            AttributeError,
         ),
     ],
 )

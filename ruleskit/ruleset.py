@@ -15,19 +15,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-try:
-    import pandas as pd
 
-    pandas_ok = True
-except ImportError:
-
-    class pd:
-        DataFrame = None
-        Series = None
-
-    pandas_ok = False
-
-
+# noinspection PyUnresolvedReferences
 class RuleSet(ABC):
 
     """A set of rules"""
@@ -224,8 +213,11 @@ class RuleSet(ABC):
         """Updates the stacked activation vectors of the RuleSet with the activation vector of a new Rule or
         the stacked activation vectors of another RuleSet."""
         if other.activation_available:
-            if not pandas_ok:
+            try:
+                import pandas as pd
+            except ImportError:
                 raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
+
             if self.stacked_activations is None:
                 if isinstance(other, Rule):
                     self.stacked_activations = pd.DataFrame(
@@ -388,8 +380,11 @@ class RuleSet(ABC):
         """Computes the stacked activation vectors of self from its rules."""
         if len(self) == 0:
             return
-        if not pandas_ok:
-            raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+
         activations_available = all([r.activation_available for r in self])
         if activations_available:
             # noinspection PyProtectedMember
@@ -418,7 +413,7 @@ class RuleSet(ABC):
             del self.stacked_activations
             self.stacked_activations = None
 
-    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> Activation:
+    def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> Activation:
         """Computes and returns the activation vector from an array of features.
 
         Parameters
@@ -436,7 +431,7 @@ class RuleSet(ABC):
         activations = [rule.evaluate(xs) for rule in self.rules]
         return Activation.multi_logical_or(activations)
 
-    def calc_activation(self, xs: Union[np.ndarray, pd.DataFrame]):
+    def calc_activation(self, xs: Union[np.ndarray, "pd.DataFrame"]):
         """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
         activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
         if len(self) == 0:
@@ -472,11 +467,15 @@ class RuleSet(ABC):
         return count
 
     def load(self, path, **kwargs):
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("'pandas' is needed to read a RuleSet from a file. Please run\npip install pandas")
+
         if hasattr(path, "read"):
             rules = path.read(**kwargs)
         else:
             rules = pd.read_csv(path, **kwargs)
-
         if rules.empty:
             self._rules = []
         else:
@@ -491,6 +490,11 @@ class RuleSet(ABC):
         self.features_names = list(set(traverse([rule.features_names for rule in self])))
 
     def save(self, path):
+
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("'pandas' is needed to save a RuleSet to a file. Please run\npip install pandas")
 
         if len(self) == 0:
             if hasattr(path, "write"):
@@ -527,7 +531,11 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember
     @staticmethod
-    def rule_to_series(irule: Tuple[int, Rule], index: list) -> pd.Series:
+    def rule_to_series(irule: Tuple[int, Rule], index: list) -> "pd.Series":
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("'pandas' is needed to read a RuleSet from a file. Please run\npip install pandas")
         i = irule[0]
         rule = irule[1]
         name = f"R_{i}({len(rule)})"
@@ -535,7 +543,7 @@ class RuleSet(ABC):
         return sr
 
     @staticmethod
-    def series_to_rule(srule: pd.Series) -> Rule:
+    def series_to_rule(srule: "pd.Series") -> Rule:
 
         condition_index = {c: None for c in RuleSet.condition_index}
 
