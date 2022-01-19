@@ -105,6 +105,9 @@ def test_fit(clean, prepare_fit, x_y_condition_activation_s_error, theclass):
         with pytest.raises(error) as e:
             rule.fit(xs=x, y=y)
         assert "'fit' did not set 'prediction'" in str(e.value)
+    elif theclass == Rule:
+        with pytest.raises(NotImplementedError):
+            rule.fit(xs=x, y=y)
     else:
         rule.fit(xs=x, y=y)
         np.testing.assert_equal(rule.activation, activation)
@@ -125,11 +128,11 @@ def test_fit(clean, prepare_fit, x_y_condition_activation_s_error, theclass):
 )
 def test_local_activation(clean, x, y, condition, activation):
     Rule.LOCAL_ACTIVATION = False
-    rule = Rule(condition=condition)
+    rule = RegressionRule(condition=condition)
     rule.fit(xs=x, y=y)
     assert not isinstance(rule._activation.data, Path)
     Rule.LOCAL_ACTIVATION = True
-    rule = Rule(condition=condition)
+    rule = RegressionRule(condition=condition)
     rule.fit(xs=x, y=y)
     assert isinstance(rule._activation.data, Path) and rule._activation.data.is_file()
 
@@ -219,9 +222,9 @@ def test_classification_attributes(clean, x, y, condition, proba, pred, crit):
     ],
 )
 def test_and(clean, x, y, condition1, condition2, activation1, activation2, activation_test):
-    rule1 = Rule(condition=condition1)
+    rule1 = RegressionRule(condition=condition1)
     rule1.fit(xs=x, y=y)
-    rule2 = Rule(condition=condition2)
+    rule2 = RegressionRule(condition=condition2)
     rule2.fit(xs=x, y=y)
 
     new_rule = rule1 & rule2
@@ -239,63 +242,70 @@ def test_and(clean, x, y, condition1, condition2, activation1, activation2, acti
                 np.array([[1, 3], [3, 4], [2, np.nan]]),
                 np.array([1.5, 3, 2]),
                 np.array([[1, 3], [0, 4], [0, 5], [np.nan, np.nan]]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5]),
                 np.array([[1, 3], [3, 4], [2, np.nan]]),
                 np.array([1.5, 3, 2]),
                 None,
-                np.array([1.5, 0, 0]),
+                np.array([1.5, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([0, 1], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
                 pd.DataFrame(data=[[1, 3], [3, 4], [2, np.nan]], columns=["A", "B"]),
                 np.array([1.5, 3, 2]),
                 np.array([[1, 3], [0, 4], [0, 5], [np.nan, np.nan]]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([0, 1], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
                 pd.DataFrame(data=[[1, 3], [3, 4], [2, np.nan]], columns=["A", "B"]),
                 np.array([1.5, 3, 2]),
                 None,
-                np.array([1.5, 0, 0]),
+                np.array([1.5, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([0, 1], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
                 np.array([[1, 3], [3, 4], [2, np.nan]]),
                 np.array([1.5, 3, 2]),
                 pd.DataFrame([[1, 3], [0, 4], [0, 5], [np.nan, np.nan]], columns=["A", "B"]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([0, 1], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
                 pd.DataFrame(data=[[1, 3], [3, 4], [2, np.nan]], columns=["A", "B"]),
                 np.array([1.5, 3, 2]),
                 pd.DataFrame([[1, 3], [0, 4], [0, 5], [np.nan, np.nan]], columns=["A", "B"]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([1, 0], bmins=[1, 3], bmaxs=[2, 5]),
                 np.array([[3, 1], [4, 3], [np.nan, 2]]),
                 np.array([1.5, 3, 2]),
                 np.array([[3, 1], [4, 0], [5, 0], [np.nan, np.nan]]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([1, 0], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
                 np.array([[3, 1], [4, 3], [np.nan, 2]]),
                 np.array([1.5, 3, 2]),
                 np.array([[3, 1], [4, 0], [5, 0], [np.nan, np.nan]]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
             ),
             (
                 HyperrectangleCondition([0, 1], features_names=["B", "A"], bmins=[1, 3], bmaxs=[2, 5]),
                 pd.DataFrame([[3, 1], [4, 3], [np.nan, 2]], columns=["A", "B"]),
                 np.array([1.5, 3, 2]),
                 pd.DataFrame([[3, 1], [4, 0], [5, 0], [np.nan, np.nan]], columns=["A", "B"]),
-                np.array([1.5, 0, 0, 0]),
+                np.array([1.5, np.nan, np.nan, np.nan]),
+            ),
+            (
+                HyperrectangleCondition([0, 1], features_names=["B", "A"], bmins=[1, 3], bmaxs=[2, 5]),
+                pd.DataFrame([[3, 1], [4, 3], [np.nan, 2]], columns=["A", "B"]),
+                np.array(["a", "b", "c"]),
+                pd.DataFrame([[3, 1], [4, 0], [5, 0], [np.nan, np.nan]], columns=["A", "B"]),
+                np.array(["a", "nan", "nan", "nan"]),
             ),
         ],
         [Rule, RegressionRule, ClassificationRule],
@@ -305,14 +315,16 @@ def test_predict(clean, condition_x_y_x2_expected, theclass):
     condition, x, y, x2, expected = condition_x_y_x2_expected
     # noinspection PyCallingNonCallable
     rule = theclass(condition=condition)
+    if y.dtype == str and theclass != ClassificationRule:
+        return
+
     if theclass == Rule:
-        if x2 is not None:
-            expected = np.zeros(x2.shape[0])
-        else:
-            expected = np.zeros(x.shape[0])
-    elif theclass == ClassificationRule:
-        expected = expected.astype(str)
-        expected[expected == "0.0"] = ""
+        with pytest.raises(NotImplementedError):
+            rule.fit(xs=x, y=y)
+        return
+    if y.dtype.type == np.str_ and theclass != ClassificationRule:
+        return
+
     rule.fit(xs=x, y=y)
     pred = rule.predict(x2)
     if theclass == ClassificationRule:

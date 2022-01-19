@@ -1,5 +1,5 @@
 import numpy as np
-from ruleskit import HyperrectangleCondition
+from ruleskit import HyperrectangleCondition, RegressionRule
 from ruleskit import Rule
 from ruleskit import RuleSet
 import pytest
@@ -33,8 +33,8 @@ def test_add(rule1, rule2, rs):
             np.array([[5, 3], [3, 4], [2, np.nan]]),
             np.array([1, 3, 2]),
             [
-                Rule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
-                Rule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
+                RegressionRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
+                RegressionRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
             ],
             2 / 3,
         ),

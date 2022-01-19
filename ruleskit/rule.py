@@ -246,7 +246,7 @@ class Rule(ABC):
 
     def calc_attributes(self, xs: Union[pd.DataFrame, np.ndarray], y: np.ndarray, **kwargs):
         """Implement in daughter class. Must set self._prediction."""
-        self._prediction = 0
+        raise NotImplementedError("To implement in daughter class")
 
     def calc_activation(self, xs: Union[pd.DataFrame, np.ndarray]):
         """Uses self.evaluate to set self._activation.
@@ -261,20 +261,21 @@ class Rule(ABC):
         self._activation = self.evaluate(xs)
         self._time_calc_activation = time() - t0
 
-    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> np.ndarray:
+    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> Union[np.ndarray, pd.Series]:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
         Will raise ValueError is xs is None and activation is not yet known.
 
         Parameters
         ----------
-        xs: Union[pd.DataFrame, np.ndarray]
+        xs: Optional[Union[pd.DataFrame, np.ndarray]]
             The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
-            or pd.DataFrame.
+            or pd.DataFrame. If not specified the rule's activation vector must have been computed already.
 
         Returns
         -------
-        np.ndarray
-            np.nan where rule is not activated, prediction where it is
+        Union[np.ndarray, pd.Series]
+            np.nan where rule is not activated, rule's prediction where it is. If xs vas given and it was a dataframe,
+            return a pd.Series. Else, a np.ndarray.
         """
         t0 = time()
         if xs is not None:
@@ -282,9 +283,16 @@ class Rule(ABC):
         elif self.activation is None:
             raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
         act = self.activation
-        to_ret = np.empty((len(act)))
-        to_ret[act == 1] = self._prediction
+        to_ret = np.array([np.nan] * len(act))
+        if isinstance(self.prediction, str):
+            if self.prediction == "nan":
+                raise ValueError("Prediction should not be the 'nan' string, it will conflict with NaNs."
+                                 "Rename your class.")
+            to_ret = to_ret.astype(str)
+        to_ret[act == 1] = self.prediction
         self._time_predict = time() - t0
+        if xs is not None and isinstance(xs, pd.DataFrame):
+            return xs.__class__(index=xs.index, data=to_ret).squeeze()  # So not to requier pandas explicitly
         return to_ret
 
     def get_correlation(self, other: "Rule") -> float:
@@ -397,25 +405,6 @@ class RegressionRule(Rule):
         self._criterion = functions.calc_regression_criterion(p, y, **kwargs)
         self._time_calc_criterion = time() - t0
 
-    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> np.ndarray:
-        """Returns the prediction vector. If xs is not given, will use existing activation vector.
-        Will raise ValueError is xs is None and activation is not yet known.
-
-        Parameters
-        ----------
-        xs: Union[pd.DataFrame, np.ndarray]
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
-            or pd.DataFrame.
-        """
-        t0 = time()
-        if xs is not None:
-            self.calc_activation(xs)
-        elif self.activation is None:
-            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        to_ret = self._prediction * self.activation
-        self._time_predict = time() - t0
-        return to_ret
-
 
 class ClassificationRule(Rule):
 
@@ -486,27 +475,3 @@ class ClassificationRule(Rule):
         t0 = time()
         self._criterion = functions.calc_classification_criterion(self.activation, self.prediction, y, **kwargs)
         self._time_calc_criterion = time() - t0
-
-    def predict(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None) -> np.ndarray:
-        """Returns the prediction vector. If xs is not given, will use existing activation vector.
-        Will raise ValueError is xs is None and activation is not yet known.
-
-        Parameters
-        ----------
-        xs: Union[pd.DataFrame, np.ndarray]
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
-            or pd.DataFrame.
-
-        Returns
-        -------
-        np.ndarray
-            Prediction vector
-        """
-        t0 = time()
-        if xs is not None:
-            self.calc_activation(xs)
-        elif self.activation is None:
-            raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        to_ret = np.array([self.prediction if i == 1 else "" for i in self.activation])
-        self._time_predict = time() - t0
-        return to_ret
