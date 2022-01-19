@@ -436,7 +436,7 @@ class RuleSet(ABC):
         activations = [rule.evaluate(xs) for rule in self.rules]
         return Activation.multi_logical_or(activations)
 
-    def calc_activation(self, xs: np.ndarray):
+    def calc_activation(self, xs: Union[np.ndarray, pd.DataFrame]):
         """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
         activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
         if len(self) == 0:

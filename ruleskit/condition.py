@@ -84,15 +84,15 @@ class Condition(ABC):
         """A Condition's length is the number of features it talks about"""
         return len(self._features_indexes)
 
-    @staticmethod
-    def evaluate(xs: np.ndarray) -> np.ndarray:
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
+        To be implemented in daughter class.
         Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
         it is always fullfilled.
 
         Parameters
         ----------
-        xs: np.ndarray
+        xs: Union[pd.DataFrame, np.ndarray]
             shape (n, d), n number of line, d number of features
 
         Returns
@@ -100,8 +100,7 @@ class Condition(ABC):
         activation: Activation
              Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
         """
-        activation = np.ones(xs.shape[0], dtype=np.ubyte)
-        return activation
+        pass
 
     def normalize_features_indexes(self):
         """In some daughter classes, features indexes are optional. however since the attribute 'features_indexes'
