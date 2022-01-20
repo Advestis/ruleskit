@@ -48,7 +48,8 @@ class Rule(ABC):
         """Set thresholds globally for all futur Rules"""
         if path is None:
             cls.THRESHOLDS = None
-        cls.THRESHOLDS = Thresholds(path, show)
+        else:
+            cls.THRESHOLDS = Thresholds(path, show)
 
     def __init__(
         self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
@@ -81,7 +82,8 @@ class Rule(ABC):
         """Set thresholds for this rule only"""
         if path is None:
             cls.THRESHOLDS = None
-        self._thresholds = Thresholds(path, show)
+        else:
+            self._thresholds = Thresholds(path, show)
 
     def check_thresholds(self, attribute: Optional[str] = None) -> None:
         """If `ruleskit.rule.Rule.THRESHOLDS` is specified, will check that this rule is good regarding those
