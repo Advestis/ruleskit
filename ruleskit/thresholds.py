@@ -9,6 +9,15 @@ logger = logging.getLogger(__name__)
 
 class Thresholds:
 
+    """Implements the notion of thresholds in Rule. From a given json, sets limits that can be used to flag bad rules.
+
+    Attributes
+    ----------
+    limits: dict
+        The limits to use
+    path: Union[str, Path, TransparentPath]
+    """
+
     KWOWN_ARGS = {"abs": abs, "sqrt": math.sqrt, "exp": math.exp, "log": math.log, "str": str, "int": int}
 
     def __init__(self, path: Union[str, Path, "TransparentPath"], show=False):
