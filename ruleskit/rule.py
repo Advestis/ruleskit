@@ -44,8 +44,10 @@ class Rule(ABC):
     """Thresholds that the Rule must meet to be good. See `ruleskit.thresholds.Thresholds` for more details."""
 
     @classmethod
-    def SET_THRESHOLDS(cls, path: Union[str, Path, "TransparentPath"], show=False):
+    def SET_THRESHOLDS(cls, path: Union[str, Path, "TransparentPath", None], show=False):
         """Set thresholds globally for all futur Rules"""
+        if path is None:
+            cls.THRESHOLDS = None
         cls.THRESHOLDS = Thresholds(path, show)
 
     def __init__(
@@ -77,6 +79,8 @@ class Rule(ABC):
 
     def set_thresholds(self, path: Union[str, Path, "TransparentPath"], show=False):
         """Set thresholds for this rule only"""
+        if path is None:
+            cls.THRESHOLDS = None
         self._thresholds = Thresholds(path, show)
 
     def check_thresholds(self, attribute: Optional[str] = None) -> None:
