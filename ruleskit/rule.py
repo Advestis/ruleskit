@@ -2,9 +2,11 @@ from abc import ABC
 import numpy as np
 from typing import Optional, Union, Tuple
 from time import time
+from pathlib import Path
 from .condition import Condition
 from .activation import Activation
 from .utils import rfunctions as functions
+from .thresholds import Thresholds
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,6 +40,13 @@ class Rule(ABC):
     """
 
     LOCAL_ACTIVATION = True
+    THRESHOLDS = None
+    """Thresholds that the Rule must meet to be good. See `ruleskit.thresholds.Thresholds` for more details."""
+
+    @classmethod
+    def SET_THRESHOLDS(cls, path: Union[str, Path, "TransparentPath"], show=False):
+        """Set thresholds globally for all futur Rules"""
+        cls.THRESHOLDS = Thresholds(path, show)
 
     def __init__(
         self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
@@ -52,6 +61,9 @@ class Rule(ABC):
 
         self._condition = condition
         self._activation = activation
+        self._thresholds = Rule.THRESHOLDS
+        if self._activation is not None:
+            self.check_thresholds("coverage")
 
         self._coverage = None
         self._prediction = None
@@ -59,6 +71,42 @@ class Rule(ABC):
         self._time_fit = -1
         self._time_calc_activation = -1
         self._time_predict = -1
+
+        self._good = True
+        self._bad_because = None
+
+    def set_thresholds(self, path: Union[str, Path, "TransparentPath"], show=False):
+        """Set thresholds for this rule only"""
+        self._thresholds = Thresholds(path, show)
+
+    def check_thresholds(self, attribute: Optional[str] = None) -> None:
+        """If `ruleskit.rule.Rule.THRESHOLDS` is specified, will check that this rule is good regarding those
+        thresholds, and set the flags *good* and *bad_because* accordingly
+
+        Parameters
+        ----------
+        attribute: Optional[str]
+            If specified, will only check the threshold of this rule attribute. If not, will test every rule attributes
+            for which a threshold is defined.
+        """
+
+        if Rule.THRESHOLDS is None:
+            return
+
+        if attribute is not None:
+            if not Rule.THRESHOLDS(attribute, self):
+                self._bad_because = attribute
+                self._good = False
+            return
+
+        for attribute in dir(self):
+            if attribute.startswith("__"):
+                continue
+            if not Rule.THRESHOLDS(attribute, self):
+                self._bad_because = attribute
+                self._good = False
+                return
+        logger.debug(f"Rule {self} is good")
 
     @property
     def coverage(self) -> float:
@@ -119,8 +167,20 @@ class Rule(ABC):
         return None
 
     @property
-    def prediction(self) -> float:
+    def prediction(self) -> Union[str, float]:
         return self._prediction
+
+    @property
+    def thresholds(self) -> Thresholds:
+        return self._thresholds
+
+    @property
+    def good(self) -> bool:
+        return self._good
+
+    @property
+    def bad_because(self) -> str:
+        return self._bad_because
 
     @property
     def time_fit(self) -> float:
@@ -217,7 +277,7 @@ class Rule(ABC):
         return a
 
     # noinspection PyUnusedLocal
-    def fit(self, xs: Union["pd.DataFrame", np.ndarray], y: np.ndarray, **kwargs):
+    def fit(self, xs: Union["pd.DataFrame", np.ndarray] = None, y: np.ndarray = None, **kwargs):
         """Computes activation, and other criteria dependant on the nature of the daughter class of the Rule,
         for a given xs and y.
 
@@ -232,13 +292,18 @@ class Rule(ABC):
             Other arguments used by daughter class
         """
         t0 = time()
-        self.calc_activation(xs)
-        self.calc_attributes(xs, y, **kwargs)
+        if xs is not None:
+            self.calc_activation(xs)
+
+        if self._activation is None:
+            raise ValueError("If fitting without specifying xs, activation must have been computed already.")
+        self.calc_attributes(y, **kwargs)
         if self.prediction is None:
             raise ValueError("'fit' did not set 'prediction' : did you overload 'calc_attributes' correctly ?")
+
         self._time_fit = time() - t0
 
-    def calc_attributes(self, xs: Union["pd.DataFrame", np.ndarray], y: Union[np.ndarray, "pd.Series"], **kwargs):
+    def calc_attributes(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
         """Implement in daughter class. Must set self._prediction."""
         raise NotImplementedError("To implement in daughter class")
 
@@ -254,6 +319,7 @@ class Rule(ABC):
         t0 = time()
         self._activation = self.evaluate(xs)
         self._time_calc_activation = time() - t0
+        self.check_thresholds("coverage")
 
     def predict(self, xs: Optional[Union["pd.DataFrame", np.ndarray]] = None) -> Union[np.ndarray, "pd.Series"]:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
@@ -339,14 +405,11 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_attributes(self, xs: Union["pd.DataFrame", np.ndarray], y: Union[np.ndarray, "pd.Series"], **kwargs):
+    def calc_attributes(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
         """Computes prediction, standard deviation, and regression criterion
         
         Parameters
         ----------
-        xs: Union[pd:DataFrame, np.ndarray]
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
-            or pd:DataFrame.
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.
@@ -372,6 +435,7 @@ class RegressionRule(Rule):
             return None
         self._prediction = functions.conditional_mean(self.activation, y)
         self._time_calc_prediction = time() - t0
+        self.check_thresholds("prediction")
 
     def calc_std(self, y: Union[np.ndarray, "pd.Series"]):
         """Computes the standard deviation of all activated points in target y
@@ -387,6 +451,7 @@ class RegressionRule(Rule):
             return None
         self._std = functions.conditional_std(self.activation, y)
         self._time_calc_std = time() - t0
+        self.check_thresholds("std")
 
     def calc_criterion(self, p: Union[np.ndarray, "pd.Series"], y: Union[np.ndarray, "pd.Series"], **kwargs):
         """
@@ -403,6 +468,7 @@ class RegressionRule(Rule):
         t0 = time()
         self._criterion = functions.calc_regression_criterion(p, y, **kwargs)
         self._time_calc_criterion = time() - t0
+        self.check_thresholds("criterion")
 
 
 # noinspection PyUnresolvedReferences
@@ -435,7 +501,7 @@ class ClassificationRule(Rule):
     def criterion(self) -> float:
         return self._criterion
 
-    def calc_attributes(self, xs: Union["pd.DataFrame", np.ndarray], y: Union[np.ndarray, "pd.Series"], **kwargs):
+    def calc_attributes(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
         """
         Parameters
         ----------
@@ -464,6 +530,7 @@ class ClassificationRule(Rule):
             raise ValueError("The activation vector has not been computed yet.")
         self._prediction = functions.most_common_class(self.activation, y)
         self._time_calc_prediction = time() - t0
+        self.check_thresholds("prediction")
 
     def calc_criterion(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
         """
@@ -478,3 +545,4 @@ class ClassificationRule(Rule):
         t0 = time()
         self._criterion = functions.calc_classification_criterion(self.activation, self.prediction, y, **kwargs)
         self._time_calc_criterion = time() - t0
+        self.check_thresholds("criterion")

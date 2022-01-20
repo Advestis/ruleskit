@@ -97,7 +97,7 @@ def test_fit(clean, prepare_fit, x_y_condition_activation_s_error, theclass):
     rule = theclass(condition=condition)
     if error is not None:
 
-        def wrong_calc_attributes(r, xs_, y_, **kwargs):
+        def wrong_calc_attributes(r, y_, **kwargs):
             return
 
         theclass.calc_attributes = wrong_calc_attributes

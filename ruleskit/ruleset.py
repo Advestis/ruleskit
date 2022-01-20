@@ -1,7 +1,7 @@
 from abc import ABC
 import ast
 from copy import copy
-from typing import List, Union, Tuple, Any
+from typing import List, Union, Tuple, Any, Optional
 from collections import Counter
 import numpy as np
 import itertools
@@ -16,7 +16,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# noinspection PyUnresolvedReferences
 class RuleSet(ABC):
 
     """A set of rules"""
@@ -97,28 +96,6 @@ class RuleSet(ABC):
         if RuleSet.CHECK_DUPLICATED:
             self.check_duplicated_rules(self.rules, name_or_index="name" if len(self.features_names) > 0 else "index")
 
-    @property
-    def rules(self) -> List[Rule]:
-        return self._rules
-
-    @rules.setter
-    def rules(self, rules: Union[List[Rule], None]):
-        ruleset = RuleSet(rules, remember_activation=self.remember_activation, stack_activation=self.stack_activation)
-        self._rules = ruleset._rules
-        self.features_names = ruleset.features_names
-        self.features_indexes = ruleset.features_indexes
-        self.stacked_activations = ruleset.stacked_activations
-        self._activation = ruleset._activation
-
-    def set_features_indexes(self):
-        if len(RuleSet.all_features_indexes) > 0:
-            self.features_indexes = [RuleSet.all_features_indexes[f] for f in self.features_names]
-            for r in self._rules:
-                # noinspection PyProtectedMember
-                r._condition._features_indexes = [RuleSet.all_features_indexes[f] for f in r.features_names]
-        else:
-            list(set(itertools.chain(*[rule.features_indexes for rule in self])))
-
     # noinspection PyProtectedMember,PyTypeChecker
     def __iadd__(self, other: Union["RuleSet", Rule]):
         """Appends a rule or each rules of another RuleSet to self and updates activation vector and stacked activations
@@ -186,6 +163,36 @@ class RuleSet(ABC):
                 + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
             )
 
+    def __hash__(self) -> hash:
+        return hash(frozenset(self.to_hash))
+
+    # noinspection PyProtectedMember
+    def __contains__(self, other: Rule) -> bool:
+        """A RuleSet contains another Rule if the two rule's conditions and predictions are the same"""
+        name_or_index = "name" if len(self.features_names) > 0 else "index"
+
+        if name_or_index == "index":
+            str_rules = [str(r.features_indexes) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in self]
+            str_rule = str(other.features_indexes) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
+        else:
+            str_rules = [str(r.features_names) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in self]
+            str_rule = str(other.features_names) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
+
+        return str_rule in str_rules
+
+    @property
+    def rules(self) -> List[Rule]:
+        return self._rules
+
+    @rules.setter
+    def rules(self, rules: Union[List[Rule], None]):
+        ruleset = RuleSet(rules, remember_activation=self.remember_activation, stack_activation=self.stack_activation)
+        self._rules = ruleset._rules
+        self.features_names = ruleset.features_names
+        self.features_indexes = ruleset.features_indexes
+        self.stacked_activations = ruleset.stacked_activations
+        self._activation = ruleset._activation
+
     @property
     def to_hash(self) -> Tuple[str]:
         if len(self) == 0:
@@ -196,8 +203,43 @@ class RuleSet(ABC):
             to_hash += rule_hash
         return to_hash
 
-    def __hash__(self) -> hash:
-        return hash(frozenset(self.to_hash))
+    @property
+    def activation_available(self) -> bool:
+        """Returns True if the RuleSet has an activation vector, and if this Activation's object data is available."""
+        if self._activation is None:
+            return False
+        if self._activation.data_format == "file":
+            return self._activation.data.is_file()
+        else:
+            return self._activation.data is not None
+
+    @property
+    def stacked_activations_available(self) -> bool:
+        """Returns True is the RuleSet has its rules' stacked activations."""
+        if self.stack_activation is None:
+            return False
+        return True
+
+    @property
+    def activation(self) -> Union[None, np.ndarray]:
+        """Returns the Activation vector's data in a form of a 1-D np.ndarray, or None if not available.
+
+        Returns:
+        --------
+        Union[None, np.ndarray]
+            of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, ...]
+        """
+        if self._activation:
+            return self._activation.raw
+        return None
+
+    @property
+    def ruleset_coverage(self) -> float:
+        """Coverage is the fraction of points equal to 1 in the activation vector"""
+        if not self.activation_available:
+            return self._coverage
+        else:
+            return self._activation.coverage
 
     # noinspection PyProtectedMember,PyTypeChecker
     def _update_activation(self, other: Union[Rule, "RuleSet"]):
@@ -230,6 +272,68 @@ class RuleSet(ABC):
                     self.stacked_activations[str(other.condition)] = other.activation
                 else:
                     self.stacked_activations = pd.concat([self.stacked_activations, other.stacked_activations], axis=1)
+
+    def set_features_indexes(self):
+        if len(RuleSet.all_features_indexes) > 0:
+            self.features_indexes = [RuleSet.all_features_indexes[f] for f in self.features_names]
+            for r in self._rules:
+                # noinspection PyProtectedMember
+                r._condition._features_indexes = [RuleSet.all_features_indexes[f] for f in r.features_names]
+        else:
+            list(set(itertools.chain(*[rule.features_indexes for rule in self])))
+
+    # noinspection PyProtectedMember
+    def fit(self, xs: Optional[Union["pd.DataFrame", np.ndarray]], y: Union[np.ndarray, "pd.Series"]) -> None:
+        if len(self) == 0:
+            logger.debug("Ruleset is empty. Nothing to fit.")
+            return
+
+        if RuleSet.STACKED_FIT:
+            try:
+                import pandas as pd
+            except ImportError:
+                raise ImportError("RuleSet's stacked fit requies pandas. Please run\npip install pandas")
+
+            clean_activation = not self.stack_activation
+            self.stack_activation = True
+            self.calc_activation(xs)
+            self.stack_activation = not clean_activation
+
+            if isinstance(y, np.ndarray) and not len(self.stacked_activations.index) == y.shape[0]:
+                raise IndexError("Stacked activation and y have different number of rows. Use pd.Series for y to"
+                                 "reindex stacked activations automatically.")
+            else:
+                self.stacked_activations.index = y.index
+            pred, prediction_vector = self.calc_prediction(y)
+
+            if clean_activation:
+                self.del_stacked_activations()
+            else:
+                self.stacked_activations.index = pd.RangeIndex(len(y.index))
+
+            prediction_vector.index = self.stack_activations.index
+            criterion = self.calc_criterion(prediction_vector, y)
+            to_drop = []
+
+            for ir in range(len(self)):
+                self._rules[ir]._criterion = criterion.iloc[ir] if isinstance(criterion, pd.Series) else criterion
+                self._rules[ir]._prediction = pred.iloc[ir] if isinstance(pred, pd.Series) else pred
+
+                self._rules[ir].check_thresholds("prediction")
+                if not self._rules[ir].good:
+                    to_drop.append(self._rules[ir])
+                    break
+        else:
+            [r.fit(xs=xs, y=y) for r in self]
+            to_drop = [r for r in self if not r.good]
+
+        if len(to_drop) > 0:
+            rules = [r for r in self.rules if r not in to_drop]
+            self._rules = []
+            self._activation.clear()
+            self.del_stacked_activations()
+            for r in rules:
+                self.append(r)
 
     def append(self, rule: Rule, update_activation: bool = True):
         """Appends a new rule to self. The updates of activation vector and the stacked activation vectors can be
@@ -315,58 +419,6 @@ class RuleSet(ABC):
         if self.stack_activation:
             self.stacked_activations = self.stacked_activations[[str(r.condition) for r in self]]
 
-    # noinspection PyProtectedMember
-    def __contains__(self, other: Rule) -> bool:
-        """A RuleSet contains another Rule if the two rule's conditions and predictions are the same"""
-        name_or_index = "name" if len(self.features_names) > 0 else "index"
-
-        if name_or_index == "index":
-            str_rules = [str(r.features_indexes) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in self]
-            str_rule = str(other.features_indexes) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
-        else:
-            str_rules = [str(r.features_names) + str(r.bmins) + str(r.bmaxs) + str(r.prediction) for r in self]
-            str_rule = str(other.features_names) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
-
-        return str_rule in str_rules
-
-    @property
-    def activation_available(self) -> bool:
-        """Returns True if the RuleSet has an activation vector, and if this Activation's object data is available."""
-        if self._activation is None:
-            return False
-        if self._activation.data_format == "file":
-            return self._activation.data.is_file()
-        else:
-            return self._activation.data is not None
-
-    @property
-    def stacked_activations_available(self) -> bool:
-        """Returns True is the RuleSet has its rules' stacked activations."""
-        if self.stack_activation is None:
-            return False
-        return True
-
-    @property
-    def activation(self) -> Union[None, np.ndarray]:
-        """Returns the Activation vector's data in a form of a 1-D np.ndarray, or None if not available.
-
-        Returns:
-        --------
-        Union[None, np.ndarray]
-            of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, ...]
-        """
-        if self._activation:
-            return self._activation.raw
-        return None
-
-    @property
-    def ruleset_coverage(self) -> float:
-        """Coverage is the fraction of points equal to 1 in the activation vector"""
-        if not self.activation_available:
-            return self._coverage
-        else:
-            return self._activation.coverage
-
     def compute_self_activation(self):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if len(self) == 0:
@@ -391,10 +443,6 @@ class RuleSet(ABC):
             self.stacked_activations = pd.DataFrame(
                 data=np.array([r.activation for r in self]).T, columns=[str(r.condition) for r in self]
             )
-
-    # def __del__(self):
-    #     self.del_activations()
-    #     self.del_activation()
 
     def del_activations(self):
         """Deletes the data, but not the relevent attributes, of the activation vector or each rules in self."""
