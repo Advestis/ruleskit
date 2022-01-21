@@ -342,7 +342,8 @@ class RuleSet(ABC):
         if len(to_drop) > 0:
             rules = [r for r in self.rules if r not in to_drop]
             self._rules = []
-            self._activation.clear()
+            if self._activation is not None:
+                self._activation.clear()
             self.del_stacked_activations()
             for r in rules:
                 self.append(r)
