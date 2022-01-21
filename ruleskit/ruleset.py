@@ -22,6 +22,7 @@ class RuleSet(ABC):
 
     NLINES = 5  # half how many rules to show in str(self)
     CHECK_DUPLICATED = False
+    STACKED_FIT = False
     all_features_indexes = {}
 
     condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
@@ -283,10 +284,12 @@ class RuleSet(ABC):
             list(set(itertools.chain(*[rule.features_indexes for rule in self])))
 
     # noinspection PyProtectedMember
-    def fit(self, xs: Optional[Union["pd.DataFrame", np.ndarray]], y: Union[np.ndarray, "pd.Series"]) -> None:
+    def fit(
+        self, y: Union[np.ndarray, "pd.Series"], xs: Optional[Union["pd.DataFrame", np.ndarray]] = None
+    ) -> List[Rule]:
         if len(self) == 0:
             logger.debug("Ruleset is empty. Nothing to fit.")
-            return
+            return []
 
         if RuleSet.STACKED_FIT:
             try:
@@ -294,14 +297,23 @@ class RuleSet(ABC):
             except ImportError:
                 raise ImportError("RuleSet's stacked fit requies pandas. Please run\npip install pandas")
 
-            clean_activation = not self.stack_activation
-            self.stack_activation = True
-            self.calc_activation(xs)
-            self.stack_activation = not clean_activation
+            clean_activation = False
+            if xs is not None:
+                clean_activation = not self.stack_activation
+                self.stack_activation = True
+                self.calc_activation(xs)
+                self.stack_activation = not clean_activation
+            elif self.stacked_activations is None:
+                clean_activation = not self.stack_activation
+                self.stack_activation = True
+                self.compute_stacked_activation()
+                self.stack_activation = not clean_activation
 
             if isinstance(y, np.ndarray) and not len(self.stacked_activations.index) == y.shape[0]:
-                raise IndexError("Stacked activation and y have different number of rows. Use pd.Series for y to"
-                                 "reindex stacked activations automatically.")
+                raise IndexError(
+                    "Stacked activation and y have different number of rows. Use pd.Series for y to"
+                    " reindex stacked activations automatically."
+                )
             else:
                 self.stacked_activations.index = y.index
             pred, prediction_vector = self.calc_prediction(y)
@@ -334,6 +346,7 @@ class RuleSet(ABC):
             self.del_stacked_activations()
             for r in rules:
                 self.append(r)
+        return to_drop
 
     def append(self, rule: Rule, update_activation: bool = True):
         """Appends a new rule to self. The updates of activation vector and the stacked activation vectors can be
