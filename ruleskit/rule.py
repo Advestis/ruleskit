@@ -64,9 +64,9 @@ class Rule(ABC):
 
         self._condition = condition
         self._activation = activation
-        self._thresholds = Rule.THRESHOLDS
-        if self._activation is not None:
-            self.check_thresholds("coverage")
+        self._thresholds = self.__class__.THRESHOLDS
+        self._good = True
+        self._bad_because = None
 
         self._coverage = None
         self._prediction = None
@@ -74,9 +74,8 @@ class Rule(ABC):
         self._time_fit = -1
         self._time_calc_activation = -1
         self._time_predict = -1
-
-        self._good = True
-        self._bad_because = None
+        if self._activation is not None:
+            self.check_thresholds("coverage")
 
     def set_thresholds(self, path: Union[str, Path, "TransparentPath"], show=False):
         """Set thresholds for this rule only"""
@@ -96,11 +95,11 @@ class Rule(ABC):
             for which a threshold is defined.
         """
 
-        if Rule.THRESHOLDS is None:
+        if self.__class__.THRESHOLDS is None:
             return
 
         if attribute is not None:
-            if not Rule.THRESHOLDS(attribute, self):
+            if not self.__class__.THRESHOLDS(attribute, self):
                 self._bad_because = attribute
                 self._good = False
             return
@@ -108,7 +107,7 @@ class Rule(ABC):
         for attribute in dir(self):
             if attribute.startswith("__"):
                 continue
-            if not Rule.THRESHOLDS(attribute, self):
+            if not self.__class__.THRESHOLDS(attribute, self):
                 self._bad_because = attribute
                 self._good = False
                 return
@@ -279,7 +278,7 @@ class Rule(ABC):
         """
         arr = self._condition.evaluate(xs)
         # noinspection PyTypeChecker
-        a = Activation(arr, to_file=Rule.LOCAL_ACTIVATION)
+        a = Activation(arr, to_file=self.__class__.LOCAL_ACTIVATION)
         return a
 
     # noinspection PyUnusedLocal

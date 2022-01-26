@@ -386,12 +386,12 @@ class HyperrectangleCondition(Condition):
 
     def sort(self):
         if len(self) > 1:
-            if HyperrectangleCondition.SORT_ACCORDING_TO == "index":
+            if self.__class__.SORT_ACCORDING_TO == "index":
                 self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
                 self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
                 self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
                 self._features_indexes = sorted(self._features_indexes)
-            elif HyperrectangleCondition.SORT_ACCORDING_TO == "name":
+            elif self.__class__.SORT_ACCORDING_TO == "name":
                 self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
                 self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
                 self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
@@ -399,7 +399,7 @@ class HyperrectangleCondition(Condition):
             else:
                 raise ValueError(
                     "HyperrectangleCondition's SORT_ACCORDING_TO"
-                    f" can be 'index' or 'name', not {HyperrectangleCondition.SORT_ACCORDING_TO}"
+                    f" can be 'index' or 'name', not {self.__class__.SORT_ACCORDING_TO}"
                 )
 
     def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:

@@ -94,7 +94,7 @@ class RuleSet(ABC):
             if names_available:
                 self.features_names = list(set(itertools.chain(*[rule.features_names for rule in self])))
             self.set_features_indexes()
-        if RuleSet.CHECK_DUPLICATED:
+        if self.__class__.CHECK_DUPLICATED:
             self.check_duplicated_rules(self.rules, name_or_index="name" if len(self.features_names) > 0 else "index")
 
     # noinspection PyProtectedMember,PyTypeChecker
@@ -155,13 +155,13 @@ class RuleSet(ABC):
         return self.rules.__getitem__(key)
 
     def __str__(self):
-        if len(self) < 2 * RuleSet.NLINES:
+        if len(self) < 2 * self.__class__.NLINES:
             return "\n".join([str(self[i]) for i in range(len(self))])
         else:
             return "\n".join(
-                [str(self[i]) for i in range(RuleSet.NLINES)]
+                [str(self[i]) for i in range(self.__class__.NLINES)]
                 + ["..."]
-                + [str(self[i]) for i in range(len(self) - RuleSet.NLINES, len(self))]
+                + [str(self[i]) for i in range(len(self) - self.__class__.NLINES, len(self))]
             )
 
     def __hash__(self) -> hash:
@@ -275,11 +275,11 @@ class RuleSet(ABC):
                     self.stacked_activations = pd.concat([self.stacked_activations, other.stacked_activations], axis=1)
 
     def set_features_indexes(self):
-        if len(RuleSet.all_features_indexes) > 0:
-            self.features_indexes = [RuleSet.all_features_indexes[f] for f in self.features_names]
+        if len(self.__class__.all_features_indexes) > 0:
+            self.features_indexes = [self.__class__.all_features_indexes[f] for f in self.features_names]
             for r in self._rules:
                 # noinspection PyProtectedMember
-                r._condition._features_indexes = [RuleSet.all_features_indexes[f] for f in r.features_names]
+                r._condition._features_indexes = [self.__class__.all_features_indexes[f] for f in r.features_names]
         else:
             list(set(itertools.chain(*[rule.features_indexes for rule in self])))
 
@@ -291,7 +291,7 @@ class RuleSet(ABC):
             logger.debug("Ruleset is empty. Nothing to fit.")
             return []
 
-        if RuleSet.STACKED_FIT:
+        if self.__class__.STACKED_FIT:
             try:
                 import pandas as pd
             except ImportError:
@@ -309,6 +309,7 @@ class RuleSet(ABC):
                 self.compute_stacked_activation()
                 self.stack_activation = not clean_activation
 
+            # noinspection PyUnresolvedReferences
             if isinstance(y, np.ndarray) and not len(self.stacked_activations.index) == y.shape[0]:
                 raise IndexError(
                     "Stacked activation and y have different number of rows. Use pd.Series for y to"
@@ -565,13 +566,13 @@ class RuleSet(ABC):
                 pd.DataFrame().to_csv(path)
             return
 
-        idx = copy(RuleSet.condition_index)
+        idx = copy(self.__class__.condition_index)
         if self.rule_type == ClassificationRule:
-            idx += RuleSet.classification_rule_index
+            idx += self.__class__.classification_rule_index
         elif self.rule_type == RegressionRule:
-            idx += RuleSet.regression_rule_index
+            idx += self.__class__.regression_rule_index
         elif self.rule_type == Rule:
-            idx += RuleSet.rule_index
+            idx += self.__class__.rule_index
         else:
             raise TypeError(f"Impossible to save rule type {self.rule_type}")
 
@@ -604,26 +605,25 @@ class RuleSet(ABC):
         sr = pd.Series(data=[str(getattr(rule, ind)) for ind in index], name=name, index=index, dtype=str)
         return sr
 
-    @staticmethod
-    def series_to_rule(srule: "pd.Series") -> Rule:
+    def series_to_rule(self, srule: "pd.Series") -> Rule:
 
-        condition_index = {c: None for c in RuleSet.condition_index}
+        condition_index = {c: None for c in self.__class__.condition_index}
 
         for ind in srule.index:
             if ind == "Unnamed: 0":
                 continue
-            if ind not in RuleSet.classification_rule_index + RuleSet.condition_index:
+            if ind not in self.__class__.classification_rule_index + self.__class__.condition_index:
                 raise IndexError(f"Invalid rule attribute '{ind}'")
 
         if "std" in srule.index:
             rule = RegressionRule()
-            rule_idx = copy(RuleSet.regression_rule_index)
+            rule_idx = copy(self.__class__.regression_rule_index)
         elif "criterion" in srule.index:
             rule = ClassificationRule()
-            rule_idx = copy(RuleSet.classification_rule_index)
+            rule_idx = copy(self.__class__.classification_rule_index)
         else:
             rule = Rule()
-            rule_idx = copy(RuleSet.rule_index)
+            rule_idx = copy(self.__class__.rule_index)
 
         for rule_ind in srule.index:
             str_value = str(srule[rule_ind])
