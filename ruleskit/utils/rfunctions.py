@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 # noinspection PyUnresolvedReferences
-def most_common_class(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> Union[np.ndarray, "pd.DataFrame"]:
+def most_common_class(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray
+) -> Union[np.ndarray, "pd.DataFrame"]:
     if activation is None:
         return np.bincount(y).argmax()
 
@@ -24,7 +26,9 @@ def most_common_class(activation: Union[np.ndarray, "pd.DataFrame", None], y: np
             import pandas as pd
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
-        y_conditional = (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        y_conditional = (
+            (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        )
         count = y_conditional.apply(lambda x: x.value_counts())
         count.index = count.index.astype(y.dtype)
         return count.apply(lambda x: x / len(x.dropna()))
@@ -47,8 +51,7 @@ def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.
         non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
         if len(non_nans_conditional_y) == 0:
             logger.debug(
-                "None of the activated points have a non-nan value in target y."
-                " Conditional mean is set to nan."
+                "None of the activated points have a non-nan value in target y." " Conditional mean is set to nan."
             )
             return np.nan
         return float(np.mean(non_nans_conditional_y))
@@ -57,7 +60,9 @@ def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.
             import pandas as pd
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
-        y_conditional = (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        y_conditional = (
+            (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        )
         return y_conditional.mean()
 
 
@@ -82,7 +87,9 @@ def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> Union
             import pandas as pd
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
-        y_conditional = (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        y_conditional = (
+            (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        )
         return y_conditional.std()
 
 
@@ -182,7 +189,9 @@ def aae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
 
 
 # noinspection PyUnresolvedReferences
-def calc_regression_criterion(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray, **kwargs) -> Union[float, "pd.Series"]:
+def calc_regression_criterion(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray, **kwargs
+) -> Union[float, "pd.Series"]:
     """
     Compute the criterion
 

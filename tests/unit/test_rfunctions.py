@@ -23,31 +23,21 @@ from ruleskit.utils.rfunctions import (
             np.array([(0, 0.5), (2, 0.5)]),
         ),
         (
-            pd.DataFrame([
-                [1, 1],
-                [0, 1],
-                [1, 0]
-            ]),
+            pd.DataFrame([[1, 1], [0, 1], [1, 0]]),
             np.array([0, 3, 2]),
             pd.DataFrame(index=[0, 2, 3], columns=[0, 1], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
         ),
         (
-            pd.DataFrame([
-                [1, 1],
-                [0, 1],
-                [1, 0]
-            ]),
+            pd.DataFrame([[1, 1], [0, 1], [1, 0]]),
             np.array(["a", "c", "b"]),
             pd.DataFrame(index=["a", "b", "c"], columns=[0, 1], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
         ),
         (
-            pd.DataFrame([
-                [1, 1],
-                [0, 1],
-                [1, 0]
-            ], columns=["chien", "chat"]),
+            pd.DataFrame([[1, 1], [0, 1], [1, 0]], columns=["chien", "chat"]),
             np.array(["a", "c", "b"]),
-            pd.DataFrame(index=["a", "b", "c"], columns=["chien", "chat"], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
+            pd.DataFrame(
+                index=["a", "b", "c"], columns=["chien", "chat"], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]
+            ),
         ),
     ],
 )
@@ -72,23 +62,15 @@ def test_most_common_class(activation, y, expected):
             np.nan,
         ),
         (
-            pd.DataFrame([
-                [1, 1, 0],
-                [0, 1, 0],
-                [1, 0, 0]
-            ]),
+            pd.DataFrame([[1, 1, 0], [0, 1, 0], [1, 0, 0]]),
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[0.5, -0.5, np.nan]),
         ),
         (
-            pd.DataFrame([
-                [1, 1, 0],
-                [0, 1, 0],
-                [1, 0, 0]
-            ], columns=["chien", "chat", "cheval"]),
+            pd.DataFrame([[1, 1, 0], [0, 1, 0], [1, 0, 0]], columns=["chien", "chat", "cheval"]),
             np.array([-1, 0, 2]),
             pd.Series(index=["chien", "chat", "cheval"], data=[0.5, -0.5, np.nan]),
-        )
+        ),
     ],
 )
 def test_conditional_mean(activation, y, expected):
@@ -115,20 +97,12 @@ def test_conditional_mean(activation, y, expected):
             np.nan,
         ),
         (
-            pd.DataFrame([
-                [1, 1, 0],
-                [0, 1, 0],
-                [1, 0, 0]
-            ]),
+            pd.DataFrame([[1, 1, 0], [0, 1, 0], [1, 0, 0]]),
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[2.121320344, 0.7071067812, np.nan]),
         ),
         (
-            pd.DataFrame([
-                [1, 1, 0],
-                [0, 1, 0],
-                [1, 0, 0]
-            ], columns=["chien", "chat", "cheval"]),
+            pd.DataFrame([[1, 1, 0], [0, 1, 0], [1, 0, 0]], columns=["chien", "chat", "cheval"]),
             np.array([-1, 0, 2]),
             pd.Series(index=["chien", "chat", "cheval"], data=[2.121320344, 0.7071067812, np.nan]),
         ),
@@ -158,11 +132,7 @@ def test_conditional_std(activation, y, expected):
             np.nan,
         ),
         (
-            pd.DataFrame([
-                [2, -1, np.nan],
-                [np.nan, -1, np.nan],
-                [2, np.nan, np.nan]
-            ]),
+            pd.DataFrame([[2, -1, np.nan], [np.nan, -1, np.nan], [2, np.nan, np.nan]]),
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[4.5, 0.5, np.nan]),
         ),
@@ -175,4 +145,5 @@ def test_mse_function(prediction, y, expected):
         else:
             assert round(mse_function(prediction, y), 6) == round(expected, 6)
     else:
+        # noinspection PyTypeChecker
         pd.testing.assert_series_equal(mse_function(prediction, y), expected)
