@@ -11,6 +11,7 @@ from .condition import HyperrectangleCondition
 
 from .rule import Rule, ClassificationRule, RegressionRule
 from .activation import Activation
+from .utils import rfunctions as functions
 import logging
 
 logger = logging.getLogger(__name__)
@@ -283,7 +284,7 @@ class RuleSet(ABC):
         else:
             list(set(itertools.chain(*[rule.features_indexes for rule in self])))
 
-    # noinspection PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     def fit(
         self, y: Union[np.ndarray, "pd.Series"], xs: Optional[Union["pd.DataFrame", np.ndarray]] = None
     ) -> List[Rule]:
@@ -476,6 +477,7 @@ class RuleSet(ABC):
             del self.stacked_activations
             self.stacked_activations = None
 
+    # noinspection PyUnresolvedReferences
     def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> Activation:
         """Computes and returns the activation vector from an array of features.
 
@@ -494,6 +496,7 @@ class RuleSet(ABC):
         activations = [rule.evaluate(xs) for rule in self.rules]
         return Activation.multi_logical_or(activations)
 
+    # noinspection PyUnresolvedReferences
     def calc_activation(self, xs: Union[np.ndarray, "pd.DataFrame"]):
         """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
         activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
@@ -592,7 +595,7 @@ class RuleSet(ABC):
         else:
             df.to_csv(path)
 
-    # noinspection PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     @staticmethod
     def rule_to_series(irule: Tuple[int, Rule], index: list) -> "pd.Series":
         try:
@@ -605,6 +608,7 @@ class RuleSet(ABC):
         sr = pd.Series(data=[str(getattr(rule, ind)) for ind in index], name=name, index=index, dtype=str)
         return sr
 
+    # noinspection PyUnresolvedReferences
     def series_to_rule(self, srule: "pd.Series") -> Rule:
 
         condition_index = {c: None for c in self.__class__.condition_index}
@@ -650,6 +654,49 @@ class RuleSet(ABC):
 
         rule._condition = HyperrectangleCondition(**condition_index)
         return rule
+
+    # noinspection PyUnresolvedReferences
+    def calc_prediction(self, y: [np.ndarray, "pd.Series"]):
+        """
+        Will compute the prediction of each rule in the ruleset
+        Parameters
+        ----------
+        y: [np.ndarray, pd.Series]
+          The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
+          or pd.Series.
+        """
+        if self.stacked_activations is None:
+            raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
+        if self.rule_type == ClassificationRule:
+            return functions.most_common_class(self.stacked_activations, y)
+        else:
+            return functions.conditional_mean(self.stacked_activations, y)
+
+    # noinspection PyUnresolvedReferences
+    def calc_criterion(self, p: "pd.DataFrame", y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
+        """
+        Will compute the criterion of each rule in the ruleset
+        
+        Parameters
+        ----------
+        p: "pd.DataFrame"
+          Prediction series of each rules
+        y: [np.ndarray, pd.Series]
+          The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
+          or pd.Series.
+        
+        Returns
+        -------
+        pd.Series
+            Criterion values a set of rules (pd.Series)
+        
+        """
+        if self.stacked_activations is None:
+            raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
+        if self.rule_type == ClassificationRule:
+            return functions.calc_classification_criterion(self.stacked_activations, p, y, **kwargs)
+        else:
+            return functions.calc_regression_criterion(p, y, **kwargs)
 
 
 def traverse(o, tree_types=(list, tuple, RuleSet)):

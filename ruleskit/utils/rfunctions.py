@@ -6,23 +6,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def most_common_class(
-    activation: Union[np.ndarray, None], y: np.ndarray
-) -> List[Tuple[str, float]]:
+# noinspection PyUnresolvedReferences
+def most_common_class(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> List[Tuple[str, float]]:
     if activation is None:
         return np.bincount(y).argmax()
 
-    if isinstance(activation, np.ndarray):
-        y_conditional = np.extract(activation, y)
-    else:
-        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
+    if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+    y_conditional = np.extract(activation, y)
     count = Counter(y_conditional)
     n = len(y_conditional)
     prop = [v / n for v in count.values()]
     return [(c, v) for c, v in zip(count.keys(), prop)]
 
 
-def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> float:
     """Mean of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -31,10 +30,9 @@ def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> floa
     if activation is None:
         return float(np.nanmean(y))
 
-    if isinstance(activation, np.ndarray):
-        y_conditional = np.extract(activation, y)
-    else:
-        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
+    if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+    y_conditional = np.extract(activation, y)
     non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
     if len(non_nans_conditional_y) == 0:
         logger.debug("None of the activated points have a non-nan value in target y. Conditional mean is set to 0.")
@@ -58,17 +56,17 @@ def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float
     return float(np.nanstd(y_conditional))
 
 
-def mse_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray) -> Union[float, "pd.Series"]:
     """
     Compute the mean squared error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)^2 $"
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        A predictor vector. It means a sparse array with two
-        different values ymean, if the rule is not active
-        and the prediction is the rule is active.
+    prediction_vector : Union[np.ndarray, "pd.DataFrame"]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
 
     y : np.ndarray
         The real target values (real numbers)
@@ -86,20 +84,20 @@ def mse_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     return criterion
 
 
-def mae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def mae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray) -> Union[float, "pd.Series"]:
     """
     Compute the mean absolute error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} |\\hat{y}_i - y_i| $"
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        A predictor vector. It means a sparse array with two
-        different values ymean, if the rule is not active
-        and the prediction is the rule is active.
+    prediction_vector : Union[np.ndarray, "pd.DataFrame"]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
 
     y : np.ndarray
-        The real target values (real numbers)
+      The real target values (real numbers)
 
     Return
     ------
@@ -114,25 +112,25 @@ def mae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     return criterion
 
 
-def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def aae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray) -> Union[float, "pd.Series"]:
     """
     Compute the mean squared error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)$"
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        A predictor vector. It means a sparse array with two
-        different values ymean, if the rule is not active
-        and the prediction is the rule is active.
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
 
     y : np.ndarray
-        The real target values (real numbers)
+      The real target values (real numbers)
 
     Return
     ------
     criterion : float
-        the mean squared error
+      the mean squared error, or a Series of mean squared errors
     """
     if len(prediction_vector) != len(y):
         raise ValueError("The two array must have the same length")
@@ -141,26 +139,25 @@ def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
     return error_vector / median_error
 
 
-def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, **kwargs) -> float:
+# noinspection PyUnresolvedReferences
+def calc_regression_criterion(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray, **kwargs) -> Union[float, "pd.Series"]:
     """
     Compute the criterion
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        The prediction vector
-
+    prediction_vector : Union[np.ndarray, "pd.DataFrame"]
+      The prediction vector of one rule, or the stacked prediction vectors of a ruleset
     y : np.ndarray
-        The real target values (real numbers)
+      The real target values (real numbers)
+    kwargs:
+      Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
+      to evaluate the criterion only if the rule is activated (default is True)
 
-    kwargs : dict
-        Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
-         to evaluate the criterion only if the rule is activated (default is True)
-
-    Return
-    ------
-    criterion : float
-        Criteria value
+    Returns
+    -------
+    criterion : Union[float, "pd.Series"]
+        Criterion value of one rule, of the Series of the criterion values of several rules.
     """
 
     method = kwargs.get("method", "mse")
@@ -188,37 +185,50 @@ def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, **kw
     return criterion
 
 
-def success_rate(prediction: Union[int, str], y: np.ndarray):
+# noinspection PyUnresolvedReferences
+def success_rate(prediction: Union[int, str, "pd.Series"], y: np.ndarray) -> Union[float, "pd.Series"]:
+    """
+    Parameters
+    ----------
+    prediction: Union[int, str, "pd.Series"]
+      The label prediction, of one rule (int or str) or of a set of rules (pd.Series)
+    y: np.ndarray
+        The real target values (real numbers)
+
+    Returns
+    -------
+      The number of times y equals one rule's prediction (float) or many rules predictions (pd.Series).
+    """
     success = sum(y == prediction)
     return success / len(y)
 
 
 # noinspection PyUnresolvedReferences
 def calc_classification_criterion(
-    activation_vector: np.ndarray, prediction: Union[int, str], y: Union[np.ndarray, "pd.Series"], **kwargs
-) -> float:
+    activation_vector: Union[np.ndarray, "pd.DataFrame"],
+    prediction: Union[int, str, "pd.Series"],
+    y: np.ndarray,
+    **kwargs,
+) -> Union[float, "pd.Series"]:
     """
     Computes the criterion
 
     Parameters
     ----------
-    activation_vector : Union[np.ndarray, pd.Series]
-        The prediction vector
-
-    prediction: int or str:
-                The label prediction
-
-    y : np.ndarray
+    activation_vector: Union[np.ndarray, "pd.DataFrame"]
+      The activation vector of one rule, of the stacked activation vectors of a ruleset
+    prediction: Union[int, str, "pd.Series"]
+      The label prediction, of one rule (int or str) or of a set of rules (pd.Series)
+    y: np.ndarray
         The real target values (real numbers)
-
-    kwargs : dict
+    kwargs:
         Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
-         to evaluate the criterion only if the rule is activated (default is True)
+        to evaluate the criterion only if the rule is activated (default is True)
 
     Return
     ------
-    criterion : float
-        Criteria value
+    Union[float, pd.Series]
+      Criterion value of one rule (float) or of a set of rules (pd.Series)
     """
 
     method = kwargs.get("method", "success_rate")
@@ -231,8 +241,7 @@ def calc_classification_criterion(
 
     if method.lower() == "success_rate":
         criterion = success_rate(prediction, sub_y)
-
     else:
-        raise ValueError(f"Unknown criterion: {method}. Please choose among success_rate")
+        raise ValueError(f"Unknown criterion: {method}. Please choose among:\n* success_rate")
 
     return criterion
