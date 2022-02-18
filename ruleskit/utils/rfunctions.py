@@ -31,7 +31,7 @@ def most_common_class(activation: Union[np.ndarray, "pd.DataFrame", None], y: np
 
 
 # noinspection PyUnresolvedReferences
-def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> float:
+def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> Union[float, "pd.Series"]:
     """Mean of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -42,12 +42,23 @@ def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.
 
     if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
-    y_conditional = np.extract(activation, y)
-    non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
-    if len(non_nans_conditional_y) == 0:
-        logger.debug("None of the activated points have a non-nan value in target y. Conditional mean is set to 0.")
-        return 0
-    return float(np.mean(non_nans_conditional_y))
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
+        if len(non_nans_conditional_y) == 0:
+            logger.debug(
+                "None of the activated points have a non-nan value in target y."
+                " Conditional mean is set to nan."
+            )
+            return np.nan
+        return float(np.mean(non_nans_conditional_y))
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        y_conditional = (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        return y_conditional.mean()
 
 
 def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
