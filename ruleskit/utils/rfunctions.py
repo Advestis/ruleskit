@@ -61,7 +61,8 @@ def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.
         return y_conditional.mean()
 
 
-def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> Union[float, "pd.Series"]:
     """Standard deviation of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -70,11 +71,18 @@ def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float
     if activation is None:
         return float(np.nanstd(y))
 
+    if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
     if isinstance(activation, np.ndarray):
         y_conditional = np.extract(activation, y)
+        return float(np.nanstd(y_conditional, ddof=1))
     else:
-        raise TypeError("'activationt' in conditional_std must be None or a np.ndarray")
-    return float(np.nanstd(y_conditional))
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        y_conditional = (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        return y_conditional.std()
 
 
 # noinspection PyUnresolvedReferences
