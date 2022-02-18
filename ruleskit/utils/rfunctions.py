@@ -7,17 +7,27 @@ logger = logging.getLogger(__name__)
 
 
 # noinspection PyUnresolvedReferences
-def most_common_class(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> List[Tuple[str, float]]:
+def most_common_class(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> Union[np.ndarray, "pd.DataFrame"]:
     if activation is None:
         return np.bincount(y).argmax()
 
     if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
-    y_conditional = np.extract(activation, y)
-    count = Counter(y_conditional)
-    n = len(y_conditional)
-    prop = [v / n for v in count.values()]
-    return [(c, v) for c, v in zip(count.keys(), prop)]
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        count = Counter(y_conditional)
+        n = len(y_conditional)
+        prop = [v / n for v in count.values()]
+        return np.array([(c, v) for c, v in zip(count.keys(), prop)])
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        y_conditional = (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+        count = y_conditional.apply(lambda x: x.value_counts())
+        count.index = count.index.astype(y.dtype)
+        return count.apply(lambda x: x / len(x.dropna()))
 
 
 # noinspection PyUnresolvedReferences
