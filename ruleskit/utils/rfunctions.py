@@ -75,6 +75,7 @@ def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> Union
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
     if isinstance(activation, np.ndarray):
         y_conditional = np.extract(activation, y)
+        # ddof ensures numpy uses non-biased estimator of std, like pandas' default
         return float(np.nanstd(y_conditional, ddof=1))
     else:
         try:
