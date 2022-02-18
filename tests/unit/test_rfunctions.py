@@ -123,6 +123,15 @@ def test_conditional_mean(activation, y, expected):
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[2.121320344, 0.7071067812, np.nan]),
         ),
+        (
+            pd.DataFrame([
+                [1, 1, 0],
+                [0, 1, 0],
+                [1, 0, 0]
+            ], columns=["chien", "chat", "cheval"]),
+            np.array([-1, 0, 2]),
+            pd.Series(index=["chien", "chat", "cheval"], data=[2.121320344, 0.7071067812, np.nan]),
+        ),
     ],
 )
 def test_conditional_std(activation, y, expected):
@@ -133,3 +142,37 @@ def test_conditional_std(activation, y, expected):
             assert round(conditional_std(activation, y), 6) == round(expected, 6)
     else:
         pd.testing.assert_series_equal(conditional_std(activation, y), expected)
+
+
+@pytest.mark.parametrize(
+    "prediction, y, expected",
+    [
+        (
+            np.array([2, np.nan, 2]),
+            np.array([-1, 0, 2]),
+            4.5,
+        ),
+        (
+            np.array([np.nan, np.nan, np.nan]),
+            np.array([-1, 0, 2]),
+            np.nan,
+        ),
+        (
+            pd.DataFrame([
+                [2, -1, np.nan],
+                [np.nan, -1, np.nan],
+                [2, np.nan, np.nan]
+            ]),
+            np.array([-1, 0, 2]),
+            pd.Series(index=[0, 1, 2], data=[4.5, 0.5, np.nan]),
+        ),
+    ],
+)
+def test_mse_function(prediction, y, expected):
+    if isinstance(expected, float):
+        if np.isnan(expected):
+            assert np.isnan(mse_function(prediction, y))
+        else:
+            assert round(mse_function(prediction, y), 6) == round(expected, 6)
+    else:
+        pd.testing.assert_series_equal(mse_function(prediction, y), expected)

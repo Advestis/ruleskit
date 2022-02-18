@@ -106,12 +106,24 @@ def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
     criterion : float
         the mean squared error
     """
-    if len(prediction_vector) != len(y):
-        raise ValueError("The two array must have the same length")
-    error_vector = prediction_vector - y
-    criterion = np.nanmean(error_vector ** 2)
-    # noinspection PyTypeChecker
-    return criterion
+    if prediction_vector.__class__.__name__ != "DataFrame" and not isinstance(prediction_vector, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError("Predictions and y must have have the same length")
+        error_vector = prediction_vector - y
+        criterion = np.nanmean(error_vector ** 2)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if len(prediction_vector.index) != len(y):
+            raise ValueError("Predictions and y must have the same length")
+        error_vector = (prediction_vector.T - y).T
+        return (error_vector ** 2).mean()
 
 
 # noinspection PyUnresolvedReferences
