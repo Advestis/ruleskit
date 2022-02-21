@@ -103,11 +103,10 @@ def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
 
     Parameters
     ----------
-    prediction_vector : Union[np.ndarray, "pd.DataFrame"]
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
       different values ymean, if the rule is not active and the prediction is the rule is active.
-
-    y : np.ndarray
+    y: np.ndarray
         The real target values (real numbers)
 
     Return
@@ -143,11 +142,10 @@ def mae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
 
     Parameters
     ----------
-    prediction_vector : Union[np.ndarray, "pd.DataFrame"]
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
       different values ymean, if the rule is not active and the prediction is the rule is active.
-
-    y : np.ndarray
+    y: np.ndarray
       The real target values (real numbers)
 
     Return
@@ -186,20 +184,32 @@ def aae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
     prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
       different values ymean, if the rule is not active and the prediction is the rule is active.
-
-    y : np.ndarray
+    y: np.ndarray
       The real target values (real numbers)
 
     Return
     ------
-    criterion : float
+    criterion: Union[float, "pd.Series"]
       the mean squared error, or a Series of mean squared errors
     """
-    if len(prediction_vector) != len(y):
-        raise ValueError("The two array must have the same length")
-    error_vector = np.mean(np.abs(prediction_vector - y))
-    median_error = np.mean(np.abs(y - np.median(y)))
-    return error_vector / median_error
+    if prediction_vector.__class__.__name__ != "DataFrame" and not isinstance(prediction_vector, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError("The two array must have the same length")
+        error = np.nanmean(np.abs(prediction_vector - y))
+        median = np.nanmean(np.abs(y - np.median(y)))
+        return error / median
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if len(prediction_vector.index) != len(y):
+            raise ValueError("Predictions and y must have the same length")
+        error_vector = prediction_vector.sub(y, axis=0).abs().mean()
+        median = np.mean(np.abs(y - np.median(y)))
+        return error_vector / median
 
 
 # noinspection PyUnresolvedReferences

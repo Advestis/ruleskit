@@ -156,6 +156,7 @@ def test_mse_function(prediction, y, expected):
         if np.isnan(expected):
             assert np.isnan(mse_function(prediction, y))
         else:
+            # noinspection PyTypeChecker
             assert round(mse_function(prediction, y), 6) == round(expected, 6)
     else:
         # noinspection PyTypeChecker
@@ -201,7 +202,54 @@ def test_mae_function(prediction, y, expected):
         if np.isnan(expected):
             assert np.isnan(mae_function(prediction, y))
         else:
+            # noinspection PyTypeChecker
             assert round(mae_function(prediction, y), 6) == round(expected, 6)
     else:
         # noinspection PyTypeChecker
         pd.testing.assert_series_equal(mae_function(prediction, y), expected)
+
+
+@pytest.mark.parametrize(
+    "prediction, y, expected",
+    [
+        (
+            np.array([2, np.nan, 2]),
+            np.array([-1, 0, 2]),
+            1.5,
+        ),
+        (
+            np.array([np.nan, np.nan, np.nan]),
+            np.array([-1, 0, 2]),
+            np.nan,
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=[0, 1, 2], data=[1.5, 0.5, np.nan]),
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]],
+                columns=["chien", "chat", "cheval"]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=["chien", "chat", "cheval"], data=[1.5, 0.5, np.nan]),
+        ),
+    ],
+)
+def test_aae_function(prediction, y, expected):
+    if isinstance(expected, float):
+        if np.isnan(expected):
+            assert np.isnan(aae_function(prediction, y))
+        else:
+            # noinspection PyTypeChecker
+            assert round(aae_function(prediction, y), 6) == round(expected, 6)
+    else:
+        # noinspection PyTypeChecker
+        pd.testing.assert_series_equal(aae_function(prediction, y), expected)
