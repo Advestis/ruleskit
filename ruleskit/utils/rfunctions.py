@@ -27,7 +27,8 @@ def most_common_class(
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
         y_conditional = (
-            (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+            activation.mul(pd.Series(y).replace(0, "zero"), axis=0).replace(0, np.nan).replace("", np.nan).replace(
+                "zero", 0)
         )
         count = y_conditional.apply(lambda x: x.value_counts())
         count.index = count.index.astype(y.dtype)
@@ -61,7 +62,8 @@ def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
         y_conditional = (
-            (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+            activation.mul(pd.Series(y).replace(0, "zero"), axis=0).replace(0, np.nan).replace("", np.nan).replace(
+                "zero", 0)
         )
         return y_conditional.mean()
 
@@ -88,7 +90,7 @@ def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> Union
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
         y_conditional = (
-            (activation.T * pd.Series(y).replace(0, "zero")).T.replace(0, np.nan).replace("", np.nan).replace("zero", 0)
+            activation.mul(pd.Series(y).replace(0, "zero"), axis=0).replace(0, np.nan).replace("", np.nan).replace("zero", 0)
         )
         return y_conditional.std()
 
@@ -129,7 +131,7 @@ def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
         if len(prediction_vector.index) != len(y):
             raise ValueError("Predictions and y must have the same length")
-        error_vector = (prediction_vector.T - y).T
+        error_vector = prediction_vector.sub(y, axis=0)
         return (error_vector ** 2).mean()
 
 
@@ -169,7 +171,7 @@ def mae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
         if len(prediction_vector.index) != len(y):
             raise ValueError("Predictions and y must have the same length")
-        error_vect = (prediction_vector.T - y).abs().T
+        error_vect = prediction_vector.sub(y, axis=0).abs()
         return error_vect.mean()
 
 
