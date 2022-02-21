@@ -510,9 +510,6 @@ class ClassificationRule(Rule):
         """
         Parameters
         ----------
-        xs: Union[pd:DataFrame, np.ndarray]
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
-            or pd:DataFrame.
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.

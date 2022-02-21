@@ -256,14 +256,18 @@ def success_rate(prediction: Union[int, str, "pd.Series"], y: np.ndarray) -> Uni
     prediction: Union[int, str, "pd.Series"]
       The label prediction, of one rule (int or str) or of a set of rules (pd.Series)
     y: np.ndarray
-        The real target values (real numbers)
+        The real target classes
 
     Returns
     -------
       The number of times y equals one rule's prediction (float) or many rules predictions (pd.Series).
     """
-    success = sum(y == prediction)
-    return success / len(y)
+    if prediction.__class__.__name__ != "Series" and not isinstance(prediction, (int, str)):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+    if isinstance(prediction, (int, str)):
+        return sum(prediction == y) / len(y)
+    else:
+        return prediction.apply(lambda x: (x == y).sum()) / len(y)
 
 
 # noinspection PyUnresolvedReferences

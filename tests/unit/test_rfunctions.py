@@ -28,12 +28,20 @@ from ruleskit.utils.rfunctions import (
             pd.DataFrame(index=[0, 2, 3], columns=[0, 1], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
         ),
         (
-            pd.DataFrame([[1, 1], [0, 1], [1, 0]]),
+            pd.DataFrame(
+                [[1, 1],
+                 [0, 1],
+                 [1, 0]]
+            ),
             np.array(["a", "c", "b"]),
             pd.DataFrame(index=["a", "b", "c"], columns=[0, 1], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
         ),
         (
-            pd.DataFrame([[1, 1], [0, 1], [1, 0]], columns=["chien", "chat"]),
+            pd.DataFrame(
+                [[1, 1],
+                 [0, 1],
+                 [1, 0]],
+                columns=["chien", "chat"]),
             np.array(["a", "c", "b"]),
             pd.DataFrame(
                 index=["a", "b", "c"], columns=["chien", "chat"], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]
@@ -369,3 +377,45 @@ def test_calc_regression_criterion(prediction, y, expected, kwargs):
     else:
         # noinspection PyTypeChecker
         pd.testing.assert_series_equal(calc_regression_criterion(prediction, y, **kwargs), expected)
+
+
+@pytest.mark.parametrize(
+    "prediction, y, expected",
+    [
+        (
+                2,
+                np.array([0, 1, 2, 0]),
+                0.25
+        ),
+        (
+                "chien",
+                np.array(["chien", "chien", "cheval", "chouette"]),
+                0.5
+        ),
+        (
+                pd.Series([2, 0]),
+                np.array([0, 1, 2, 0]),
+                pd.Series([0.25, 0.5])
+        ),
+        (
+                pd.Series(["chien", "cheval"]),
+                np.array(["chien", "chien", "cheval", "chouette"]),
+                pd.Series([0.5, 0.25])
+        ),
+        (
+                pd.Series(["chien", "cheval"], index=["a", "b"]),
+                np.array(["chien", "chien", "cheval", "chouette"]),
+                pd.Series([0.5, 0.25], index=["a", "b"])
+        ),
+    ]
+)
+def test_success_rate(prediction, y, expected):
+    if isinstance(expected, float):
+        if np.isnan(expected):
+            assert np.isnan(success_rate(prediction, y))
+        else:
+            # noinspection PyTypeChecker
+            assert round(success_rate(prediction, y), 6) == round(expected, 6)
+    else:
+        # noinspection PyTypeChecker
+        pd.testing.assert_series_equal(success_rate(prediction, y), expected)
