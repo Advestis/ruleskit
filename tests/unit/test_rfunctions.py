@@ -253,3 +253,119 @@ def test_aae_function(prediction, y, expected):
     else:
         # noinspection PyTypeChecker
         pd.testing.assert_series_equal(aae_function(prediction, y), expected)
+
+
+@pytest.mark.parametrize(
+    "prediction, y, expected, kwargs",
+    [
+        (
+            np.array([2, np.nan, 2]),
+            np.array([-1, 0, 2]),
+            4.5,
+            {}
+        ),
+        (
+            np.array([np.nan, np.nan, np.nan]),
+            np.array([-1, 0, 2]),
+            np.nan,
+            {}
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=[0, 1, 2], data=[4.5, 0.5, np.nan]),
+            {}
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]],
+                columns=["chien", "chat", "cheval"]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=["chien", "chat", "cheval"], data=[4.5, 0.5, np.nan]),
+            {}
+        ),
+        (
+            np.array([2, np.nan, 2]),
+            np.array([-1, 0, 2]),
+            1.5,
+            {"method": "mae"}
+        ),
+        (
+            np.array([np.nan, np.nan, np.nan]),
+            np.array([-1, 0, 2]),
+            np.nan,
+            {"method": "mae"}
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=[0, 1, 2], data=[1.5, 0.5, np.nan]),
+            {"method": "mae"}
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]],
+                columns=["chien", "chat", "cheval"]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=["chien", "chat", "cheval"], data=[1.5, 0.5, np.nan]),
+            {"method": "mae"}
+        ),
+        (
+            np.array([2, np.nan, 2]),
+            np.array([-1, 0, 2]),
+            1.5,
+            {"method": "aae"}
+        ),
+        (
+            np.array([np.nan, np.nan, np.nan]),
+            np.array([-1, 0, 2]),
+            np.nan,
+            {"method": "aae"}
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=[0, 1, 2], data=[1.5, 0.5, np.nan]),
+            {"method": "aae"}
+        ),
+        (
+            pd.DataFrame(
+                [[2, -1, np.nan],
+                 [np.nan, -1, np.nan],
+                 [2, np.nan, np.nan]],
+                columns=["chien", "chat", "cheval"]
+            ),
+            np.array([-1, 0, 2]),
+            pd.Series(index=["chien", "chat", "cheval"], data=[1.5, 0.5, np.nan]),
+            {"method": "aae"}
+        ),
+    ],
+)
+def test_calc_regression_criterion(prediction, y, expected, kwargs):
+    if isinstance(expected, float):
+        if np.isnan(expected):
+            assert np.isnan(calc_regression_criterion(prediction, y, **kwargs))
+        else:
+            # noinspection PyTypeChecker
+            assert round(calc_regression_criterion(prediction, y, **kwargs), 6) == round(expected, 6)
+    else:
+        # noinspection PyTypeChecker
+        pd.testing.assert_series_equal(calc_regression_criterion(prediction, y, **kwargs), expected)

@@ -221,39 +221,27 @@ def calc_regression_criterion(
 
     Parameters
     ----------
-    prediction_vector : Union[np.ndarray, "pd.DataFrame"]
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       The prediction vector of one rule, or the stacked prediction vectors of a ruleset
-    y : np.ndarray
+    y: np.ndarray
       The real target values (real numbers)
     kwargs:
-      Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
-      to evaluate the criterion only if the rule is activated (default is True)
+      Can contain 'method', the method mse_function or mse_function criterion (default is 'mse')
 
     Returns
     -------
-    criterion : Union[float, "pd.Series"]
+    criterion: Union[float, "pd.Series"]
         Criterion value of one rule, of the Series of the criterion values of several rules.
     """
 
     method = kwargs.get("method", "mse")
-    cond = kwargs.get("cond", True)
-
-    if cond:
-        sub_y = np.extract(prediction_vector != 0, y)
-        sub_pred = np.extract(prediction_vector != 0, prediction_vector)
-    else:
-        sub_y = y
-        sub_pred = prediction_vector
 
     if method.lower() == "mse":
-        criterion = mse_function(sub_pred, sub_y)
-
+        criterion = mse_function(prediction_vector, y)
     elif method.lower() == "mae":
-        criterion = mae_function(sub_pred, sub_y)
-
+        criterion = mae_function(prediction_vector, y)
     elif method.lower() == "aae":
-        criterion = aae_function(sub_pred, sub_y)
-
+        criterion = aae_function(prediction_vector, y)
     else:
         raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
 
