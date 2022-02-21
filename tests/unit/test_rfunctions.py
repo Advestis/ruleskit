@@ -383,29 +383,45 @@ def test_calc_regression_criterion(prediction, y, expected, kwargs):
     "prediction, y, expected",
     [
         (
-                2,
-                np.array([0, 1, 2, 0]),
-                0.25
+            2,
+            np.array([0, 1, 2, 0]),
+            0.25
         ),
         (
-                "chien",
-                np.array(["chien", "chien", "cheval", "chouette"]),
-                0.5
+            "chien",
+            np.array(["chien", "chien", "cheval", "chouette"]),
+            0.5
         ),
         (
-                pd.Series([2, 0]),
-                np.array([0, 1, 2, 0]),
-                pd.Series([0.25, 0.5])
+            pd.Series([2, 0]),
+            pd.DataFrame(
+                [[0, 0],
+                 [np.nan, np.nan],
+                 [2, 2],
+                 [np.nan, 0]]
+            ),
+            pd.Series([0.5, 2/3])
         ),
         (
-                pd.Series(["chien", "cheval"]),
-                np.array(["chien", "chien", "cheval", "chouette"]),
-                pd.Series([0.5, 0.25])
+            pd.Series(["chien", "chat"]),
+            pd.DataFrame(
+                [["chat", "chat"],
+                 [np.nan, np.nan],
+                 ["chien", "chien"],
+                 [np.nan, "chat"]]
+            ),
+            pd.Series([0.5, 2/3])
         ),
         (
-                pd.Series(["chien", "cheval"], index=["a", "b"]),
-                np.array(["chien", "chien", "cheval", "chouette"]),
-                pd.Series([0.5, 0.25], index=["a", "b"])
+            pd.Series(index=["a", "b"], data=["chien", "chat"]),
+            pd.DataFrame(
+                [["chat", "chat"],
+                 [np.nan, np.nan],
+                 ["chien", "chien"],
+                 [np.nan, "chat"]],
+                columns=["a", "b"]
+            ),
+            pd.Series([0.5, 2/3], index=["a", "b"])
         ),
     ]
 )
@@ -419,3 +435,66 @@ def test_success_rate(prediction, y, expected):
     else:
         # noinspection PyTypeChecker
         pd.testing.assert_series_equal(success_rate(prediction, y), expected)
+
+
+@pytest.mark.parametrize(
+    "activations, prediction, y, expected",
+    [
+        (
+            np.array([1, 0, 1, 0]),
+            2,
+            np.array([0, 1, 2, 0]),
+            0.5
+        ),
+        (
+            np.array([1, 1, 0, 0]),
+            "chien",
+            np.array(["chien", "chien", "cheval", "chouette"]),
+            1.0
+        ),
+        (
+            pd.DataFrame(
+                [[1, 1],
+                 [0, 0],
+                 [1, 1],
+                 [0, 1]]
+            ),
+            pd.Series([2, 0]),
+            np.array([0, 1, 2, 0]),
+            pd.Series([0.5, 2/3])
+        ),
+        (
+            pd.DataFrame(
+                [[1, 0],
+                 [0, 1],
+                 [1, 1],
+                 [0, 1]]
+            ),
+            pd.Series(["chien", "cheval"]),
+            np.array(["chien", "chien", "cheval", "chouette"]),
+            pd.Series([0.5, 1/3])
+        ),
+        (
+            pd.DataFrame(
+                [[1, 0],
+                 [0, 1],
+                 [1, 1],
+                 [0, 1]],
+                columns=["a", "b"]
+            ),
+            pd.Series(["chien", "cheval"], index=["a", "b"]),
+            np.array(["chien", "chien", "cheval", "chouette"]),
+            pd.Series([0.5, 1/3], index=["a", "b"])
+        ),
+    ]
+)
+def test_calc_classification_criterion(activations, prediction, y, expected):
+    if isinstance(expected, float):
+        if np.isnan(expected):
+            assert np.isnan(calc_classification_criterion(activations, prediction, y))
+        else:
+            # noinspection PyTypeChecker
+            assert round(calc_classification_criterion(activations, prediction, y), 6) == round(expected, 6)
+    else:
+        # noinspection PyTypeChecker
+        pd.testing.assert_series_equal(calc_classification_criterion(activations, prediction, y), expected)
