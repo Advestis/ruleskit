@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from ruleskit.utils.rfunctions import (
-    most_common_class,
+    class_probabilities,
     conditional_mean,
     conditional_std,
     mse_function,
@@ -18,42 +18,74 @@ from ruleskit.utils.rfunctions import (
     "activation, y, expected",
     [
         (
-            np.array([1, 0, 1]),
-            np.array([0, 3, 2]),
-            np.array([(0, 0.5), (2, 0.5)]),
+            np.array([1, 0, 1, 1, 1]),
+            np.array([0, 3, 2, 100, 2]),
+            np.array([(0, 0.25), (2, 0.5), (100, 0.25)]),
         ),
         (
-            pd.DataFrame([[1, 1], [0, 1], [1, 0]]),
-            np.array([0, 3, 2]),
-            pd.DataFrame(index=[0, 2, 3], columns=[0, 1], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
+            pd.DataFrame([
+                [1, 1],
+                [0, 1],
+                [1, 0],
+                [1, 1],
+                [1, 1]
+            ]),
+            np.array([0, 3, 2, 100, 2]),
+            pd.DataFrame(
+                index=[0, 2, 3, 100],
+                columns=[0, 1],
+                data=[
+                    [0.25, 0.25],
+                    [0.5, 0.25],
+                    [np.nan, 0.25],
+                    [0.25, 0.25]
+                ]),
         ),
         (
+            pd.DataFrame([
+                [1, 1],
+                [0, 1],
+                [1, 0],
+                [1, 1],
+                [1, 1]
+            ]),
+            np.array(["a", "c", "b", "d", "b"]),
             pd.DataFrame(
-                [[1, 1],
-                 [0, 1],
-                 [1, 0]]
-            ),
-            np.array(["a", "c", "b"]),
-            pd.DataFrame(index=["a", "b", "c"], columns=[0, 1], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]),
+                index=["a", "b", "c", "d"],
+                columns=[0, 1],
+                data=[
+                    [0.25, 0.25],
+                    [0.5, 0.25],
+                    [np.nan, 0.25],
+                    [0.25, 0.25]
+                ]),
         ),
         (
+            pd.DataFrame([
+                [1, 1],
+                [0, 1],
+                [1, 0],
+                [1, 1],
+                [1, 1]
+            ], columns=["chien", "chat"]),
+            np.array(["a", "c", "b", "d", "b"]),
             pd.DataFrame(
-                [[1, 1],
-                 [0, 1],
-                 [1, 0]],
-                columns=["chien", "chat"]),
-            np.array(["a", "c", "b"]),
-            pd.DataFrame(
-                index=["a", "b", "c"], columns=["chien", "chat"], data=[[0.5, 0.5], [0.5, np.nan], [np.nan, 0.5]]
-            ),
+                index=["a", "b", "c", "d"],
+                columns=["chien", "chat"],
+                data=[
+                    [0.25, 0.25],
+                    [0.5, 0.25],
+                    [np.nan, 0.25],
+                    [0.25, 0.25]
+                ]),
         ),
     ],
 )
-def test_most_common_class(activation, y, expected):
+def test_class_probabilities(activation, y, expected):
     if isinstance(expected, np.ndarray):
-        np.testing.assert_equal(most_common_class(activation, y), expected)
+        np.testing.assert_equal(class_probabilities(activation, y), expected)
     else:
-        pd.testing.assert_frame_equal(most_common_class(activation, y), expected)
+        pd.testing.assert_frame_equal(class_probabilities(activation, y), expected)
 
 
 @pytest.mark.parametrize(

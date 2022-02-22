@@ -423,7 +423,7 @@ class RegressionRule(Rule):
         """
         self.calc_prediction(y)
         self.calc_std(y)
-        prediction_vector = self.prediction * self.activation
+        prediction_vector = self.prediction * np.where(self.activation == 0, np.nan, self.activation)
         self.calc_criterion(prediction_vector, y, **kwargs)
 
     def calc_prediction(self, y: [np.ndarray, "pd.Series"]):
@@ -492,9 +492,12 @@ class ClassificationRule(Rule):
         self._time_calc_prediction = -1
 
     @property
-    def prediction(self) -> Union[int, str, None]:
+    def prediction(self) -> Union[int, str, np.integer, np.float, None]:
+        """Returns the rule prediction. If rule was fitted alone, the self._prediction should be a np.ndarray
+        containing the probability of each class. In that case, the most probable class is returned. If the rule was
+        fitted in a stacked fit, then the prediction is already the most probable class and it is just returned."""
         if self._prediction is not None:
-            if isinstance(self._prediction, (float, int, str)):
+            if isinstance(self._prediction, (float, int, str, np.integer, np.float)):
                 return self._prediction
             prop = [p[1] for p in self._prediction]
             idx = prop.index(max(prop))
@@ -530,7 +533,7 @@ class ClassificationRule(Rule):
         t0 = time()
         if self.activation is None:
             raise ValueError("The activation vector has not been computed yet.")
-        self._prediction = functions.most_common_class(self.activation, y)
+        self._prediction = functions.class_probabilities(self.activation, y)
         self._time_calc_prediction = time() - t0
         self.check_thresholds("prediction")
 

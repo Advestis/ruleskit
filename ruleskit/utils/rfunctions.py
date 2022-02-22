@@ -7,9 +7,26 @@ logger = logging.getLogger(__name__)
 
 
 # noinspection PyUnresolvedReferences
-def most_common_class(
-    activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray
+def class_probabilities(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: Union[np.ndarray, "pd.Series"]
 ) -> Union[np.ndarray, "pd.DataFrame"]:
+    """Computes the class probability of each rule(s)
+
+    Parameters
+    ----------
+    activation: Union[np.ndarray, "pd.DataFrame", None]
+      Either the activation vector of one rule (np.ndarray) or a DataFrame of activation vectors of many rules (one rule
+      is one column)
+    y: Union[np.ndarray, "pd.Series"]
+      The target classes
+
+    Returns
+    -------
+    Union[np.ndarray, "pd.DataFrame"]
+        If given one activation vector, returns a np.ndarray of the form [(class1, prob 1), ..., (class n, prob n)].
+        If given a df of activation vectors, returns a df with the classes as index, the rules as columns and the
+        probabilities as values.
+    """
     if activation is None:
         return np.bincount(y).argmax()
 
@@ -20,7 +37,9 @@ def most_common_class(
         count = Counter(y_conditional)
         n = len(y_conditional)
         prop = [v / n for v in count.values()]
-        return np.array([(c, v) for c, v in zip(count.keys(), prop)])
+        proba = np.array([(c, v) for c, v in zip(count.keys(), prop)])
+        proba = proba[proba[:, 0].argsort()]
+        return proba
     else:
         try:
             import pandas as pd
@@ -34,11 +53,13 @@ def most_common_class(
         )
         count = y_conditional.apply(lambda x: x.value_counts())
         count.index = count.index.astype(y.dtype)
-        return count.apply(lambda x: x / len(x.dropna()))
+        return count.apply(lambda x: x / x.dropna().sum())
 
 
 # noinspection PyUnresolvedReferences
-def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> Union[float, "pd.Series"]:
+def conditional_mean(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """Mean of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -73,7 +94,9 @@ def conditional_mean(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.
 
 
 # noinspection PyUnresolvedReferences
-def conditional_std(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.ndarray) -> Union[float, "pd.Series"]:
+def conditional_std(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """Standard deviation of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -103,7 +126,9 @@ def conditional_std(activation: Union[np.ndarray, "pd.DataFrame", None], y: np.n
 
 
 # noinspection PyUnresolvedReferences
-def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray) -> Union[float, "pd.Series"]:
+def mse_function(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """
     Compute the mean squared error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)^2 $"
@@ -113,7 +138,7 @@ def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
     prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
       different values ymean, if the rule is not active and the prediction is the rule is active.
-    y: np.ndarray
+    y: Union[np.ndarray, "pd.Series"]
         The real target values (real numbers)
 
     Returns
@@ -142,7 +167,9 @@ def mse_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
 
 
 # noinspection PyUnresolvedReferences
-def mae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray) -> Union[float, "pd.Series"]:
+def mae_function(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """
     Compute the mean absolute error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} |\\hat{y}_i - y_i| $"
@@ -152,7 +179,7 @@ def mae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
     prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
       different values ymean, if the rule is not active and the prediction is the rule is active.
-    y: np.ndarray
+    y: Union[np.ndarray, "pd.Series"]
       The real target values (real numbers)
 
     Returns
@@ -181,7 +208,9 @@ def mae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
 
 
 # noinspection PyUnresolvedReferences
-def aae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray) -> Union[float, "pd.Series"]:
+def aae_function(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """
     Compute the mean squared error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)$"
@@ -191,7 +220,7 @@ def aae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
     prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
       different values ymean, if the rule is not active and the prediction is the rule is active.
-    y: np.ndarray
+    y: Union[np.ndarray, "pd.Series"]
       The real target values (real numbers)
 
     Returns
@@ -221,7 +250,7 @@ def aae_function(prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.nda
 
 # noinspection PyUnresolvedReferences
 def calc_regression_criterion(
-    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: np.ndarray, **kwargs
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"], **kwargs
 ) -> Union[float, "pd.Series"]:
     """
     Compute the criterion
@@ -230,7 +259,7 @@ def calc_regression_criterion(
     ----------
     prediction_vector: Union[np.ndarray, "pd.DataFrame"]
       The prediction vector of one rule, or the stacked prediction vectors of a ruleset
-    y: np.ndarray
+    y: Union[np.ndarray, "pd.Series"]
       The real target values (real numbers)
     kwargs:
       Can contain 'method', the method mse_function or mse_function criterion (default is 'mse')
@@ -256,14 +285,16 @@ def calc_regression_criterion(
 
 
 # noinspection PyUnresolvedReferences
-def success_rate(prediction: Union[int, str, "pd.Series"], y: Union[np.ndarray, "pd.DataFrame"]) -> Union[float, "pd.Series"]:
+def success_rate(
+    prediction: Union[float, int, str, np.integer, np.float, "pd.Series"], y: Union[np.ndarray, "pd.DataFrame"]
+) -> Union[float, "pd.Series"]:
     """
     Returns the number fraction of y that equal the prediction.
 
     Parameters
     ----------
-    prediction: Union[int, str, "pd.Series"]
-        The label prediction, of one rule (int or str) or of a set of rules (pd.Series)
+    prediction: Union[int, np.integer, np.float, str, "pd.Series"]
+        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series)
     y: Union[np.ndarray, "pd.DataFrame"]
         The real target points activated by the rule (np.ndarray, without nans) or the rules
         (pd.DataFrame, can contain nans even alongside strings)
@@ -272,9 +303,11 @@ def success_rate(prediction: Union[int, str, "pd.Series"], y: Union[np.ndarray, 
     -------
       The fraction of y that equal one rule's prediction (float) or many rules predictions (pd.Series).
     """
-    if prediction.__class__.__name__ != "Series" and not isinstance(prediction, (int, str)):
+    if prediction.__class__.__name__ != "Series" and not isinstance(
+        prediction, (float, int, np.integer, np.float, str)
+    ):
         raise TypeError("'prediction' in success_rate must be an integer, a string or a pd.Series of one of those.")
-    if isinstance(prediction, (int, str)):
+    if isinstance(prediction, (float, int, np.integer, np.float, str)):
         return sum(prediction == y) / len(y)
     else:
         try:
@@ -295,8 +328,8 @@ def success_rate(prediction: Union[int, str, "pd.Series"], y: Union[np.ndarray, 
 # noinspection PyUnresolvedReferences
 def calc_classification_criterion(
     activation_vector: Union[np.ndarray, "pd.DataFrame"],
-    prediction: Union[int, str, "pd.Series"],
-    y: np.ndarray,
+    prediction: Union[float, int, np.integer, np.float, str, "pd.Series"],
+    y: Union[np.ndarray, "pd.Series"],
     **kwargs,
 ) -> Union[float, "pd.Series"]:
     """
@@ -306,9 +339,9 @@ def calc_classification_criterion(
     ----------
     activation_vector: Union[np.ndarray, "pd.DataFrame"]
         The activation vector of one rule, of the stacked activation vectors of a ruleset
-    prediction: Union[int, str, "pd.Series"]
-        The label prediction, of one rule (int or str) or of a set of rules (pd.Series)
-    y: np.ndarray
+    prediction: Union[float, int, np.integer, np.float, str, "pd.Series"]
+        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series)
+    y: Union[np.ndarray, "pd.Series"]
         The real target values (real numbers)
     kwargs:
         Can contain 'method', indicating how to evaluate the criterion. For now, one can use:\n * success_rate (default)
@@ -325,7 +358,7 @@ def calc_classification_criterion(
         raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
 
     if isinstance(activation_vector, np.ndarray):
-        if not isinstance(prediction, (int, str)):
+        if not isinstance(prediction, (float, int, np.integer, np.float, str)):
             raise TypeError(
                 f"If passing one activation vector, then prediction must be an int or a str, not a {type(prediction)}"
             )

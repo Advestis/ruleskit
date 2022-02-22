@@ -57,6 +57,7 @@ class RuleSet(ABC):
         rules_list: Union[List[Rule], None] = None,
         remember_activation: bool = True,
         stack_activation: bool = False,
+        compute_activations_at_creation: bool = False
     ):
         """
 
@@ -88,9 +89,9 @@ class RuleSet(ABC):
                     raise TypeError(f"Some rules in given iterable were not of type 'Rule' but of type {type(rule)}")
                 if rule is not None:
                     self.append(rule, update_activation=False)
-            if self.remember_activation:
+            if self.remember_activation and compute_activations_at_creation:
                 self.compute_self_activation()
-            if self.stack_activation:
+            if self.stack_activation and compute_activations_at_creation:
                 self.compute_stacked_activation()
             if names_available:
                 self.features_names = list(set(itertools.chain(*[rule.features_names for rule in self])))
@@ -260,7 +261,7 @@ class RuleSet(ABC):
             try:
                 import pandas as pd
             except ImportError:
-                raise ImportError("RuleSet's stacked activations requied pandas. Please run\npip install pandas")
+                raise ImportError("RuleSet's stacked activations requires pandas. Please run\npip install pandas")
 
             if self.stacked_activations is None:
                 if isinstance(other, Rule):
@@ -311,27 +312,30 @@ class RuleSet(ABC):
                 self.stack_activation = not clean_activation
 
             # noinspection PyUnresolvedReferences
-            if isinstance(y, np.ndarray) and not len(self.stacked_activations.index) == y.shape[0]:
-                raise IndexError(
-                    "Stacked activation and y have different number of rows. Use pd.Series for y to"
-                    " reindex stacked activations automatically."
-                )
+            if isinstance(y, np.ndarray):
+                if not len(self.stacked_activations.index) == y.shape[0]:
+                    raise IndexError(
+                        "Stacked activation and y have different number of rows. Use pd.Series for y to"
+                        " reindex stacked activations automatically."
+                    )
             else:
                 self.stacked_activations.index = y.index
-            pred, prediction_vector = self.calc_prediction(y)
+            predictions = self.calc_predictions(y)
 
             if clean_activation:
                 self.del_stacked_activations()
             else:
-                self.stacked_activations.index = pd.RangeIndex(len(y.index))
+                if isinstance(y, np.ndarray):
+                    self.stacked_activations.index = pd.RangeIndex(y.shape[0])
+                else:
+                    self.stacked_activations.index = pd.RangeIndex(len(y.index))
 
-            prediction_vector.index = self.stack_activations.index
-            criterion = self.calc_criterion(prediction_vector, y)
+            criterion = self.calc_criterions(predictions, y)
             to_drop = []
 
             for ir in range(len(self)):
-                self._rules[ir]._criterion = criterion.iloc[ir] if isinstance(criterion, pd.Series) else criterion
-                self._rules[ir]._prediction = pred.iloc[ir] if isinstance(pred, pd.Series) else pred
+                self._rules[ir]._criterion = criterion.iloc[ir]
+                self._rules[ir]._prediction = predictions.iloc[ir]
 
                 self._rules[ir].check_thresholds("prediction")
                 if not self._rules[ir].good:
@@ -349,6 +353,14 @@ class RuleSet(ABC):
             self.del_stacked_activations()
             for r in rules:
                 self.append(r)
+
+        if self.remember_activation:
+            self._activation = None
+            self.compute_self_activation()
+        if self.stack_activation:
+            self.stacked_activations = None
+            self.compute_stacked_activation()
+
         return to_drop
 
     def append(self, rule: Rule, update_activation: bool = True):
@@ -656,47 +668,76 @@ class RuleSet(ABC):
         return rule
 
     # noinspection PyUnresolvedReferences
-    def calc_prediction(self, y: [np.ndarray, "pd.Series"]):
+    def calc_predictions(self, y: [np.ndarray, "pd.Series"]) -> "pd.Series":
         """
         Will compute the prediction of each rule in the ruleset
+
         Parameters
         ----------
         y: [np.ndarray, pd.Series]
           The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
           or pd.Series.
+
+        Returns
+        -------
+        "pd.Series"
+            A pd.Series with the rules as index and the values being the predictions (most probable class in case of
+            classification).
         """
-        if self.stacked_activations is None:
-            raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
-        if self.rule_type == ClassificationRule:
-            return functions.most_common_class(self.stacked_activations, y)
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's calc_predictions requires pandas. Please run\npip install pandas")
+
+        if len(self) == 0:
+            if self.rule_type == ClassificationRule:
+                return pd.DataFrame()
+            else:
+                return pd.Series()
+
+        if self.stacked_activations is not None:
+            if self.rule_type == ClassificationRule:
+                class_probabilities = functions.class_probabilities(self.stacked_activations, y)
+                maxs = class_probabilities.max()
+                return class_probabilities[class_probabilities == maxs].apply(
+                    lambda x: x.dropna().sort_index().index[0]
+                )
+            else:
+                return functions.conditional_mean(self.stacked_activations, y)
         else:
-            return functions.conditional_mean(self.stacked_activations, y)
+            if self.rule_type == ClassificationRule:
+                [functions.class_probabilities(r, y) for r in self]
+                return pd.Series(index=[str(r.condition) for r in self], data=[r.prediction for r in self])
+            else:
+                return pd.Series(
+                    [functions.conditional_mean(r, y) for r in self], index=[str(r.condition) for r in self]
+                )
 
     # noinspection PyUnresolvedReferences
-    def calc_criterion(self, p: "pd.DataFrame", y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
+    def calc_criterions(self, p: "pd.Series", y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
         """
         Will compute the criterion of each rule in the ruleset
-        
+
         Parameters
         ----------
-        p: "pd.DataFrame"
-          Prediction series of each rules
+        p: "pd.Series"
+          Prediction of each rules
         y: [np.ndarray, pd.Series]
           The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
           or pd.Series.
-        
+
         Returns
         -------
         pd.Series
             Criterion values a set of rules (pd.Series)
-        
+
         """
         if self.stacked_activations is None:
             raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
         if self.rule_type == ClassificationRule:
             return functions.calc_classification_criterion(self.stacked_activations, p, y, **kwargs)
         else:
-            return functions.calc_regression_criterion(p, y, **kwargs)
+            return functions.calc_regression_criterion(self.stacked_activations.replace(0, np.nan) * p, y, **kwargs)
 
 
 def traverse(o, tree_types=(list, tuple, RuleSet)):
