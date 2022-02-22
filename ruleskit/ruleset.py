@@ -322,6 +322,8 @@ class RuleSet(ABC):
             else:
                 self.stacked_activations.index = y.index
             predictions = self.calc_predictions(y)
+            criterion = self.calc_criterions(predictions, y)
+            to_drop = []
 
             if clean_activation:
                 self.del_stacked_activations()
@@ -330,9 +332,6 @@ class RuleSet(ABC):
                     self.stacked_activations.index = pd.RangeIndex(y.shape[0])
                 else:
                     self.stacked_activations.index = pd.RangeIndex(len(y.index))
-
-            criterion = self.calc_criterions(predictions, y)
-            to_drop = []
 
             for ir in range(len(self)):
                 self._rules[ir]._criterion = criterion.iloc[ir]
