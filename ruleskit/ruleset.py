@@ -696,23 +696,16 @@ class RuleSet(ABC):
                 else:
                     return pd.Series()
 
-            if self.stacked_activations is not None:
-                if self.rule_type == ClassificationRule:
-                    class_probabilities = functions.class_probabilities(self.stacked_activations, y)
-                    maxs = class_probabilities.max()
-                    return class_probabilities[class_probabilities == maxs].apply(
-                        lambda x: x.dropna().sort_index().index[0]
-                    )
-                else:
-                    return functions.conditional_mean(self.stacked_activations, y)
+            if self.stacked_activations is None:
+                raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
+            if self.rule_type == ClassificationRule:
+                class_probabilities = functions.class_probabilities(self.stacked_activations, y)
+                maxs = class_probabilities.max()
+                return class_probabilities[class_probabilities == maxs].apply(
+                    lambda x: x.dropna().sort_index().index[0]
+                )
             else:
-                if self.rule_type == ClassificationRule:
-                    [functions.class_probabilities(r, y) for r in self]
-                    return pd.Series(index=[str(r.condition) for r in self], data=[r.prediction for r in self])
-                else:
-                    return pd.Series(
-                        [functions.conditional_mean(r, y) for r in self], index=[str(r.condition) for r in self]
-                    )
+                return functions.conditional_mean(self.stacked_activations, y)
 
     # noinspection PyUnresolvedReferences
     def calc_criterions(self, p: "pd.Series", y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
