@@ -84,13 +84,7 @@ def conditional_mean(
             import pandas as pd
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
-        y_conditional = (
-            activation.mul(pd.Series(y).replace(0, "zero"), axis=0)
-            .replace(0, np.nan)
-            .replace("", np.nan)
-            .replace("zero", 0)
-        )
-        return y_conditional.mean()
+        return activation.apply(lambda x: np.nanmean(np.extract(x, y)))
 
 
 # noinspection PyUnresolvedReferences
