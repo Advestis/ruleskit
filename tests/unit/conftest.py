@@ -1,4 +1,4 @@
-from ruleskit import Activation, Rule, RegressionRule, ClassificationRule
+from ruleskit import Activation, Rule, RegressionRule, ClassificationRule, RuleSet
 import pytest
 
 
@@ -6,6 +6,14 @@ import pytest
 def clean():
     yield
     Activation.clean_files()
+
+
+@pytest.fixture
+def clean_for_stacked_fit():
+    RuleSet.STACKED_FIT = True
+    yield
+    Activation.clean_files()
+    RuleSet.STACKED_FIT = False
 
 
 @pytest.fixture

@@ -1,28 +1,65 @@
 import numpy as np
 from collections import Counter
-from typing import Union, Tuple, List
+from typing import Union
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def most_common_class(
-    activation: Union[np.ndarray, None], y: np.ndarray
-) -> List[Tuple[str, float]]:
+# noinspection PyUnresolvedReferences
+def class_probabilities(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: Union[np.ndarray, "pd.Series"]
+) -> Union[np.ndarray, "pd.DataFrame"]:
+    """Computes the class probability of each rule(s)
+
+    Parameters
+    ----------
+    activation: Union[np.ndarray, "pd.DataFrame", None]
+      Either the activation vector of one rule (np.ndarray) or a DataFrame of activation vectors of many rules (one rule
+      is one column)
+    y: Union[np.ndarray, "pd.Series"]
+      The target classes
+
+    Returns
+    -------
+    Union[np.ndarray, "pd.DataFrame"]
+        If given one activation vector, returns a np.ndarray of the form [(class1, prob 1), ..., (class n, prob n)].
+        If given a df of activation vectors, returns a df with the classes as index, the rules as columns and the
+        probabilities as values.
+    """
     if activation is None:
         return np.bincount(y).argmax()
 
+    if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
+        raise TypeError("'activation' in most_common_class must be None or a np.ndarray or a pd.DataFrame")
     if isinstance(activation, np.ndarray):
         y_conditional = np.extract(activation, y)
+        count = Counter(y_conditional)
+        n = len(y_conditional)
+        prop = [v / n for v in count.values()]
+        proba = np.array([(c, v) for c, v in zip(count.keys(), prop)])
+        proba = proba[proba[:, 0].argsort()]
+        return proba
     else:
-        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
-    count = Counter(y_conditional)
-    n = len(y_conditional)
-    prop = [v / n for v in count.values()]
-    return [(c, v) for c, v in zip(count.keys(), prop)]
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        y_conditional = (
+            activation.mul(pd.Series(y).replace(0, "zero"), axis=0)
+            .replace(0, np.nan)
+            .replace("", np.nan)
+            .replace("zero", 0)
+        )
+        count = y_conditional.apply(lambda x: x.value_counts())
+        count.index = count.index.astype(y.dtype)
+        return count.apply(lambda x: x / x.dropna().sum())
 
 
-def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def conditional_mean(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """Mean of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -31,18 +68,29 @@ def conditional_mean(activation: Union[np.ndarray, None], y: np.ndarray) -> floa
     if activation is None:
         return float(np.nanmean(y))
 
+    if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
     if isinstance(activation, np.ndarray):
         y_conditional = np.extract(activation, y)
+        non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
+        if len(non_nans_conditional_y) == 0:
+            logger.debug(
+                "None of the activated points have a non-nan value in target y." " Conditional mean is set to nan."
+            )
+            return np.nan
+        return float(np.mean(non_nans_conditional_y))
     else:
-        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray")
-    non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
-    if len(non_nans_conditional_y) == 0:
-        logger.debug("None of the activated points have a non-nan value in target y. Conditional mean is set to 0.")
-        return 0
-    return float(np.mean(non_nans_conditional_y))
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        return activation.apply(lambda x: np.nanmean(np.extract(x, y)))
 
 
-def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def conditional_std(
+    activation: Union[np.ndarray, "pd.DataFrame", None], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """Standard deviation of all activated values
 
     If activation is None, we assume the given y have already been extracted from the activation vector,
@@ -51,188 +99,283 @@ def conditional_std(activation: Union[np.ndarray, None], y: np.ndarray) -> float
     if activation is None:
         return float(np.nanstd(y))
 
+    if activation.__class__.__name__ != "DataFrame" and not isinstance(activation, np.ndarray):
+        raise TypeError("'activation' in conditional_std must be None or a np.ndarray or a pd.DataFrame")
     if isinstance(activation, np.ndarray):
         y_conditional = np.extract(activation, y)
+        # ddof ensures numpy uses non-biased estimator of std, like pandas' default
+        return float(np.nanstd(y_conditional, ddof=1))
     else:
-        raise TypeError("'activationt' in conditional_std must be None or a np.ndarray")
-    return float(np.nanstd(y_conditional))
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        y_conditional = (
+            activation.mul(pd.Series(y).replace(0, "zero"), axis=0)
+            .replace(0, np.nan)
+            .replace("", np.nan)
+            .replace("zero", 0)
+        )
+        return y_conditional.std()
 
 
-def mse_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def mse_function(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """
     Compute the mean squared error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)^2 $"
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        A predictor vector. It means a sparse array with two
-        different values ymean, if the rule is not active
-        and the prediction is the rule is active.
-
-    y : np.ndarray
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, "pd.Series"]
         The real target values (real numbers)
 
-    Return
-    ------
-    criterion : float
+    Returns
+    -------
+    criterion: Union[float, "pd.Series"]
         the mean squared error
     """
-    if len(prediction_vector) != len(y):
-        raise ValueError("The two array must have the same length")
-    error_vector = prediction_vector - y
-    criterion = np.nanmean(error_vector ** 2)
-    # noinspection PyTypeChecker
-    return criterion
+    if prediction_vector.__class__.__name__ != "DataFrame" and not isinstance(prediction_vector, np.ndarray):
+        raise TypeError("'prediction_vector' in mse_function must be a np.ndarray or a pd.DataFrame")
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError("Predictions and y must have have the same length")
+        error_vector = prediction_vector - y
+        criterion = np.nanmean(error_vector ** 2)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if len(prediction_vector.index) != len(y):
+            raise ValueError("Predictions and y must have the same length")
+        error_vector = prediction_vector.sub(y, axis=0)
+        return (error_vector ** 2).mean()
 
 
-def mae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def mae_function(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """
     Compute the mean absolute error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} |\\hat{y}_i - y_i| $"
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        A predictor vector. It means a sparse array with two
-        different values ymean, if the rule is not active
-        and the prediction is the rule is active.
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, "pd.Series"]
+      The real target values (real numbers)
 
-    y : np.ndarray
-        The real target values (real numbers)
-
-    Return
-    ------
-    criterion : float
+    Returns
+    -------
+    criterion: Union[float, "pd.Series"]
         the mean absolute error
     """
-    if len(prediction_vector) != len(y):
-        raise ValueError("The two array must have the same length")
-    error_vect = np.abs(prediction_vector - y)
-    criterion = np.nanmean(error_vect)
-    # noinspection PyTypeChecker
-    return criterion
+    if prediction_vector.__class__.__name__ != "DataFrame" and not isinstance(prediction_vector, np.ndarray):
+        raise TypeError("'prediction_vector' in mae_function must be a np.ndarray or a pd.DataFrame")
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError("The two array must have the same length")
+        error_vect = np.abs(prediction_vector - y)
+        criterion = np.nanmean(error_vect)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if len(prediction_vector.index) != len(y):
+            raise ValueError("Predictions and y must have the same length")
+        error_vect = prediction_vector.sub(y, axis=0).abs()
+        return error_vect.mean()
 
 
-def aae_function(prediction_vector: np.ndarray, y: np.ndarray) -> float:
+# noinspection PyUnresolvedReferences
+def aae_function(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"]
+) -> Union[float, "pd.Series"]:
     """
     Compute the mean squared error
     "$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)$"
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        A predictor vector. It means a sparse array with two
-        different values ymean, if the rule is not active
-        and the prediction is the rule is active.
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, "pd.Series"]
+      The real target values (real numbers)
 
-    y : np.ndarray
-        The real target values (real numbers)
-
-    Return
-    ------
-    criterion : float
-        the mean squared error
+    Returns
+    -------
+    criterion: Union[float, "pd.Series"]
+      the mean squared error, or a Series of mean squared errors
     """
-    if len(prediction_vector) != len(y):
-        raise ValueError("The two array must have the same length")
-    error_vector = np.mean(np.abs(prediction_vector - y))
-    median_error = np.mean(np.abs(y - np.median(y)))
-    return error_vector / median_error
+    if prediction_vector.__class__.__name__ != "DataFrame" and not isinstance(prediction_vector, np.ndarray):
+        raise TypeError("'prediction_vector' in aae_function must be a np.ndarray or a pd.DataFrame")
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError("The two array must have the same length")
+        error = np.nanmean(np.abs(prediction_vector - y))
+        median = np.nanmean(np.abs(y - np.median(y)))
+        return error / median
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if len(prediction_vector.index) != len(y):
+            raise ValueError("Predictions and y must have the same length")
+        error_vector = prediction_vector.sub(y, axis=0).abs().mean()
+        median = np.mean(np.abs(y - np.median(y)))
+        return error_vector / median
 
 
-def calc_regression_criterion(prediction_vector: np.ndarray, y: np.ndarray, **kwargs) -> float:
+# noinspection PyUnresolvedReferences
+def calc_regression_criterion(
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"], **kwargs
+) -> Union[float, "pd.Series"]:
     """
     Compute the criterion
 
     Parameters
     ----------
-    prediction_vector : np.ndarray
-        The prediction vector
+    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
+      The prediction vector of one rule, or the stacked prediction vectors of a ruleset
+    y: Union[np.ndarray, "pd.Series"]
+      The real target values (real numbers)
+    kwargs:
+      Can contain 'method', the method mse_function or mse_function criterion (default is 'mse')
 
-    y : np.ndarray
-        The real target values (real numbers)
-
-    kwargs : dict
-        Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
-         to evaluate the criterion only if the rule is activated (default is True)
-
-    Return
-    ------
-    criterion : float
-        Criteria value
+    Returns
+    -------
+    criterion: Union[float, "pd.Series"]
+        Criterion value of one rule, of the Series of the criterion values of several rules.
     """
 
     method = kwargs.get("method", "mse")
-    cond = kwargs.get("cond", True)
-
-    if cond:
-        sub_y = np.extract(prediction_vector != 0, y)
-        sub_pred = np.extract(prediction_vector != 0, prediction_vector)
-    else:
-        sub_y = y
-        sub_pred = prediction_vector
 
     if method.lower() == "mse":
-        criterion = mse_function(sub_pred, sub_y)
-
+        criterion = mse_function(prediction_vector, y)
     elif method.lower() == "mae":
-        criterion = mae_function(sub_pred, sub_y)
-
+        criterion = mae_function(prediction_vector, y)
     elif method.lower() == "aae":
-        criterion = aae_function(sub_pred, sub_y)
-
+        criterion = aae_function(prediction_vector, y)
     else:
         raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
 
     return criterion
 
 
-def success_rate(prediction: Union[int, str], y: np.ndarray):
-    success = sum(y == prediction)
-    return success / len(y)
+# noinspection PyUnresolvedReferences
+def success_rate(
+    prediction: Union[float, int, str, np.integer, np.float, "pd.Series"], y: Union[np.ndarray, "pd.DataFrame"]
+) -> Union[float, "pd.Series"]:
+    """
+    Returns the number fraction of y that equal the prediction.
+
+    Parameters
+    ----------
+    prediction: Union[int, np.integer, np.float, str, "pd.Series"]
+        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series)
+    y: Union[np.ndarray, "pd.DataFrame"]
+        The real target points activated by the rule (np.ndarray, without nans) or the rules
+        (pd.DataFrame, can contain nans even alongside strings)
+
+    Returns
+    -------
+      The fraction of y that equal one rule's prediction (float) or many rules predictions (pd.Series).
+    """
+    if prediction.__class__.__name__ != "Series" and not isinstance(
+        prediction, (float, int, np.integer, np.float, str)
+    ):
+        raise TypeError("'prediction' in success_rate must be an integer, a string or a pd.Series of one of those.")
+    if isinstance(prediction, (float, int, np.integer, np.float, str)):
+        return sum(prediction == y) / len(y)
+    else:
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+
+        if not y.__class__.__name__ == "DataFrame":
+            raise TypeError(
+                f"If passing several predictions as a Series, then activated Y must be a DataFrame, not {type(y)}"
+            )
+        pass
+        activated_points = (~y.isnull()).sum()
+        correctly_predicted = y == prediction
+        return correctly_predicted.sum() / activated_points
 
 
 # noinspection PyUnresolvedReferences
 def calc_classification_criterion(
-    activation_vector: np.ndarray, prediction: Union[int, str], y: Union[np.ndarray, "pd.Series"], **kwargs
-) -> float:
+    activation_vector: Union[np.ndarray, "pd.DataFrame"],
+    prediction: Union[float, int, np.integer, np.float, str, "pd.Series"],
+    y: Union[np.ndarray, "pd.Series"],
+    **kwargs,
+) -> Union[float, "pd.Series"]:
     """
     Computes the criterion
 
     Parameters
     ----------
-    activation_vector : Union[np.ndarray, pd.Series]
-        The prediction vector
-
-    prediction: int or str:
-                The label prediction
-
-    y : np.ndarray
+    activation_vector: Union[np.ndarray, "pd.DataFrame"]
+        The activation vector of one rule, of the stacked activation vectors of a ruleset
+    prediction: Union[float, int, np.integer, np.float, str, "pd.Series"]
+        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series)
+    y: Union[np.ndarray, "pd.Series"]
         The real target values (real numbers)
+    kwargs:
+        Can contain 'method', indicating how to evaluate the criterion. For now, one can use:\n * success_rate (default)
 
-    kwargs : dict
-        Can contain 'method', the method mse_function or mse_function criterion (default is 'mse'), and 'cond', whether
-         to evaluate the criterion only if the rule is activated (default is True)
-
-    Return
-    ------
-    criterion : float
-        Criteria value
+    Returns
+    -------
+    Union[float, pd.Series]
+      Criterion value of one rule (float) or of a set of rules (pd.Series)
     """
 
     method = kwargs.get("method", "success_rate")
-    cond = kwargs.get("cond", True)
 
-    if cond:
-        sub_y = np.extract(activation_vector != 0, y)
+    if activation_vector.__class__.__name__ != "DataFrame" and not isinstance(activation_vector, np.ndarray):
+        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+
+    if isinstance(activation_vector, np.ndarray):
+        if not isinstance(prediction, (float, int, np.integer, np.float, str)):
+            raise TypeError(
+                f"If passing one activation vector, then prediction must be an int or a str, not a {type(prediction)}"
+            )
+        y_conditional = np.extract(activation_vector != 0, y)
+        if method.lower() == "success_rate":
+            return success_rate(prediction, y_conditional)
+        else:
+            raise ValueError(f"Unknown criterion: {method}. Please choose among:\n* success_rate")
     else:
-        sub_y = y
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
 
-    if method.lower() == "success_rate":
-        criterion = success_rate(prediction, sub_y)
-
-    else:
-        raise ValueError(f"Unknown criterion: {method}. Please choose among success_rate")
-
-    return criterion
+        if not prediction.__class__.__name__ == "Series":
+            raise TypeError(
+                "If passing several activation vector as a DataFrame, then prediction must be a Series,"
+                f" not {type(prediction)}"
+            )
+        y_conditional = (
+            activation_vector.mul(pd.Series(y).replace(0, "zero"), axis=0)
+            .replace(0, np.nan)
+            .replace("", np.nan)
+            .replace("zero", 0)
+        )
+        return success_rate(prediction, y_conditional)
