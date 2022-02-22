@@ -58,7 +58,6 @@ class RuleSet(ABC):
         rules_list: Union[List[Rule], None] = None,
         remember_activation: bool = True,
         stack_activation: bool = False,
-        compute_activations_at_creation: bool = False
     ):
         """
 
@@ -90,9 +89,9 @@ class RuleSet(ABC):
                     raise TypeError(f"Some rules in given iterable were not of type 'Rule' but of type {type(rule)}")
                 if rule is not None:
                     self.append(rule, update_activation=False)
-            if self.remember_activation and compute_activations_at_creation:
+            if self.remember_activation:
                 self.compute_self_activation()
-            if self.stack_activation and compute_activations_at_creation:
+            if self.stack_activation:
                 self.compute_stacked_activation()
             if names_available:
                 self.features_names = list(set(itertools.chain(*[rule.features_names for rule in self])))
