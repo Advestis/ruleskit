@@ -1,7 +1,5 @@
 {
     "coverage": {"min": 0.05},
-    "zscore": {"min": 1.96, "arg": "abs"},
-    "crit_mean": {"min": 0},
-    "crit_min": {"max": "crit_max", "arg": "abs"},
-    "out": {"equal":  0, "arg": "int"}
+    "prediction": {"max": 3, "arg": "abs"},
+    "criterion": {"min": 0.3}
 }

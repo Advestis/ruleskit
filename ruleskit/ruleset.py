@@ -336,10 +336,9 @@ class RuleSet(ABC):
                 self._rules[ir]._criterion = criterion.iloc[ir]
                 self._rules[ir]._prediction = predictions.iloc[ir]
 
-                self._rules[ir].check_thresholds("prediction")
+                self._rules[ir].check_thresholds()
                 if not self._rules[ir].good:
                     to_drop.append(self._rules[ir])
-                    break
         else:
             [r.fit(xs=xs, y=y) for r in self]
             to_drop = [r for r in self if not r.good]
