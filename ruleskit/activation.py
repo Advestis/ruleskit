@@ -54,6 +54,8 @@ class Activation(ABC):
     @classmethod
     def clean_files(cls):
         """Removes activation vector files, if any."""
+        if not cls.DEFAULT_TEMPDIR.is_dir():
+            return
         for path in cls.DEFAULT_TEMPDIR.glob("ACTIVATION_VECTOR_*.txt"):
             path.unlink()
 
