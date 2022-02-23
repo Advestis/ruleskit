@@ -134,6 +134,105 @@ def test_thresholds():
                 ]
             )
         ),
+        (
+            np.array(
+                [
+                    [5, 3],
+                    [3, 4],
+                    [2, np.nan],
+                    [2, 4]
+                ]
+            ),
+            np.array([-4, 3, 2, 1]),
+            [
+                ClassificationRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
+                ClassificationRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
+                ClassificationRule(HyperrectangleCondition([1], bmins=[0], bmaxs=[3])),
+                ClassificationRule(HyperrectangleCondition([0], bmins=[2], bmaxs=[5])),
+                ClassificationRule(HyperrectangleCondition([0, 1], bmins=[2, 0], bmaxs=[5, 3])),
+            ],
+            1.0,
+            np.array([1, 1, 1, 1]),
+            pd.DataFrame([
+                [0, 0, 1, 1, 1],
+                [0, 1, 0, 1, 0],
+                [1, 0, 0, 1, 0],
+                [1, 1, 0, 1, 0]
+            ],
+             dtype=np.uint8,
+             columns=[
+                 "X_0 in [1, 2]",
+                 "X_1 in [4, 5]",
+                 "X_1 in [0, 3]",
+                 "X_0 in [2, 5]",
+                 "X_0 in [2, 5] AND X_1 in [0, 3]"
+             ]
+            ),
+            pd.Series(
+                [0.5, 0.5, 0.25, 1.0, 0.25],
+                index=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                    "X_1 in [0, 3]",
+                    "X_0 in [2, 5]",
+                    "X_0 in [2, 5] AND X_1 in [0, 3]"
+                ]
+            ),
+            pd.Series(
+                [1, 1, -4, -4, -4],
+                index=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                    "X_1 in [0, 3]",
+                    "X_0 in [2, 5]",
+                    "X_0 in [2, 5] AND X_1 in [0, 3]"
+                ]
+            ),
+            pd.Series(
+                [0.5, 0.5, 1, 0.25, 1],
+                index=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                    "X_1 in [0, 3]",
+                    "X_0 in [2, 5]",
+                    "X_0 in [2, 5] AND X_1 in [0, 3]"
+                ]
+            ),
+
+            pd.DataFrame([
+                [0, 0],
+                [0, 1],
+                [1, 0],
+                [1, 1]
+            ],
+                dtype=np.uint8,
+                columns=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                ]
+            ),
+            pd.Series(
+                [0.5, 0.5],
+                index=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                ]
+            ),
+            pd.Series(
+                [1, 1],
+                index=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                ]
+            ),
+            pd.Series(
+                [0.5, 0.5],
+                index=[
+                    "X_0 in [1, 2]",
+                    "X_1 in [4, 5]",
+                ]
+            ),
+        ),
     ],
 )
 def test_thresholds_stacked_fit(
