@@ -27,11 +27,6 @@ class RuleSet(ABC):
     STACKED_FIT = False
     all_features_indexes = {}
 
-    condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
-    rule_index = ["prediction"]
-    classification_rule_index = rule_index + ["coverage", "criterion"]
-    regression_rule_index = classification_rule_index + ["std"]
-
     @staticmethod
     def check_duplicated_rules(rules, name_or_index: str = "index"):
         if name_or_index == "index":
@@ -287,8 +282,28 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember,PyUnresolvedReferences
     def fit(
-        self, y: Union[np.ndarray, "pd.Series"], xs: Optional[Union["pd.DataFrame", np.ndarray]] = None
+        self,
+        y: Union[np.ndarray, "pd.Series"],
+        xs: Optional[Union["pd.DataFrame", np.ndarray]] = None,
+        y_test: Optional[Union[np.ndarray, "pd.Series"]] = None,
+        xs_test: Optional[Union["pd.DataFrame", np.ndarray]] = None,
     ) -> List[Rule]:
+        """ Fits the ruleset on y and xs to produce the rules' activation vectors and predictions. If y_test and xs_test
+        are given, will evaluate the rules's criterion on them instead of y and xs.
+
+        Parameters
+        ----------
+        y: Union[np.ndarray, "pd.Series"]
+        xs: Optional[Union["pd.DataFrame", np.ndarray]]
+        y_test: Optional[Union[np.ndarray, "pd.Series"]]
+        xs_test: Optional[Union["pd.DataFrame", np.ndarray]]
+
+
+        Returns
+        -------
+        List[Rule]
+            List of rules that were excluded from the ruleset after fitting because they were 'bad'
+        """
         if len(self) == 0:
             logger.debug("Ruleset is empty. Nothing to fit.")
             return []
@@ -298,6 +313,11 @@ class RuleSet(ABC):
                 import pandas as pd
             except ImportError:
                 raise ImportError("RuleSet's stacked fit requies pandas. Please run\npip install pandas")
+
+            if y_test is not None and xs_test is None:
+                raise ValueError("If specifying y_test, must also specify xs_test")
+            if y_test is None and xs_test is not None:
+                raise ValueError("If specifying xs_test, must also specify y_test")
 
             clean_activation = False
             if xs is not None:
@@ -520,13 +540,18 @@ class RuleSet(ABC):
         """
         if len(self) == 0:
             raise ValueError("Can not use evaluate : The ruleset is empty!")
-        activations = [rule.evaluate(xs) for rule in self.rules]
+        activations = [rule.evaluate_activation(xs) for rule in self.rules]
         return Activation.multi_logical_or(activations)
 
     # noinspection PyUnresolvedReferences
     def calc_activation(self, xs: Union[np.ndarray, "pd.DataFrame"]):
         """Uses input xs features data to compute the activation vector of all rules in self, and updates self's
-        activation if self.remember_activation is True and stacked activation if self.stack_activation is True"""
+        activation if self.remember_activation is True and stacked activation if self.stack_activation is True
+
+        Parameters
+        ----------
+        xs: Union[np.ndarray, "pd.DataFrame"]
+        """
         if len(self) == 0:
             raise ValueError("Can not use calc_activation : The ruleset is empty!")
         [rule.calc_activation(xs) for rule in self.rules]
@@ -595,16 +620,9 @@ class RuleSet(ABC):
             else:
                 pd.DataFrame().to_csv(path)
             return
-
-        idx = copy(self.__class__.condition_index)
-        if self.rule_type == ClassificationRule:
-            idx += self.__class__.classification_rule_index
-        elif self.rule_type == RegressionRule:
-            idx += self.__class__.regression_rule_index
-        elif self.rule_type == Rule:
-            idx += self.__class__.rule_index
-        else:
-            raise TypeError(f"Impossible to save rule type {self.rule_type}")
+        if self.rule_type is None:
+            raise TypeError("Rule type unset : can not save Ruleset")
+        idx = copy(self.rule_type.index)
 
         dfs = [
             self.rule_to_series(
@@ -636,25 +654,23 @@ class RuleSet(ABC):
         return sr
 
     # noinspection PyUnresolvedReferences
-    def series_to_rule(self, srule: "pd.Series") -> Rule:
-
-        condition_index = {c: None for c in self.__class__.condition_index}
+    @staticmethod
+    def series_to_rule(srule: "pd.Series") -> Rule:
 
         for ind in srule.index:
             if ind == "Unnamed: 0":
                 continue
-            if ind not in self.__class__.classification_rule_index + self.__class__.condition_index:
+            if ind not in Rule.index and ind not in RegressionRule.index and ind not in ClassificationRule.index:
                 raise IndexError(f"Invalid rule attribute '{ind}'")
 
         if "std" in srule.index:
             rule = RegressionRule()
-            rule_idx = copy(self.__class__.regression_rule_index)
         elif "criterion" in srule.index:
             rule = ClassificationRule()
-            rule_idx = copy(self.__class__.classification_rule_index)
         else:
             rule = Rule()
-            rule_idx = copy(self.__class__.rule_index)
+        rule_idx = copy(type(rule).rule_index)
+        condition_index = {c: None for c in type(rule).condition_index}
 
         for rule_ind in srule.index:
             str_value = str(srule[rule_ind])
@@ -707,21 +723,25 @@ class RuleSet(ABC):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             if len(self) == 0:
-                if self.rule_type == ClassificationRule:
+                if self.rule_type is None:
+                    return pd.DataFrame()
+                elif self.rule_type == ClassificationRule:
                     return pd.DataFrame()
                 else:
                     return pd.Series()
 
             if self.stacked_activations is None:
                 raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
-            if self.rule_type == ClassificationRule:
+            if issubclass(self.rule_type, ClassificationRule):
                 class_probabilities = functions.class_probabilities(self.stacked_activations, y)
                 maxs = class_probabilities.max()
                 return class_probabilities[class_probabilities == maxs].apply(
                     lambda x: x.dropna().sort_index().index[0]
                 )
-            else:
+            elif issubclass(self.rule_type, RegressionRule):
                 return functions.conditional_mean(self.stacked_activations, y)
+            else:
+                raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
     # noinspection PyUnresolvedReferences
     def calc_criterions(self, p: "pd.Series", y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
@@ -744,10 +764,14 @@ class RuleSet(ABC):
         """
         if self.stacked_activations is None:
             raise ValueError("The stacked activation vectors of this ruleset has not been computed yet.")
-        if self.rule_type == ClassificationRule:
+        if self.rule_type is None:
+            return pd.Series()
+        elif self.rule_type == ClassificationRule:
             return functions.calc_classification_criterion(self.stacked_activations, p, y, **kwargs)
-        else:
+        elif self.rule_type == RegressionRule:
             return functions.calc_regression_criterion(self.stacked_activations.replace(0, np.nan) * p, y, **kwargs)
+        else:
+            raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
 
 def traverse(o, tree_types=(list, tuple, RuleSet)):

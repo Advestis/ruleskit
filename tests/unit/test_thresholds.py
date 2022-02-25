@@ -442,7 +442,7 @@ def test_thresholds():
         ),
     ],
 )
-def test_thresholds_stacked_fit(
+def test_thresholds_fit(
         clean_for_stacked_fit_th,
         xs,
         y,

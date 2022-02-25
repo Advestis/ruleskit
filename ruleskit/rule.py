@@ -1,3 +1,4 @@
+import inspect
 from abc import ABC
 import numpy as np
 from typing import Optional, Union, Tuple
@@ -43,6 +44,15 @@ class Rule(ABC):
     THRESHOLDS = None
     """Thresholds that the Rule must meet to be good. See `ruleskit.thresholds.Thresholds` for more details."""
 
+    condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
+    rule_index = ["prediction"]
+    index = condition_index + rule_index
+
+    attributes_from_test_set = []
+    attributes_from_train_set = ["activation"]
+
+    daughters = []
+
     @classmethod
     def SET_THRESHOLDS(cls, path: Union[str, Path, "TransparentPath", None], show=False):
         """Set thresholds globally for all futur Rules"""
@@ -52,7 +62,9 @@ class Rule(ABC):
             cls.THRESHOLDS = Thresholds(path, show)
 
     def __init__(
-        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
+        self,
+        condition: Optional[Condition] = None,
+        activation: Optional[Activation] = None,
     ):
 
         if condition is not None and not isinstance(condition, Condition):
@@ -74,6 +86,7 @@ class Rule(ABC):
         self._time_fit = -1
         self._time_calc_activation = -1
         self._time_predict = -1
+        self._fitted = False
         if self._activation is not None:
             self.check_thresholds("coverage")
 
@@ -127,7 +140,7 @@ class Rule(ABC):
         self._coverage = value
 
     def __and__(self, other: "Rule") -> "Rule":
-        """Logical AND (&) of two rules. It is simply the logical AND of the two rule's conditions and activations. """
+        """Logical AND (&) of two rules. It is simply the logical AND of the two rule's conditions and activations."""
         condition = self._condition & other._condition
         activation = self._activation & other._activation
         return self.__class__(condition, activation)
@@ -238,7 +251,9 @@ class Rule(ABC):
             return self._condition == other._condition
 
     def __contains__(self, other: "Rule") -> bool:
-        """A Rule contains another Rule if the second rule's activated points are also all activated by the first rule.
+        """
+        A Rule contains another Rule if the second rule's activated points are also all activated by the first
+        rule.
         """
         if not self._activation or not other._activation:
             return False
@@ -263,7 +278,7 @@ class Rule(ABC):
         """A Rule's length is the number of features it talks about"""
         return len(self._condition)
 
-    def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> Activation:
+    def evaluate_activation(self, xs: Union["pd.DataFrame", np.ndarray]) -> Activation:
         """Computes and returns the activation vector from an array of features.
 
         Parameters
@@ -281,50 +296,108 @@ class Rule(ABC):
         a = Activation(arr, to_file=self.__class__.LOCAL_ACTIVATION)
         return a
 
-    # noinspection PyUnusedLocal
-    def fit(self, xs: Union["pd.DataFrame", np.ndarray] = None, y: np.ndarray = None, **kwargs):
-        """Computes activation, and other criteria dependant on the nature of the daughter class of the Rule,
-        for a given xs and y.
+    def evaluate_criterion(self, y: Union[np.ndarray, "pd.Series"], activation: np.ndarray, **kwargs) -> float:
+        """From an activation vector and targets, computes the criterion of the rule and returns it. Does not set it as
+        a rule attribute.
+        """
+        pass
+
+    def evaluate(
+        self, xs: Union["pd.DataFrame", np.ndarray], y: Union["pd.Series", np.ndarray], get_activtion: bool = False
+    ) -> Union[float, Tuple[float, Activation]]:
+        """From given xs features and y targets, returns the criterion of the rule. Does not set it as a rule attribute.
+        If 'get_activtion' is True, returns the activation vector matching 'xs' too.
+        """
+        activation = self.evaluate_activation(xs)
+        criterion = self.evaluate_criterion(y=y, activation=activation.raw)
+        if get_activtion:
+            return criterion, activation
+        return criterion
+
+    def fit(
+        self,
+        y: Union[np.ndarray, "pd.Series"],
+        xs: Optional[Union["pd.DataFrame", np.ndarray]] = None,
+        y_test: Optional[Union[np.ndarray, "pd.Series"]] = None,
+        xs_test: Optional[Union["pd.DataFrame", np.ndarray]] = None,
+        **kwargs,
+    ):
+        """Computes prediction, standard deviation, and regression criterion
 
         Parameters
         ----------
-        xs: Union[pd:DataFrame, np.ndarray]
-            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
-            or pd:DataFrame.
-        y: np.ndarray
-            The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray.
+        y: Union[np.ndarray, pd.Series]
+            The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
+            or pd.Series.
+        xs: Union[pd.DataFrame, np.ndarray]
+            The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray or a
+            pd.DataFrame.
+        y_test: Optional[Union[np.ndarray, "pd.Series"]]
+        xs_test: Optional[Union["pd.DataFrame", np.ndarray]]
         kwargs: dict
-            Other arguments used by daughter class
+            Additionnal keyword arguments for calc_<any_attribute>
         """
+        if self._fitted and xs is None:
+            return
         t0 = time()
-        if xs is not None:
-            self.calc_activation(xs)
 
-        if self._activation is None:
-            raise ValueError("If fitting without specifying xs, activation must have been computed already.")
-        self.calc_attributes(y, **kwargs)
-        if self.prediction is None:
-            raise ValueError("'fit' did not set 'prediction' : did you overload 'calc_attributes' correctly ?")
+        def launch_method(method, **kw):
+            expected_args = list(inspect.signature(method).parameters)
+            kw = {item: kw[item] for item in kw if item in expected_args}
+            method(**kw)
 
+        if y_test is not None and xs_test is None:
+            raise ValueError("If specifying y_test, must also specify xs_test")
+        if y_test is None and xs_test is not None:
+            raise ValueError("If specifying xs_test, must also specify y_test")
+        elif y_test is None and xs_test is None:
+            y_test = y
+            xs_test = xs
+
+        for attr in self.__class__.attributes_from_train_set:
+            launch_method(getattr(self, f"calc_{attr}"), y=y, xs=xs, **kwargs)
+            self.check_thresholds(attr)
+            if not self.good:
+                self._time_fit = time() - t0
+                self._fitted = True
+                return
+        for attr in self.__class__.attributes_from_test_set:
+            launch_method(getattr(self, f"calc_{attr}"), y=y_test, xs=xs_test, **kwargs)
+            self.check_thresholds(attr)
+            if not self.good:
+                self._time_fit = time() - t0
+                self._fitted = True
+                return
+        self.check_thresholds()
+        self.trigger_subattributes_computation()
         self._time_fit = time() - t0
+        self._fitted = True
 
-    def calc_attributes(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
-        """Implement in daughter class. Must set self._prediction."""
-        raise NotImplementedError("To implement in daughter class")
-
-    def calc_activation(self, xs: Union["pd.DataFrame", np.ndarray]):
+    def calc_activation(self, xs: Union["pd.DataFrame", np.ndarray, None] = None):
         """Uses self.evaluate to set self._activation.
 
         Parameters
         ----------
-        xs: Union[pd:DataFrame, np.ndarray]
+        xs: Union["pd.DataFrame", np.ndarray, None]
             The features on which the check whether the rule is activated or not. Must be a 2-D np.ndarray
             or pd:DataFrame.
         """
+        if xs is None:
+            if self._activation is None:
+                raise ValueError(
+                    "If calling calc_activation without specifying xs, activation must have been computed already."
+                )
+            return
         t0 = time()
-        self._activation = self.evaluate(xs)
+        self._activation = self.evaluate_activation(xs)
         self._time_calc_activation = time() - t0
         self.check_thresholds("coverage")
+
+    def trigger_subattributes_computation(self):
+        """Uses getattr(self, attr) to trigger important attributes computation. Important attributes should be
+        Ruleset.rule_index"""
+        for attr in self.__class__.index:
+            _ = getattr(self, attr)
 
     def predict(self, xs: Optional[Union["pd.DataFrame", np.ndarray]] = None) -> Union[np.ndarray, "pd.Series"]:
         """Returns the prediction vector. If xs is not given, will use existing activation vector.
@@ -344,15 +417,17 @@ class Rule(ABC):
         """
         t0 = time()
         if xs is not None:
-            self.calc_activation(xs)
+            act = self.evaluate_activation(xs).raw
         elif self.activation is None:
             raise ValueError("If the activation vector has not been computed yet, xs can not be None.")
-        act = self.activation
+        else:
+            act = self.activation
         to_ret = np.array([np.nan] * len(act))
         if isinstance(self.prediction, str):
             if self.prediction == "nan":
-                raise ValueError("Prediction should not be the 'nan' string, it will conflict with NaNs."
-                                 "Rename your class.")
+                raise ValueError(
+                    "Prediction should not be the 'nan' string, it will conflict with NaNs. Rename your class."
+                )
             to_ret = to_ret.astype(str)
         to_ret[act == 1] = self.prediction
         self._time_predict = time() - t0
@@ -361,7 +436,7 @@ class Rule(ABC):
         return to_ret
 
     def get_correlation(self, other: "Rule") -> float:
-        """ Computes the correlation between self and other
+        """Computes the correlation between self and other
         Correlation is the number of points in common between the two vectors divided by their length, times the product
         of the rules' signs.
         Both vectors must have the same length.
@@ -375,11 +450,17 @@ class Rule(ABC):
 
 # noinspection PyUnresolvedReferences
 class RegressionRule(Rule):
-
     """Rule applied on continuous target data."""
 
+    rule_index = Rule.rule_index + ["coverage", "criterion", "std"]
+    index = Rule.condition_index + rule_index
+    attributes_from_test_set = ["criterion"]
+    attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std"]
+
     def __init__(
-        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
+        self,
+        condition: Optional[Condition] = None,
+        activation: Optional[Activation] = None,
     ):
         super().__init__(condition, activation)
         self._std = None
@@ -410,25 +491,9 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_attributes(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
-        """Computes prediction, standard deviation, and regression criterion
-        
-        Parameters
-        ----------
-        y: Union[np.ndarray, pd.Series]
-            The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
-            or pd.Series.
-        kwargs: dict
-            Arguments for calc_regression_criterion
-        """
-        self.calc_prediction(y)
-        self.calc_std(y)
-        prediction_vector = self.prediction * np.where(self.activation == 0, np.nan, self.activation)
-        self.calc_criterion(prediction_vector, y, **kwargs)
-
     def calc_prediction(self, y: [np.ndarray, "pd.Series"]):
         """Computes the mean of all activated points in target y and use it as prediction
-        
+
         Parameters
         ----------
         y: [np.ndarray, pd.Series]
@@ -444,7 +509,7 @@ class RegressionRule(Rule):
 
     def calc_std(self, y: Union[np.ndarray, "pd.Series"]):
         """Computes the standard deviation of all activated points in target y
-        
+
         Parameters
         ----------
         y: Union[np.ndarray, pd.Series]
@@ -458,12 +523,10 @@ class RegressionRule(Rule):
         self._time_calc_std = time() - t0
         self.check_thresholds("std")
 
-    def calc_criterion(self, p: Union[np.ndarray, "pd.Series"], y: Union[np.ndarray, "pd.Series"], **kwargs):
+    def calc_criterion(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
         """
         Parameters
         ----------
-        p: Union[np.ndarray, pd.Series]
-            Prediction vector. Must be a 1-D np.ndarray or pd.Series.
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.
@@ -471,18 +534,34 @@ class RegressionRule(Rule):
             Arguments for calc_regression_criterion
         """
         t0 = time()
-        self._criterion = functions.calc_regression_criterion(p, y, **kwargs)
+        self._criterion = functions.calc_regression_criterion(
+            self.prediction * np.where(self.activation == 0, np.nan, self.activation), y, **kwargs
+        )
         self._time_calc_criterion = time() - t0
         self.check_thresholds("criterion")
+
+    def evaluate_criterion(self, y: Union[np.ndarray, "pd.Series"], activation: np.ndarray, **kwargs):
+        """From an activation vector and targets, computes the criterion of the rule and returns it. Does not set it as
+        a rule attribute.
+        """
+        return functions.calc_regression_criterion(
+            self.prediction * np.where(activation == 0, np.nan, self.activation), y, **kwargs
+        )
 
 
 # noinspection PyUnresolvedReferences
 class ClassificationRule(Rule):
-
     """Rule applied on discret target data."""
 
+    rule_index = Rule.rule_index + ["coverage", "criterion"]
+    index = Rule.condition_index + rule_index
+    attributes_from_test_set = ["criterion"]
+    attributes_from_train_set = Rule.attributes_from_train_set + ["prediction"]
+
     def __init__(
-        self, condition: Optional[Condition] = None, activation: Optional[Activation] = None,
+        self,
+        condition: Optional[Condition] = None,
+        activation: Optional[Activation] = None,
     ):
         super().__init__(condition, activation)
 
@@ -508,19 +587,6 @@ class ClassificationRule(Rule):
     @property
     def criterion(self) -> float:
         return self._criterion
-
-    def calc_attributes(self, y: Union[np.ndarray, "pd.Series"], **kwargs):
-        """
-        Parameters
-        ----------
-        y: Union[np.ndarray, pd.Series]
-            The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
-            or pd.Series.
-        kwargs: dict
-            Arguments for calc_classification_criterion
-        """
-        self.calc_prediction(y)
-        self.calc_criterion(y, **kwargs)
 
     def calc_prediction(self, y: [np.ndarray, "pd.Series"]):
         """
@@ -551,3 +617,9 @@ class ClassificationRule(Rule):
         self._criterion = functions.calc_classification_criterion(self.activation, self.prediction, y, **kwargs)
         self._time_calc_criterion = time() - t0
         self.check_thresholds("criterion")
+
+    def evaluate_criterion(self, y: Union[np.ndarray, "pd.Series"], activation: np.ndarray, **kwargs):
+        """From an activation vector and targets, computes the criterion of the rule and returns it. Does not set it as
+        a rule attribute.
+        """
+        return functions.calc_classification_criterion(activation, self.prediction, y, **kwargs)
