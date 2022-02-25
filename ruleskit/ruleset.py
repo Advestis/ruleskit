@@ -73,12 +73,12 @@ class RuleSet(ABC):
             can take a lot of memory, but can save time if you apply numpy methods on this stacked vector instead of on
             each rule separately. (default value = False)
         """
-        self._rules = []
-        self.features_names = []
-        self.features_indexes = []
-        self._activation = None
+        self._rules: List[Rule] = []
+        self.features_names: List[str] = []
+        self.features_indexes: List[int] = []
+        self._activation: Optional[Activation] = None
         self._coverage = None  # in case Activation is not available
-        self.stacked_activations = None
+        self.stacked_activations: Optional[np.ndarray] = None
         self.remember_activation = remember_activation
         self.stack_activation = stack_activation
         self.rule_type = None
@@ -445,14 +445,31 @@ class RuleSet(ABC):
         if self.stack_activation:
             self.stacked_activations = self.stacked_activations[[str(r.condition) for r in self]]
 
+    # noinspection PyProtectedMember
     def compute_self_activation(self):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if len(self) == 0:
             return
         activations_available = all([r.activation_available for r in self])
         if activations_available:
+            if len(self) == 1:
+                self._activation = Activation(
+                    self[0].activation,
+                    optimize=self[0]._activation.optimize,
+                    to_file=self[0]._activation.to_file
+                )
+                return
             # noinspection PyProtectedMember
-            self._activation = Activation.multi_logical_or([r._activation for r in self])
+            try:
+                self._activation = Activation.multi_logical_or([r._activation for r in self])
+            except MemoryError:
+                self._activation = Activation(
+                    self[0].activation,
+                    optimize=self[0]._activation.optimize,
+                    to_file=self[0]._activation.to_file
+                )
+                for r in self:
+                    self._activation = self._activation or r._activation
 
     def compute_stacked_activation(self):
         """Computes the stacked activation vectors of self from its rules."""

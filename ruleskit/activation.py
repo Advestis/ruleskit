@@ -193,6 +193,7 @@ class Activation(ABC):
 
         self._reset_data_related_attributes()
         self.optimize = optimize
+        self.to_file = False  # set by _init_with_any
         self.data_format = None  # Will be set by init methods
 
         # does not use instance to avoid conflicts if using TransparentPath
@@ -256,6 +257,8 @@ class Activation(ABC):
                 if to_file:
                     if not self._write(self.to_raw_from_any(activation, out=False)):
                         self._init_with_any(activation, length=length, to_file=False)
+                    else:
+                        self.to_file = True
                 else:
                     self._init_with_raw(activation, Activation.DTYPE)
         else:
@@ -505,7 +508,7 @@ class Activation(ABC):
             self._sizeof_compressed_str = sys.getsizeof(compressed) / 1e6
             size_compressed = self._sizeof_compressed_str
         else:
-            self._sizeof_compressed_array =  compressed.nbytes / 1e6
+            self._sizeof_compressed_array = compressed.nbytes / 1e6
             size_compressed = self._sizeof_compressed_array
         if dtype is str:
             self._entropy = len(ast.literal_eval(compressed))
@@ -567,8 +570,15 @@ class Activation(ABC):
 
         available_memory = psutil.virtual_memory().available / 1e6
         single_act_size = acs[0].sizeof_raw
-        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.5  # factor 1.5 is just for safety
+        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
+        if available_memory == 0:
+            raise ValueError("No memory left to compute 'multi_logical_and'")
         nbatches = ceil(expected_size / available_memory)
+        if nbatches == 0:
+            raise ValueError(
+                f"Not enough memory left to compute 'multi_logical_and' : need {expected_size}MB,"
+                f" has {available_memory}MB"
+            )
         batches = np.array_split(acs, nbatches)
 
         if len(acs) == 1:
@@ -613,8 +623,15 @@ class Activation(ABC):
 
         available_memory = psutil.virtual_memory().available / 1e6
         single_act_size = acs[0].sizeof_raw
-        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.5
+        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
+        if available_memory == 0:
+            raise MemoryError("No memory left to compute 'multi_logical_or'")
         nbatches = ceil(expected_size / available_memory)
+        if nbatches == 0:
+            raise MemoryError(
+                f"Not enough memory left to compute 'multi_logical_or' : need {expected_size}MB,"
+                f" has {available_memory}MB"
+            )
         batches = np.array_split(acs, nbatches)
 
         if len(acs) == 1:
