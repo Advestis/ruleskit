@@ -649,7 +649,10 @@ class RuleSet(ABC):
             raise ImportError("'pandas' is needed to read a RuleSet from a file. Please run\npip install pandas")
         i = irule[0]
         rule = irule[1]
-        name = f"R_{i}({len(rule)})"
+        if hasattr(rule, "sign"):
+            name = f"R_{i}({len(rule)}){rule.sign}"
+        else:
+            name = f"R_{i}({len(rule)})"
         sr = pd.Series(data=[str(getattr(rule, ind)) for ind in index], name=name, index=index, dtype=str)
         return sr
 
