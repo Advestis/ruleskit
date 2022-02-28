@@ -103,6 +103,10 @@ def conditional_std(
         raise TypeError("'activation' in conditional_std must be None or a np.ndarray or a pd.DataFrame")
     if isinstance(activation, np.ndarray):
         y_conditional = np.extract(activation, y)
+        if len(y_conditional) == 0:
+            return np.nan
+        if len(y_conditional) == 1:
+            return 0
         # ddof ensures numpy uses non-biased estimator of std, like pandas' default
         return float(np.nanstd(y_conditional, ddof=1))
     else:
