@@ -1,6 +1,6 @@
 import numpy as np
 from collections import Counter
-from typing import Union
+from typing import Union, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -383,3 +383,73 @@ def calc_classification_criterion(
             .replace("zero", 0)
         )
         return success_rate(prediction, y_conditional)
+
+
+# noinspection PyUnresolvedReferences
+def init_weights(
+    prediction_vectors: "pd.DataFrame", weights: "pd.DataFrame"
+) -> "pd.DataFrame":
+    try:
+        import pandas as pd
+    except ImportError:
+        raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+    if weights.empty:
+        raise ValueError("Weights not None but empty : can not evaluate prediction")
+    weights = weights.fillna(value=np.nan).dropna(axis=1, how="all")
+    absent_rules = prediction_vectors.loc[:, ~prediction_vectors.columns.isin(weights.columns)].columns
+    present_rules = prediction_vectors.loc[:, prediction_vectors.columns.isin(weights.columns)].columns
+    if len(absent_rules) > 0:
+        s = (
+            "Some rules given in the prediction vector did not have a weight and will be ignored in the"
+            " computation of the ruleset prediction. The concerned rules are :"
+        )
+        s = "\n".join([s] + list(absent_rules.astype(str)))
+        logger.warning(s)
+    prediction_vectors = prediction_vectors[present_rules]
+    weights = (~prediction_vectors.isna() * 1).replace(0, np.nan) * weights
+    if prediction_vectors.empty:
+        raise ValueError("No rules had weights : can not use calc_ruleset_prediction_weighted_classificator")
+    return prediction_vectors, weights
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_weighted_regressor(
+        prediction_vectors: "pd.DataFrame", weights: "pd.DataFrame"
+) -> float:
+    prediction_vectors, weights = init_weights(prediction_vectors, weights)
+    idx = prediction_vectors.index
+    return ((prediction_vectors * weights).sum(axis=1) / weights.sum(axis=1)).reindex(idx)
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_equally_weighted_regressor(prediction_vectors: "pd.DataFrame") -> float:
+    return prediction_vectors.mean(axis=1)
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_weighted_classificator(
+    prediction_vectors: "pd.DataFrame", weights: Optional["pd.DataFrame"]
+) -> Union[str, int]:
+    prediction_vectors, weights = init_weights(prediction_vectors, weights)
+    # noinspection PyUnresolvedReferences
+    mask = (weights.T == weights.max(axis=1)).T
+    prediction_vectors = prediction_vectors[mask]
+    return calc_ruleset_prediction_equally_weighted_classificator(prediction_vectors)
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_equally_weighted_classificator(prediction_vectors: "pd.DataFrame") -> Union[str, int]:
+    try:
+        import pandas as pd
+    except ImportError:
+        raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+    idx = prediction_vectors.index
+    if pd.api.types.is_string_dtype(prediction_vectors.dtypes.iloc[0]):
+        most_freq_pred = prediction_vectors.fillna(value=np.nan).replace("nan", np.nan).mode(axis=1)
+    else:
+        most_freq_pred = prediction_vectors.mode(axis=1)
+    most_freq_pred = most_freq_pred.loc[most_freq_pred.count(axis=1) == 1].dropna(axis=1).squeeze()
+    if pd.api.types.is_string_dtype(prediction_vectors.dtypes.iloc[0]):
+        most_freq_pred = most_freq_pred.reindex(idx).fillna("nan")
+    most_freq_pred.name = None
+    return most_freq_pred.reindex(idx)
