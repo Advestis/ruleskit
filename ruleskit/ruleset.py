@@ -824,7 +824,7 @@ class RuleSet(ABC):
         if weights is not None:
             if isinstance(weights, str):
                 weights = pd.Series({str(r.condition): getattr(r, weights) for r in self})
-            weights = self.stacked_activations.replace(0, np.nan) * weights
+            weights = (self.stacked_activations.replace(0, np.nan) * weights).replace(0, np.nan)
             if issubclass(self.rule_type, RegressionRule):
                 return calc_ruleset_prediction_weighted_regressor(prediction_vectors=predictions_vector, weights=weights)
             elif issubclass(self.rule_type, ClassificationRule):
