@@ -326,19 +326,19 @@ class RuleSet(ABC):
             logger.debug("Ruleset is empty. Nothing to fit.")
             return []
 
+        if y_test is not None and xs_test is None:
+            raise ValueError("If specifying y_test, must also specify xs_test")
+        if y_test is None and xs_test is not None:
+            raise ValueError("If specifying xs_test, must also specify y_test")
+        elif y_test is None and xs_test is None:
+            y_test = y
+            xs_test = xs
+
         if self.__class__.STACKED_FIT:
             try:
                 import pandas as pd
             except ImportError:
                 raise ImportError("RuleSet's stacked fit requies pandas. Please run\npip install pandas")
-
-            if y_test is not None and xs_test is None:
-                raise ValueError("If specifying y_test, must also specify xs_test")
-            if y_test is None and xs_test is not None:
-                raise ValueError("If specifying xs_test, must also specify y_test")
-            elif y_test is None and xs_test is None:
-                y_test = y
-                xs_test = xs
 
             clean_activation = False
             # Activation must always be computed from train set, to force it
