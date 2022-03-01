@@ -49,7 +49,7 @@ class Rule(ABC):
     index = condition_index + rule_index
 
     attributes_from_test_set = []
-    attributes_from_train_set = ["activation"]
+    attributes_from_train_set = []
 
     daughters = []
 
@@ -354,7 +354,12 @@ class Rule(ABC):
             y_test = y
             xs_test = xs
 
+        # Activation must always be computed from train set, to force it
+        self.calc_activation(xs=xs)
+
         for attr in self.__class__.attributes_from_train_set:
+            if attr == "activation":
+                raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
             launch_method(getattr(self, f"calc_{attr}"), y=y, xs=xs, **kwargs)
             self.check_thresholds(attr)
             if not self.good:
@@ -362,6 +367,8 @@ class Rule(ABC):
                 self._fitted = True
                 return
         for attr in self.__class__.attributes_from_test_set:
+            if attr == "activation":
+                raise ValueError("'activation' can not be specified in 'attributes_from_test_set'")
             launch_method(getattr(self, f"calc_{attr}"), y=y_test, xs=xs_test, **kwargs)
             self.check_thresholds(attr)
             if not self.good:
