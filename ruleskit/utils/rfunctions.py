@@ -265,7 +265,7 @@ def calc_regression_criterion(
     Returns
     -------
     criterion: Union[float, "pd.Series"]
-        Criterion value of one rule, of the Series of the criterion values of several rules.
+        Criterion value of one rule or ruleset, or the Series of the criterion values of several rules
     """
 
     method = kwargs.get("method", "mse")
@@ -299,7 +299,7 @@ def success_rate(
 
     Returns
     -------
-      The fraction of y that equal one rule's prediction (float) or many rules predictions (pd.Series).
+      The fraction of y that equal one rule or ruleset's prediction (float) or many rules predictions (pd.Series).
     """
     if prediction.__class__.__name__ != "Series" and not isinstance(
         prediction, (float, int, np.integer, np.float, str)
@@ -307,6 +307,8 @@ def success_rate(
         raise TypeError("'prediction' in success_rate must be an integer, a string or a pd.Series of one of those.")
     if isinstance(prediction, (float, int, np.integer, np.float, str)):
         return sum(prediction == y) / len(y)
+    elif isinstance(y, np.ndarray) and prediction.__class__.__name__ == "Series":
+        return sum(prediction == y) / len(prediction.dropna())
     else:
         try:
             import pandas as pd
@@ -317,7 +319,6 @@ def success_rate(
             raise TypeError(
                 f"If passing several predictions as a Series, then activated Y must be a DataFrame, not {type(y)}"
             )
-        pass
         activated_points = (~y.isnull()).sum()
         correctly_predicted = y == prediction
         return correctly_predicted.sum() / activated_points
@@ -336,31 +337,30 @@ def calc_classification_criterion(
     Parameters
     ----------
     activation_vector: Union[np.ndarray, "pd.DataFrame"]
-        The activation vector of one rule, of the stacked activation vectors of a ruleset
+        The activation vector of one rule, or of one ruleset, or the stacked activation vectors of a ruleset
     prediction: Union[float, int, np.integer, np.float, str, "pd.Series"]
-        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series)
+        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series), or
+        the label prediction of one ruleset at each observations (pd.Series)
     y: Union[np.ndarray, "pd.Series"]
-        The real target values (real numbers)
+        The real target values
     kwargs:
         Can contain 'method', indicating how to evaluate the criterion. For now, one can use:\n * success_rate (default)
 
     Returns
     -------
     Union[float, pd.Series]
-      Criterion value of one rule (float) or of a set of rules (pd.Series)
+        Criterion value of one rule or ruleset (float) or of a set of rules (pd.Series)
     """
 
     method = kwargs.get("method", "success_rate")
 
     if activation_vector.__class__.__name__ != "DataFrame" and not isinstance(activation_vector, np.ndarray):
-        raise TypeError("'activation' in conditional_mean must be None or a np.ndarray or a pd.DataFrame")
+        raise TypeError("'activation_vector' in calc_classification_criterion must be a np.ndarray or a pd.DataFrame")
 
     if isinstance(activation_vector, np.ndarray):
-        if not isinstance(prediction, (float, int, np.integer, np.float, str)):
-            raise TypeError(
-                f"If passing one activation vector, then prediction must be an int or a str, not a {type(prediction)}"
-            )
         y_conditional = np.extract(activation_vector != 0, y)
+        if prediction.__class__.__name__ == "Series":
+            prediction = prediction[activation_vector != 0]
         if method.lower() == "success_rate":
             return success_rate(prediction, y_conditional)
         else:

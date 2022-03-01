@@ -71,7 +71,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
 
 
 @pytest.mark.parametrize(
-    "xs, y, rule_list, weights, exp_coverage, exp_act, exp_stacked_act, exp_covs, exp_preds, exp_crits, exp_pred",
+    "xs, y, rule_list, weights, exp_coverage, exp_act, exp_stacked_act, exp_covs, exp_preds, exp_crits, exp_pred, exp_crit",
     [
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
@@ -88,6 +88,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.75]),
+            1.8125 / 3.0,
         ),
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
@@ -96,7 +97,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
                 RegressionRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
                 RegressionRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
             ],
-            pd.Series([1, 0],  index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.Series([1, 0], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             0.75,
             np.array([0, 1, 1, 1]),
             pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -104,6 +105,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, np.nan, 1.5, 1.5]),
+            0.25,
         ),
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
@@ -112,7 +114,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
                 RegressionRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
                 RegressionRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
             ],
-            pd.Series([1],  index=["X_0 in [1, 2]"]),
+            pd.Series([1], index=["X_0 in [1, 2]"]),
             0.75,
             np.array([0, 1, 1, 1]),
             pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -120,6 +122,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, np.nan, 1.5, 1.5]),
+            0.25,
         ),
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
@@ -128,7 +131,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
                 RegressionRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
                 RegressionRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
             ],
-            pd.Series([0.75, 1],  index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.Series([0.75, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             0.75,
             np.array([0, 1, 1, 1]),
             pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -136,6 +139,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.785714286]),
+            0.6224489795918368,
         ),
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
@@ -152,6 +156,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.9]),
+            2.06 / 3,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -173,6 +178,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2 / 3, 2 / 3, 1], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, 3, 2, 2, np.nan]),
+            1.0,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -182,15 +188,11 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
                 ClassificationRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[6])),
                 ClassificationRule(HyperrectangleCondition([0, 1], bmins=[2, 4], bmaxs=[3, 5])),
             ],
-            pd.Series([1, 0, 1],  index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([1, 0, 1], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             0.8,
             np.array([0, 1, 1, 1, 1]),
             pd.DataFrame(
-                [[0, 0, 0],
-                 [0, 1, 0],
-                 [1, 0, 0],
-                 [1, 1, 1],
-                 [1, 1, 0]],
+                [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 1], [1, 1, 0]],
                 dtype=np.uint8,
                 columns=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"],
             ),
@@ -198,6 +200,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2 / 3, 2 / 3, 1], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, np.nan, 2, 2, 2]),
+            2/3,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -207,15 +210,11 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
                 ClassificationRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[6])),
                 ClassificationRule(HyperrectangleCondition([0, 1], bmins=[2, 4], bmaxs=[3, 5])),
             ],
-            pd.Series([0.5, 1],  index=["X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([0.5, 1], index=["X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             0.8,
             np.array([0, 1, 1, 1, 1]),
             pd.DataFrame(
-                [[0, 0, 0],
-                 [0, 1, 0],
-                 [1, 0, 0],
-                 [1, 1, 1],
-                 [1, 1, 0]],
+                [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 1], [1, 1, 0]],
                 dtype=np.uint8,
                 columns=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"],
             ),
@@ -223,6 +222,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2 / 3, 2 / 3, 1], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, 3, np.nan, 2, 3]),
+            1.0,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -236,11 +236,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             0.8,
             np.array([0, 1, 1, 1, 1]),
             pd.DataFrame(
-                [[0, 0, 0],
-                 [0, 1, 0],
-                 [1, 0, 0],
-                 [1, 1, 1],
-                 [1, 1, 0]],
+                [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 1], [1, 1, 0]],
                 dtype=np.uint8,
                 columns=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"],
             ),
@@ -248,6 +244,7 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2 / 3, 2 / 3, 1], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, 3, 2, 2, np.nan]),
+            1.0,
         ),
     ],
 )
@@ -264,6 +261,7 @@ def test_stacked_fit(
     exp_preds,
     exp_crits,
     exp_pred,
+    exp_crit,
 ):
     res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
     res.fit(y, xs)
@@ -274,7 +272,9 @@ def test_stacked_fit(
         assert r.coverage == exp_covs[str(r.condition)]
         assert r.prediction == exp_preds[str(r.condition)]
         assert r.criterion == exp_crits[str(r.condition)]
-    pd.testing.assert_series_equal(res.calc_prediction(y, weights), exp_pred)
+    prediction = res.calc_prediction(y=y, weights=weights)
+    pd.testing.assert_series_equal(prediction, exp_pred)
+    assert round(res.calc_criterion(y=y, predictions_vector=prediction), 6) == round(exp_crit, 6)
 
 
 @pytest.mark.parametrize(

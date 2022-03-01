@@ -738,10 +738,12 @@ class RuleSet(ABC):
             if len(self) == 0:
                 if self.rule_type is None:
                     return pd.DataFrame()
-                elif self.rule_type == ClassificationRule:
+                elif issubclass(self.rule_type, ClassificationRule):
                     return pd.DataFrame()
-                else:
+                elif issubclass(self.rule_type, RegressionRule):
                     return pd.Series()
+                else:
+                    raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
             if self.stacked_activations is None:
                 self.compute_stacked_activation()
@@ -757,7 +759,7 @@ class RuleSet(ABC):
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
     # noinspection PyUnresolvedReferences
-    def calc_criterions(self, p: "pd.Series", y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
+    def calc_criterions(self, p: Union[None, "pd.Series"], y: Union[np.ndarray, "pd.Series"], **kwargs) -> "pd.Series":
         """
         Will compute the criterion of each rule in the ruleset
 
@@ -767,10 +769,11 @@ class RuleSet(ABC):
         Parameters
         ----------
         p: "pd.Series"
-          Prediction of each rules
+            Prediction of each rules. If None, will call self.calc_predictions(y)
         y: [np.ndarray, pd.Series]
-          The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
-          or pd.Series.
+            The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
+            or pd.Series.
+        kwargs
 
         Returns
         -------
@@ -778,13 +781,19 @@ class RuleSet(ABC):
             Criterion values a set of rules (pd.Series)
 
         """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's calc_criterions requires pandas. Please run\npip install pandas")
+        if p is None:
+            p = self.calc_predictions(y)
         if self.stacked_activations is None:
             self.compute_stacked_activation()
         if self.rule_type is None:
-            return pd.Series()
-        elif self.rule_type == ClassificationRule:
+            return pd.Series(dtype=int)
+        if issubclass(self.rule_type, ClassificationRule):
             return functions.calc_classification_criterion(self.stacked_activations, p, y, **kwargs)
-        elif self.rule_type == RegressionRule:
+        elif issubclass(self.rule_type, RegressionRule):
             return functions.calc_regression_criterion(self.stacked_activations.replace(0, np.nan) * p, y, **kwargs)
         else:
             raise TypeError(f"Unexpected rule type '{self.rule_type}'")
@@ -801,7 +810,7 @@ class RuleSet(ABC):
         Parameters
         ----------
         y: [np.ndarray, pd.Series]
-          The targets on which to evaluate the ruleset predictions. Must be a 1-D np.ndarray or pd.Series.
+            The targets on which to evaluate the ruleset predictions. Must be a 1-D np.ndarray or pd.Series.
         weights: Optional[Union["pd.Series", str]]
             Optional weights. If is a pd.Series, expected the index to be the rules names. If is a str, a pd.Series
             will be constructed by fetching each rules' attribute named after the given string
@@ -815,25 +824,88 @@ class RuleSet(ABC):
         try:
             import pandas as pd
         except ImportError:
-            raise ImportError("RuleSet's calc_predictions requires pandas. Please run\npip install pandas")
+            raise ImportError("RuleSet's calc_prediction requires pandas. Please run\npip install pandas")
         if len(self) == 0:
             return pd.Series(dtype=int)
-        predictions_vector = self.stacked_activations.replace(0, np.nan) * self.calc_predictions(y)
-        if predictions_vector.empty:
-            return predictions_vector
+        if self.rule_type is None:
+            return pd.Series(dtype=int)
+        prediction_vectors = self.stacked_activations.replace(0, np.nan) * self.calc_predictions(y)
+        if prediction_vectors.empty:
+            return prediction_vectors
         if weights is not None:
             if isinstance(weights, str):
                 weights = pd.Series({str(r.condition): getattr(r, weights) for r in self})
             weights = (self.stacked_activations.replace(0, np.nan) * weights).replace(0, np.nan)
             if issubclass(self.rule_type, RegressionRule):
-                return calc_ruleset_prediction_weighted_regressor(prediction_vectors=predictions_vector, weights=weights)
+                return calc_ruleset_prediction_weighted_regressor(
+                    prediction_vectors=prediction_vectors, weights=weights
+                )
             elif issubclass(self.rule_type, ClassificationRule):
-                return calc_ruleset_prediction_weighted_classificator(prediction_vectors=predictions_vector, weights=weights)
+                return calc_ruleset_prediction_weighted_classificator(
+                    prediction_vectors=prediction_vectors, weights=weights
+                )
+            else:
+                raise TypeError(f"Unexpected rule type '{self.rule_type}'")
         else:
             if issubclass(self.rule_type, RegressionRule):
-                return calc_ruleset_prediction_equally_weighted_regressor(prediction_vectors=predictions_vector)
+                return calc_ruleset_prediction_equally_weighted_regressor(prediction_vectors=prediction_vectors)
             elif issubclass(self.rule_type, ClassificationRule):
-                return calc_ruleset_prediction_equally_weighted_classificator(prediction_vectors=predictions_vector)
+                return calc_ruleset_prediction_equally_weighted_classificator(prediction_vectors=prediction_vectors)
+            else:
+                raise TypeError(f"Unexpected rule type '{self.rule_type}'")
+
+    # noinspection PyUnresolvedReferences
+    def calc_criterion(
+        self,
+        y: Union[np.ndarray, "pd.Series"],
+        weights: Optional[Union["pd.Series", str]] = None,
+        predictions_vector: Optional["pd.Series"] = None,
+        **kwargs,
+    ) -> float:
+        """Computes the criterion vector of an entier ruleset. Criterions of rules must have been computed  beforehand.
+
+        This uses the ruleset's stacked activation, so do not use it with too large rulesets otherwise your memory might
+        not suffice.
+
+        Parameters
+        ----------
+        y: [np.ndarray, pd.Series]
+            The targets on which to evaluate the ruleset criterions. Must be a 1-D np.ndarray or pd.Series.
+        weights: Optional[Union["pd.Series", str]]
+            Optional weights. If is a pd.Series, expected the index to be the rules names. If is a str, a pd.Series
+            will be constructed by fetching each rules' attribute named after the given string
+            (ex: it can be 'criterion').
+            Useless if predictions_vector is specified.
+        predictions_vector: Optional["pd.Series"]
+            The vector of predictions of the ruleset. If not specified, is computed using self.calc_prediction
+        kwargs
+
+        Returns
+        -------
+        float
+            The criterion of the ruleset
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("RuleSet's calc_criterion requires pandas. Please run\npip install pandas")
+        if len(self) == 0:
+            return np.nan
+        if self.rule_type is None:
+            return np.nan
+        if predictions_vector is None:
+            predictions_vector = self.calc_prediction(y=y, weights=weights)
+        if predictions_vector.empty:
+            return predictions_vector
+        if issubclass(self.rule_type, ClassificationRule):
+            if self._activation is None:
+                self.compute_self_activation()
+            return functions.calc_classification_criterion(self.activation, predictions_vector, y, **kwargs)
+        elif issubclass(self.rule_type, RegressionRule):
+            # noinspection PyTypeChecker
+            return functions.calc_regression_criterion(predictions_vector.values, y, **kwargs)
+        else:
+            raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
 
 def traverse(o, tree_types=(list, tuple, RuleSet)):
