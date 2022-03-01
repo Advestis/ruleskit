@@ -297,6 +297,7 @@ class RuleSet(ABC):
         xs: Optional[Union["pd.DataFrame", np.ndarray]] = None,
         y_test: Optional[Union[np.ndarray, "pd.Series"]] = None,
         xs_test: Optional[Union["pd.DataFrame", np.ndarray]] = None,
+        **kwargs
     ) -> List[Rule]:
         """Fits the ruleset on y and xs to produce the rules' activation vectors and predictions. If y_test and xs_test
         are given, will evaluate the rules's criterion on them instead of y and xs.
@@ -307,6 +308,7 @@ class RuleSet(ABC):
         xs: Optional[Union["pd.DataFrame", np.ndarray]]
         y_test: Optional[Union[np.ndarray, "pd.Series"]]
         xs_test: Optional[Union["pd.DataFrame", np.ndarray]]
+        kwargs
 
 
         Returns
@@ -365,12 +367,14 @@ class RuleSet(ABC):
             for attr in self.rule_type.attributes_from_train_set:
                 if attr == "activation":
                     raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
-                computed_attrs[f"{attr}s"] = launch_method(getattr(self, f"calc_{attr}s"), y=y, xs=xs, **computed_attrs)
+                computed_attrs[f"{attr}s"] = launch_method(
+                    getattr(self, f"calc_{attr}s"), y=y, xs=xs, **computed_attrs, **kwargs
+                )
             for attr in self.rule_type.attributes_from_test_set:
                 if attr == "activation":
                     raise ValueError("'activation' can not be specified in 'attributes_from_test_set'")
                 computed_attrs[f"{attr}s"] = launch_method(
-                    getattr(self, f"calc_{attr}s"), y=y_test, xs=xs_test, **computed_attrs
+                    getattr(self, f"calc_{attr}s"), y=y_test, xs=xs_test, **computed_attrs, **kwargs
                 )
             to_drop = []
 
