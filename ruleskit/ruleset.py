@@ -829,7 +829,10 @@ class RuleSet(ABC):
             return pd.Series(dtype=int)
         if self.rule_type is None:
             return pd.Series(dtype=int)
-        prediction_vectors = self.stacked_activations.replace(0, np.nan) * self.calc_predictions(y)
+        if pd.api.types.is_string_dtype(y.dtype):
+            prediction_vectors = self.stacked_activations.replace(0, np.nan).replace(1., "") + self.calc_predictions(y)
+        else:
+            prediction_vectors = self.stacked_activations.replace(0, np.nan) * self.calc_predictions(y)
         if prediction_vectors.empty:
             return prediction_vectors
         if weights is not None:

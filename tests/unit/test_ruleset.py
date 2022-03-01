@@ -246,6 +246,28 @@ def test_fit(clean, xs, y, rule_list, coverage, exp_act, exp_covs, exp_preds, ex
             pd.Series([np.nan, 3, 2, 2, np.nan]),
             1.0,
         ),
+        (
+            np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
+            np.array(["a", "c", "b", "b", "c"]),
+            [
+                ClassificationRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
+                ClassificationRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[6])),
+                ClassificationRule(HyperrectangleCondition([0, 1], bmins=[2, 4], bmaxs=[3, 5])),
+            ],
+            "criterion",
+            0.8,
+            np.array([0, 1, 1, 1, 1]),
+            pd.DataFrame(
+                [[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 1], [1, 1, 0]],
+                dtype=np.uint8,
+                columns=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"],
+            ),
+            pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series(["b", "c", "b"], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([2 / 3, 2 / 3, 1], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([np.nan, "c", "b", "b", np.nan]),
+            1.0,
+        ),
     ],
 )
 def test_stacked_fit(

@@ -449,7 +449,5 @@ def calc_ruleset_prediction_equally_weighted_classificator(prediction_vectors: "
     else:
         most_freq_pred = prediction_vectors.mode(axis=1)
     most_freq_pred = most_freq_pred.loc[most_freq_pred.count(axis=1) == 1].dropna(axis=1).squeeze()
-    if pd.api.types.is_string_dtype(prediction_vectors.dtypes.iloc[0]):
-        most_freq_pred = most_freq_pred.reindex(idx).fillna("nan")
     most_freq_pred.name = None
     return most_freq_pred.reindex(idx)
