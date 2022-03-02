@@ -523,7 +523,7 @@ class RegressionRule(Rule):
             activation = self._activation
             if activation is None:
                 return None
-        if activation is not None and not isinstance(activation, Activation):
+        if not isinstance(activation, Activation):
             raise TypeError("Needs 'Activation' type activation vector")
         activation = activation.raw
         self._prediction = functions.conditional_mean(activation, y)
@@ -554,7 +554,7 @@ class RegressionRule(Rule):
             activation = self._activation
             if activation is None:
                 return None
-        if activation is not None and not isinstance(activation, Activation):
+        if not isinstance(activation, Activation):
             raise TypeError("Needs 'Activation' type activation vector")
         activation = activation.raw
         self._std = functions.conditional_std(activation, y)
@@ -583,7 +583,7 @@ class RegressionRule(Rule):
             activation = self._activation
             if activation is None:
                 return None
-        if activation is not None and not isinstance(activation, Activation):
+        if not isinstance(activation, Activation):
             raise TypeError("Needs 'Activation' type activation vector")
         activation = activation.raw
         self._criterion = functions.calc_regression_criterion(
@@ -657,7 +657,7 @@ class ClassificationRule(Rule):
             activation = self._activation
             if activation is None:
                 return None
-        if activation is not None and not isinstance(activation, Activation):
+        if not isinstance(activation, Activation):
             raise TypeError("Needs 'Activation' type activation vector")
         activation = activation.raw
         self._criterion = functions.calc_classification_criterion(activation, self.prediction, y, **kwargs)
