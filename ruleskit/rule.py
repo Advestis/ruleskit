@@ -82,11 +82,14 @@ class Rule(ABC):
 
         self._coverage = None
         self._prediction = None
+        self._criterion = None
 
         self._time_fit = -1
         self._time_eval = -1
         self._time_calc_activation = -1
         self._time_predict = -1
+        self._time_calc_criterion = -1
+        self._time_calc_prediction = -1
         self._fitted = False
         self._evaluated = False
         if self._activation is not None:
@@ -424,9 +427,9 @@ class Rule(ABC):
                 )
             to_ret = to_ret.astype(str)
         to_ret[act == 1] = self.prediction
-        self._time_predict = time() - t0
         if xs is not None and not isinstance(xs, np.ndarray):
-            return xs.__class__(index=xs.index, data=to_ret).squeeze()  # So not to requier pandas explicitly
+            to_ret = xs.__class__(index=xs.index, data=to_ret).squeeze()  # So not to requier pandas explicitly
+        self._time_predict = time() - t0
         return to_ret
 
     def get_correlation(self, other: "Rule") -> float:
@@ -469,7 +472,7 @@ class RegressionRule(Rule):
     rule_index = Rule.rule_index + ["coverage", "criterion", "std"]
     index = Rule.condition_index + rule_index
     attributes_from_test_set = ["criterion"]
-    attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std"]
+    attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std", "sign"]
 
     def __init__(
         self,
@@ -478,11 +481,9 @@ class RegressionRule(Rule):
     ):
         super().__init__(condition, activation)
         self._std = None
-        self._criterion = None
+        self._sign = None
 
         # Inspection / Audit attributs
-        self._time_calc_criterion = -1
-        self._time_calc_prediction = -1
         self._time_calc_std = -1
 
     @property
@@ -524,6 +525,14 @@ class RegressionRule(Rule):
         self._prediction = functions.conditional_mean(activation, y)
         self._time_calc_prediction = time() - t0
         self.check_thresholds("prediction")
+
+    def calc_sign(self):
+        if self._prediction is None:
+            return
+        if self._prediction < 0:
+            self._sign = "-"
+        else:
+            self._sign = "+"
 
     def calc_std(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[np.ndarray] = None):
         """Computes the standard deviation of all activated points in target y
@@ -577,18 +586,6 @@ class ClassificationRule(Rule):
     index = Rule.condition_index + rule_index
     attributes_from_test_set = ["criterion"]
     attributes_from_train_set = Rule.attributes_from_train_set + ["prediction"]
-
-    def __init__(
-        self,
-        condition: Optional[Condition] = None,
-        activation: Optional[Activation] = None,
-    ):
-        super().__init__(condition, activation)
-
-        self._criterion = None
-
-        self._time_calc_criterion = -1
-        self._time_calc_prediction = -1
 
     @property
     def prediction(self) -> Union[int, str, np.integer, np.float, None]:
