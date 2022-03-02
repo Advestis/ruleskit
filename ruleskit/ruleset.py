@@ -457,6 +457,7 @@ class RuleSet(ABC):
                 clean_activation = not self.stack_activation
                 self.stack_activation = True
                 self.compute_stacked_activation()
+                self.compute_self_activation()
                 if self.stacked_activations is None:
                     raise ValueError("Rules activations must have been computed previously.")
                 self.stack_activation = not clean_activation
