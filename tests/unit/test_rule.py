@@ -180,6 +180,7 @@ def test_regression_attributes(clean, x, y, condition, cov, pred):
 def test_classification_attributes(clean, x, y, condition, proba, pred, crit):
     rule = ClassificationRule(condition=condition)
     rule.fit(xs=x, y=y)
+    rule.eval(y=y)
     np.testing.assert_equal(rule._prediction, proba)
     np.testing.assert_equal(rule.prediction, pred)
     np.testing.assert_equal(rule.criterion, crit)
@@ -405,16 +406,16 @@ def test_correlation(clean, rule1, rule2, pred1, pred2, expected):
                     [2, 3],
                     [4, 5]
                 ]),
-                np.array([0, 1, 2]),
+                np.array([1, 0, 2]),
                 np.array([
                     [0, 1],
                     [0, 1],
                     [0, 1]
                 ]),
-                np.array([3, 4, 5]),
+                np.array([1, 4, 5]),
                 np.array([1, 0, 0]),
-                {ClassificationRule: 0, RegressionRule: 0},
-                {ClassificationRule: 0, RegressionRule: 9}
+                {ClassificationRule: 1, RegressionRule: 1},
+                {ClassificationRule: 1./3., RegressionRule: 25/3.}
             )
         ],
         [Rule, RegressionRule, ClassificationRule],
@@ -434,6 +435,16 @@ def test_test(clean, condition_x_y_xtest_ytest_act_pred_crit, theclass):
     if y.dtype.type == np.str_ and theclass != ClassificationRule:
         return
 
-    rule.fit(xs=x, y=y, xs_test=xtest, y_test=ytest)
+    rule.fit(xs=x, y=y)
+    rule.eval(xs=xtest, y=ytest)
+    np.testing.assert_equal(act, rule.activation)
     np.testing.assert_equal(pred[theclass], rule.prediction)
     np.testing.assert_equal(crit[theclass], rule.criterion)
+
+
+def test_not_fitted():
+    rule = Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3]))
+    with pytest.raises(ValueError) as e:
+        rule.eval(y=np.array([0, 1, 2]))
+        assert "Must have fitted the rule before" in str(e)
+

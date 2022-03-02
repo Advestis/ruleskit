@@ -248,14 +248,14 @@ def aae_function(
 
 # noinspection PyUnresolvedReferences
 def calc_regression_criterion(
-    prediction_vector: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"], **kwargs
+    prediction: Union[np.ndarray, "pd.DataFrame"], y: Union[np.ndarray, "pd.Series"], **kwargs
 ) -> Union[float, "pd.Series"]:
     """
     Compute the criterion
 
     Parameters
     ----------
-    prediction_vector: Union[np.ndarray, "pd.DataFrame"]
+    prediction: Union[np.ndarray, "pd.DataFrame"]
       The prediction vector of one rule, or the stacked prediction vectors of a ruleset
     y: Union[np.ndarray, "pd.Series"]
       The real target values (real numbers)
@@ -271,11 +271,11 @@ def calc_regression_criterion(
     method = kwargs.get("method", "mse")
 
     if method.lower() == "mse":
-        criterion = mse_function(prediction_vector, y)
+        criterion = mse_function(prediction, y)
     elif method.lower() == "mae":
-        criterion = mae_function(prediction_vector, y)
+        criterion = mae_function(prediction, y)
     elif method.lower() == "aae":
-        criterion = aae_function(prediction_vector, y)
+        criterion = aae_function(prediction, y)
     else:
         raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
 
@@ -306,8 +306,12 @@ def success_rate(
     ):
         raise TypeError("'prediction' in success_rate must be an integer, a string or a pd.Series of one of those.")
     if isinstance(prediction, (float, int, np.integer, np.float, str)):
+        if len(y) == 0:
+            return np.nan
         return sum(prediction == y) / len(y)
     elif isinstance(y, np.ndarray) and prediction.__class__.__name__ == "Series":
+        if len(y) == 0:
+            return prediction.__class__(dtype=int)
         return sum(prediction == y) / len(prediction.dropna())
     else:
         try:
@@ -319,6 +323,8 @@ def success_rate(
             raise TypeError(
                 f"If passing several predictions as a Series, then activated Y must be a DataFrame, not {type(y)}"
             )
+        if len(y.index) == 0:
+            return y.__class__(dtype=int)
         activated_points = (~y.isnull()).sum()
         correctly_predicted = y == prediction
         return correctly_predicted.sum() / activated_points
@@ -395,7 +401,7 @@ def init_weights(
         raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
     if weights.empty:
         raise ValueError("Weights not None but empty : can not evaluate prediction")
-    weights = weights.fillna(value=np.nan).dropna(axis=1, how="all")
+    weights = weights.replace(0, np.nan).fillna(value=np.nan).dropna(axis=1, how="all")
     absent_rules = prediction_vectors.loc[:, ~prediction_vectors.columns.isin(weights.columns)].columns
     present_rules = prediction_vectors.loc[:, prediction_vectors.columns.isin(weights.columns)].columns
     if len(absent_rules) > 0:
@@ -408,7 +414,9 @@ def init_weights(
     prediction_vectors = prediction_vectors[present_rules]
     weights = (~prediction_vectors.isna() * 1).replace(0, np.nan) * weights
     if prediction_vectors.empty:
-        raise ValueError("No rules had weights : can not use calc_ruleset_prediction_weighted_classificator")
+        raise ValueError(
+            "No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN"
+        )
     return prediction_vectors, weights
 
 
