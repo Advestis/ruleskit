@@ -874,7 +874,7 @@ class RuleSet(ABC):
 
     # noinspection PyUnresolvedReferences
     def calc_predictions(
-        self, y: [np.ndarray, "pd.Series"], stacked_activation: Optional[np.ndarray] = None
+        self, y: [np.ndarray, "pd.Series"], stacked_activation: Optional["pd.DataFrame"] = None
     ) -> "pd.Series":
         """
         Will compute the prediction of each rule in the ruleset
@@ -887,7 +887,7 @@ class RuleSet(ABC):
         y: [np.ndarray, pd.Series]
             The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D
             np.ndarray or pd.Series.
-        stacked_activation: Optional[np.ndarray]
+        stacked_activation: Optional[pd.DataFrame)
             If specified, uses this activation instead of self.activation
 
         Returns
@@ -930,7 +930,9 @@ class RuleSet(ABC):
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
     # noinspection PyUnresolvedReferences
-    def calc_stds(self, y: [np.ndarray, "pd.Series"], stacked_activation: Optional[np.ndarray] = None) -> "pd.Series":
+    def calc_stds(
+        self, y: [np.ndarray, "pd.Series"], stacked_activation: Optional["pd.DataFrame"] = None
+    ) -> "pd.Series":
         """
         Will compute the std of each rule in the ruleset
 
@@ -942,7 +944,7 @@ class RuleSet(ABC):
         y: [np.ndarray, pd.Series]
           The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
           or pd.Series.
-        stacked_activation: Optional[np.ndarray]
+        stacked_activation: Optional[pd.DataFrame]
             If specified, uses this activation instead of self.activation
 
         Returns
@@ -986,7 +988,7 @@ class RuleSet(ABC):
         self,
         y: Union[np.ndarray, "pd.Series"],
         prediction: Optional["pd.Series"] = None,
-        stacked_activation: Optional[np.ndarray] = None,
+        stacked_activation: Optional["pd.DataFrame"] = None,
         **kwargs,
     ) -> "pd.Series":
         """
@@ -1002,8 +1004,8 @@ class RuleSet(ABC):
             np.ndarray or pd.Series.
         prediction: Optional["pd.Series"]
             Prediction of each rules. If None, will call self.calc_predictions(y)
-        stacked_activation: Optional[np.ndarray]
-            If specified, uses this activation instead of self.activation
+        stacked_activation: Optional[pd.DataFrame]
+            If specified, uses this activation instead of self.stacked_activations
         kwargs
 
         Returns
