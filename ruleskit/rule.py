@@ -492,6 +492,7 @@ class RegressionRule(Rule):
 
     @property
     def criterion(self) -> float:
+        # noinspection PyTypeChecker
         return self._criterion
 
     @property
@@ -506,7 +507,7 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_prediction(self, y: [np.ndarray, "pd.Series"], activation: Optional[np.ndarray] = None):
+    def calc_prediction(self, y: [np.ndarray, "pd.Series"], activation: Optional[Union[np.ndarray, Activation]] = None):
         """Computes the mean of all activated points in target y and use it as prediction
 
         Parameters
@@ -514,14 +515,16 @@ class RegressionRule(Rule):
         y: [np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series
-        activation: Optional[np.ndarray]
+        activation: Optional[Union[np.ndarray, Activation]]
             If specified, uses this activation instead of self.activation
         """
         t0 = time()
         if activation is None:
             activation = self.activation
-        if activation is None:
-            return None
+            if activation is None:
+                return None
+        elif isinstance(activation, Activation):
+            activation = activation.raw
         self._prediction = functions.conditional_mean(activation, y)
         self._time_calc_prediction = time() - t0
         self.check_thresholds("prediction")
@@ -534,7 +537,7 @@ class RegressionRule(Rule):
         else:
             self._sign = "+"
 
-    def calc_std(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[np.ndarray] = None):
+    def calc_std(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[Union[np.ndarray, Activation]] = None):
         """Computes the standard deviation of all activated points in target y
 
         Parameters
@@ -542,26 +545,33 @@ class RegressionRule(Rule):
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.
-        activation: Optional[np.ndarray]
+        activation: Optional[Union[np.ndarray, Activation]]
             If specified, uses this activation instead of self.activation
         """
         t0 = time()
         if activation is None:
             activation = self.activation
-        if activation is None:
-            return None
+            if activation is None:
+                return None
+        elif isinstance(activation, Activation):
+            activation = activation.raw
         self._std = functions.conditional_std(activation, y)
         self._time_calc_std = time() - t0
         self.check_thresholds("std")
 
-    def calc_criterion(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[np.ndarray] = None, **kwargs):
+    def calc_criterion(
+            self,
+            y: Union[np.ndarray, "pd.Series"],
+            activation: Optional[Union[np.ndarray, Activation]] = None,
+            **kwargs
+    ):
         """
         Parameters
         ----------
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.
-        activation: Optional[np.ndarray]
+        activation: Optional[Union[np.ndarray, Activation]]
             If specified, uses this activation instead of self.activation
         kwargs: dict
             Arguments for calc_regression_criterion
@@ -569,8 +579,10 @@ class RegressionRule(Rule):
         t0 = time()
         if activation is None:
             activation = self.activation
-        if activation is None:
-            return None
+            if activation is None:
+                return None
+        elif isinstance(activation, Activation):
+            activation = activation.raw
         self._criterion = functions.calc_regression_criterion(
             self.prediction * np.where(activation == 0, np.nan, activation), y, **kwargs
         )
@@ -620,14 +632,19 @@ class ClassificationRule(Rule):
         self._time_calc_prediction = time() - t0
         self.check_thresholds("prediction")
 
-    def calc_criterion(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[np.ndarray] = None, **kwargs):
+    def calc_criterion(
+            self,
+            y: Union[np.ndarray, "pd.Series"],
+            activation: Optional[Union[np.ndarray, Activation]] = None,
+            **kwargs
+    ):
         """
         Parameters
         ----------
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series
-        activation: Optional[np.ndarray]
+        activation: Optional[Union[np.ndarray, Activation]]
             If specified, uses this activation instead of self.activation
         kwargs: dict
             Arguments for calc_classification_criterion
@@ -635,8 +652,10 @@ class ClassificationRule(Rule):
         t0 = time()
         if activation is None:
             activation = self.activation
-        if activation is None:
-            return None
+            if activation is None:
+                return None
+        elif isinstance(activation, Activation):
+            activation = activation.raw
         self._criterion = functions.calc_classification_criterion(activation, self.prediction, y, **kwargs)
         self._time_calc_criterion = time() - t0
         self.check_thresholds("criterion")
