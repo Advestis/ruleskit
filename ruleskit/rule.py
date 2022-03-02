@@ -373,9 +373,9 @@ class Rule(ABC):
             self.calc_activation(xs=xs)
             xs = None
         if xs is not None:
-            activation = self.evaluate_activation(xs).raw
+            activation = self.evaluate_activation(xs)
         else:
-            activation = self.activation
+            activation = self._activation
 
         for attr in self.__class__.attributes_from_test_set:
             if attr == "activation":
@@ -507,7 +507,7 @@ class RegressionRule(Rule):
     def time_calc_std(self):
         return self._time_calc_std
 
-    def calc_prediction(self, y: [np.ndarray, "pd.Series"], activation: Optional[Union[np.ndarray, Activation]] = None):
+    def calc_prediction(self, y: [np.ndarray, "pd.Series"], activation: Optional[Activation] = None):
         """Computes the mean of all activated points in target y and use it as prediction
 
         Parameters
@@ -515,16 +515,17 @@ class RegressionRule(Rule):
         y: [np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series
-        activation: Optional[Union[np.ndarray, Activation]]
+        activation: Optional[Activation]
             If specified, uses this activation instead of self.activation
         """
         t0 = time()
         if activation is None:
-            activation = self.activation
+            activation = self._activation
             if activation is None:
                 return None
-        elif isinstance(activation, Activation):
-            activation = activation.raw
+        if activation is not None and not isinstance(activation, Activation):
+            raise TypeError("Needs 'Activation' type activation vector")
+        activation = activation.raw
         self._prediction = functions.conditional_mean(activation, y)
         self._time_calc_prediction = time() - t0
         self.check_thresholds("prediction")
@@ -537,7 +538,7 @@ class RegressionRule(Rule):
         else:
             self._sign = "+"
 
-    def calc_std(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[Union[np.ndarray, Activation]] = None):
+    def calc_std(self, y: Union[np.ndarray, "pd.Series"], activation: Optional[Activation] = None):
         """Computes the standard deviation of all activated points in target y
 
         Parameters
@@ -545,16 +546,17 @@ class RegressionRule(Rule):
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.
-        activation: Optional[Union[np.ndarray, Activation]]
+        activation: Optional[Activation]
             If specified, uses this activation instead of self.activation
         """
         t0 = time()
         if activation is None:
-            activation = self.activation
+            activation = self._activation
             if activation is None:
                 return None
-        elif isinstance(activation, Activation):
-            activation = activation.raw
+        if activation is not None and not isinstance(activation, Activation):
+            raise TypeError("Needs 'Activation' type activation vector")
+        activation = activation.raw
         self._std = functions.conditional_std(activation, y)
         self._time_calc_std = time() - t0
         self.check_thresholds("std")
@@ -562,7 +564,7 @@ class RegressionRule(Rule):
     def calc_criterion(
             self,
             y: Union[np.ndarray, "pd.Series"],
-            activation: Optional[Union[np.ndarray, Activation]] = None,
+            activation: Optional[Activation] = None,
             **kwargs
     ):
         """
@@ -571,18 +573,19 @@ class RegressionRule(Rule):
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series.
-        activation: Optional[Union[np.ndarray, Activation]]
+        activation: Optional[Activation]
             If specified, uses this activation instead of self.activation
         kwargs: dict
             Arguments for calc_regression_criterion
         """
         t0 = time()
         if activation is None:
-            activation = self.activation
+            activation = self._activation
             if activation is None:
                 return None
-        elif isinstance(activation, Activation):
-            activation = activation.raw
+        if activation is not None and not isinstance(activation, Activation):
+            raise TypeError("Needs 'Activation' type activation vector")
+        activation = activation.raw
         self._criterion = functions.calc_regression_criterion(
             self.prediction * np.where(activation == 0, np.nan, activation), y, **kwargs
         )
@@ -635,7 +638,7 @@ class ClassificationRule(Rule):
     def calc_criterion(
             self,
             y: Union[np.ndarray, "pd.Series"],
-            activation: Optional[Union[np.ndarray, Activation]] = None,
+            activation: Optional[Activation] = None,
             **kwargs
     ):
         """
@@ -644,18 +647,19 @@ class ClassificationRule(Rule):
         y: Union[np.ndarray, pd.Series]
             The targets on which to evaluate the rule prediction, and possibly other criteria. Must be a 1-D np.ndarray
             or pd.Series
-        activation: Optional[Union[np.ndarray, Activation]]
+        activation: Optional[Activation]
             If specified, uses this activation instead of self.activation
         kwargs: dict
             Arguments for calc_classification_criterion
         """
         t0 = time()
         if activation is None:
-            activation = self.activation
+            activation = self._activation
             if activation is None:
                 return None
-        elif isinstance(activation, Activation):
-            activation = activation.raw
+        if activation is not None and not isinstance(activation, Activation):
+            raise TypeError("Needs 'Activation' type activation vector")
+        activation = activation.raw
         self._criterion = functions.calc_classification_criterion(activation, self.prediction, y, **kwargs)
         self._time_calc_criterion = time() - t0
         self.check_thresholds("criterion")
