@@ -421,13 +421,13 @@ class HyperrectangleCondition(Condition):
         --------
         >>> xs_ = np.array([[1, 3], [3, 4], [2, np.nan]])
         >>> c1 = HyperrectangleCondition([0], bmins=[1], bmaxs=[2])
-        >>> c1.evaluate(xs_)
+        >>> c1.evaluate_activation(xs_)
         np.array([1, 0, 1])
         >>> c2 = HyperrectangleCondition([1], bmins=[3], bmaxs=[5])
-        >>> c2.evaluate(xs_)
+        >>> c2.evaluate_activation(xs_)
         np.array([1, 1, 0])
         >>> c3 = HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5])
-        >>> c3.evaluate(xs_)
+        >>> c3.evaluate_activation(xs_)
         np.array([1, 0, 0])
         """
         if self.impossible:

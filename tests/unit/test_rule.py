@@ -79,40 +79,18 @@ def test_init(clean, condition_activation_error, theclass):
                 "100",
                 None,
             ),
-            (
-                pd.DataFrame(data=[[1, 3], [3, 4], [2, np.nan]], columns=["A", "B"]),
-                np.array([1, 3, 2]),
-                HyperrectangleCondition([0, 1], features_names=["A", "B"], bmins=[1, 3], bmaxs=[2, 5]),
-                None,
-                "100",
-                ValueError,
-            ),
         ],
         [Rule, RegressionRule, ClassificationRule],
     ),
 )
-def test_fit(clean, prepare_fit, x_y_condition_activation_s_error, theclass):
+def test_fit(clean, x_y_condition_activation_s_error, theclass):
     x, y, condition, activation, s, error = x_y_condition_activation_s_error
     # noinspection PyCallingNonCallable
     rule = theclass(condition=condition)
-    if error is not None:
-
-        def wrong_calc_attributes(r, y_, **kwargs):
-            return
-
-        theclass.calc_attributes = wrong_calc_attributes
-        # noinspection PyTypeChecker
-        with pytest.raises(error) as e:
-            rule.fit(xs=x, y=y)
-        assert "'fit' did not set 'prediction'" in str(e.value)
-    elif theclass == Rule:
-        with pytest.raises(NotImplementedError):
-            rule.fit(xs=x, y=y)
-    else:
-        rule.fit(xs=x, y=y)
-        np.testing.assert_equal(rule.activation, activation)
-        np.testing.assert_equal(rule._activation.as_bitarray, bitarray(s))
-        assert rule._activation.as_integer == int(s, 2)
+    rule.fit(xs=x, y=y)
+    np.testing.assert_equal(rule.activation, activation)
+    np.testing.assert_equal(rule._activation.as_bitarray, bitarray(s))
+    assert rule._activation.as_integer == int(s, 2)
 
 
 @pytest.mark.parametrize(
@@ -202,6 +180,7 @@ def test_regression_attributes(clean, x, y, condition, cov, pred):
 def test_classification_attributes(clean, x, y, condition, proba, pred, crit):
     rule = ClassificationRule(condition=condition)
     rule.fit(xs=x, y=y)
+    rule.eval(y=y)
     np.testing.assert_equal(rule._prediction, proba)
     np.testing.assert_equal(rule.prediction, pred)
     np.testing.assert_equal(rule.criterion, crit)
@@ -319,8 +298,8 @@ def test_predict(clean, condition_x_y_x2_expected, theclass):
         return
 
     if theclass == Rule:
-        with pytest.raises(NotImplementedError):
-            rule.fit(xs=x, y=y)
+        rule.fit(xs=x, y=y)
+        assert rule.prediction is None
         return
     if y.dtype.type == np.str_ and theclass != ClassificationRule:
         return
@@ -414,3 +393,58 @@ def test_correlation(clean, rule1, rule2, pred1, pred2, expected):
     rule1._prediction = pred1
     rule2._prediction = pred2
     assert rule1.get_correlation(rule2) == expected
+
+
+@pytest.mark.parametrize(
+    "condition_x_y_xtest_ytest_act_pred_crit, theclass",
+    itertools.product(
+        [
+            (
+                HyperrectangleCondition([0], bmins=[0], bmaxs=[1]),
+                np.array([
+                    [0, 1],
+                    [2, 3],
+                    [4, 5]
+                ]),
+                np.array([1, 0, 2]),
+                np.array([
+                    [0, 1],
+                    [0, 1],
+                    [0, 1]
+                ]),
+                np.array([1, 4, 5]),
+                np.array([1, 0, 0]),
+                {ClassificationRule: 1, RegressionRule: 1},
+                {ClassificationRule: 1./3., RegressionRule: 25/3.}
+            )
+        ],
+        [Rule, RegressionRule, ClassificationRule],
+    )
+)
+def test_test(clean, condition_x_y_xtest_ytest_act_pred_crit, theclass):
+    condition, x, y, xtest, ytest, act, pred, crit = condition_x_y_xtest_ytest_act_pred_crit
+    # noinspection PyCallingNonCallable
+    rule = theclass(condition=condition)
+    if y.dtype == str and theclass != ClassificationRule:
+        return
+
+    if theclass == Rule:
+        rule.fit(xs=x, y=y, xs_test=xtest, y_test=ytest)
+        assert rule.prediction is None
+        return
+    if y.dtype.type == np.str_ and theclass != ClassificationRule:
+        return
+
+    rule.fit(xs=x, y=y)
+    rule.eval(xs=xtest, y=ytest)
+    np.testing.assert_equal(act, rule.activation)
+    np.testing.assert_equal(pred[theclass], rule.prediction)
+    np.testing.assert_equal(crit[theclass], rule.criterion)
+
+
+def test_not_fitted():
+    rule = Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3]))
+    with pytest.raises(ValueError) as e:
+        rule.eval(y=np.array([0, 1, 2]))
+        assert "Must have fitted the rule before" in str(e)
+

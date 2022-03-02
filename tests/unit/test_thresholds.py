@@ -442,7 +442,7 @@ def test_thresholds():
         ),
     ],
 )
-def test_thresholds_stacked_fit(
+def test_thresholds_fit(
         clean_for_stacked_fit_th,
         xs,
         y,
@@ -463,6 +463,7 @@ def test_thresholds_stacked_fit(
     if not stacked_fit:
         RuleSet.STACKED_FIT = False
     res.fit(y, xs)
+    res.eval(y, xs)
     assert res.ruleset_coverage == coverage
     np.testing.assert_equal(res.activation, exp_act)
     pd.testing.assert_frame_equal(res.stacked_activations, exp_stacked_act)
@@ -475,6 +476,7 @@ def test_thresholds_stacked_fit(
     RegressionRule.SET_THRESHOLDS("tests/unit/data/thresholds.json")
 
     res.fit(y, xs)
+    res.eval(y, xs)
     pd.testing.assert_frame_equal(res.stacked_activations, exp_stacked_act_2)
     for r in res:
         assert r.coverage == exp_covs_2[str(r.condition)]
