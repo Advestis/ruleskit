@@ -45,8 +45,20 @@ def class_probabilities(
             import pandas as pd
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if y.__class__.__name__ == "DataFrame":
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError("y must be a 1-D DataFrame or ndarray or pd.Series")
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError("y must be a 1-D DataFrame or ndarray or pd.Series")
         y_conditional = (
-            activation.mul(pd.Series(y).replace(0, "zero"), axis=0)
+            activation.mul(y.replace(0, "zero"), axis=0)
             .replace(0, np.nan)
             .replace("", np.nan)
             .replace("zero", 0)
@@ -114,8 +126,20 @@ def conditional_std(
             import pandas as pd
         except ImportError:
             raise ImportError("RuleSet's stacked activations requies pandas. Please run\npip install pandas")
+        if y.__class__.__name__ == "DataFrame":
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError("y must be a 1-D DataFrame or ndarray or pd.Series")
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError("y must be a 1-D DataFrame or ndarray or pd.Series")
         y_conditional = (
-            activation.mul(pd.Series(y).replace(0, "zero"), axis=0)
+            activation.mul(y.replace(0, "zero"), axis=0)
             .replace(0, np.nan)
             .replace("", np.nan)
             .replace("zero", 0)
@@ -382,8 +406,20 @@ def calc_classification_criterion(
                 "If passing several activation vector as a DataFrame, then prediction must be a Series,"
                 f" not {type(prediction)}"
             )
+        if y.__class__.__name__ == "DataFrame":
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError("y must be a 1-D DataFrame or ndarray or pd.Series")
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError("y must be a 1-D DataFrame or ndarray or pd.Series")
         y_conditional = (
-            activation_vector.mul(pd.Series(y).replace(0, "zero"), axis=0)
+            activation_vector.mul(y.replace(0, "zero"), axis=0)
             .replace(0, np.nan)
             .replace("", np.nan)
             .replace("zero", 0)
