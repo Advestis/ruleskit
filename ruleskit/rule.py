@@ -368,12 +368,16 @@ class Rule(ABC):
             kw = {item: kw[item] for item in kw if item in expected_args}
             method(**kw)
 
-        if not self.activation_available:
-            raise ValueError("Must have fitted the rule before calling 'eval'")
-
         if recompute_activation:
             self.calc_activation(xs=xs)
             xs = None
+
+        if not self.activation_available:
+            raise ValueError(
+                "Must have fitted the rule before calling 'eval', or use 'recompute_activation=True' to recompute it"
+                " from given xs"
+            )
+
         if xs is not None:
             activation = self.evaluate_activation(xs)
         else:

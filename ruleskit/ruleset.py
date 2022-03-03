@@ -426,7 +426,7 @@ class RuleSet(ABC):
         xs: Optional[Union["pd.DataFrame", np.ndarray]]
         keep_new_activations: bool
             If True, activation vectgor and stacked activation vectors will be kept as ruleset's attribute and replace
-            the ones computed using the train set, if any. Will not change the activation vectors of the rules however.
+            the ones computed using the train set, if any. Will also change the activation vectors of the rules.
         kwargs
 
 
@@ -463,8 +463,7 @@ class RuleSet(ABC):
                 if keep_new_activations:
                     clean_activation = not self.stack_activation
                     self.stack_activation = True
-                    self.compute_stacked_activation(xs)
-                    self.compute_self_activation(xs)
+                    self.calc_activation(xs=xs)  # Will reset rules' activation vectors too
                     self.stack_activation = not clean_activation
                     stacked_activation = self.stacked_activations
                     activation = self._activation
@@ -528,7 +527,7 @@ class RuleSet(ABC):
                     if not self._rules[ir].good:
                         to_drop.append(self._rules[ir])
         else:
-            [r.eval(xs=xs, y=y, **kwargs) for r in self]
+            [r.eval(xs=xs, y=y, recompute_activation=keep_new_activations, **kwargs) for r in self]
             to_drop = [r for r in self if not r.good]
 
         if len(to_drop) > 0:
