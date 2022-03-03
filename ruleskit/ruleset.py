@@ -404,7 +404,7 @@ class RuleSet(ABC):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (self.stacked_activations is None or xs is not None):
-                self._activation = None
+                self.stacked_activations = None
                 self.compute_stacked_activation()
 
         return to_drop
@@ -540,19 +540,21 @@ class RuleSet(ABC):
                 self.append(r, update_activation=False)
 
             # Recompute activation now that bad rules have been droped
-            if self.remember_activation:
+            if self.remember_activation and (self._activation is None or (xs is not None and keep_new_activations)):
                 self._activation = None
                 self.compute_self_activation()
-            if self.stack_activation:
+            if self.stack_activation and (
+                    self.stacked_activations is None or (xs is not None and keep_new_activations)
+            ):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
         # If not bad rules were dropped and stacked fit was not used, still compute self.activation since it has not
         # been done
         elif not self.__class__.STACKED_FIT:
-            if self.remember_activation:
+            if self.remember_activation and (self._activation is None or (xs is not None and keep_new_activations)):
                 self._activation = None
                 self.compute_self_activation()
-            if self.stack_activation:
+            if self.stack_activation and (self._activation is None or (xs is not None and keep_new_activations)):
                 self._activation = None
                 self.compute_stacked_activation()
 

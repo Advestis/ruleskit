@@ -251,7 +251,7 @@ class Activation(ABC):
             self._init_with_str(activation)
 
         elif isinstance(activation, np.ndarray):
-            if activation[-1] > 1:
+            if len(activation) > 0 and activation[-1] > 1:
                 self._init_with_compressed_array(activation)
             else:
                 if to_file:
