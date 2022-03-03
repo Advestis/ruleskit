@@ -547,11 +547,14 @@ class RuleSet(ABC):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
         # If not bad rules were dropped and stacked fit was not used, still compute self.activation since it has not
-        # been done  (needed to set self.coverage), but not stacked (useless)
+        # been done
         elif not self.__class__.STACKED_FIT:
             if self.remember_activation:
                 self._activation = None
                 self.compute_self_activation()
+            if self.stack_activation:
+                self._activation = None
+                self.compute_stacked_activation()
 
         return to_drop
 
