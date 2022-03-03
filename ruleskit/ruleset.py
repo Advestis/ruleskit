@@ -644,7 +644,7 @@ class RuleSet(ABC):
     def evaluate_self_activation(self, xs: Optional[Union[np.ndarray, "pd.DataFrame"]] = None):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if len(self) == 0:
-            return Activation(np.array([]), optimize=self[0]._activation.optimize, to_file=self[0]._activation.to_file)
+            return Activation(np.array([]))
         if xs is not None:
             activations = [r.evaluate_activation(xs) for r in self]
             activations_available = True
