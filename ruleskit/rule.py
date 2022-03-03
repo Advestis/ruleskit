@@ -51,6 +51,8 @@ class Rule(ABC):
     attributes_from_test_set = []
     attributes_from_train_set = []
 
+    fitted_if_has = "prediction"
+
     daughters = []
 
     @classmethod

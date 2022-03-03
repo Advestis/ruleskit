@@ -883,6 +883,8 @@ class RuleSet(ABC):
                 continue
 
         rule._condition = HyperrectangleCondition(**condition_index)
+        if hasattr(rule, rule.__class__.fitted_if_has) and getattr(rule, rule.__class__.fitted_if_has) is not None:
+            rule._fitted = True
         return rule
 
     # noinspection PyUnresolvedReferences
