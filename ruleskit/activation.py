@@ -815,7 +815,7 @@ class Activation(ABC):
             else:
                 value = self.data
 
-        if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
+        if isinstance(value, np.ndarray) and (len(value) == 0 or value[-1] == 0 or value[-1] == 1):
             if not out:
                 self._time_integer_to_raw = time() - t0
                 self._n_integer_to_raw += 1
@@ -865,7 +865,7 @@ class Activation(ABC):
             else:
                 value = self.data
 
-        if isinstance(value, np.ndarray) and (value[-1] == 0 or value[-1] == 1):
+        if isinstance(value, np.ndarray) and (len(value) == 0 or value[-1] == 0 or value[-1] == 1):
             if not out:
                 self._time_bitarray_to_raw = time() - t0
                 self._n_bitarray_to_raw += 1
@@ -921,6 +921,20 @@ class Activation(ABC):
         if not isinstance(value, (str, np.ndarray)):
             raise TypeError(f"Invalid format {type(value)}")
 
+        if len(value) == 0:
+            if isinstance(value, np.ndarray):  # is already raw
+                if not out:
+                    self._sizeof_raw = value.nbytes / 1e6
+                    if self._nones is None:
+                        self._nones = np.count_nonzero(value == 1)
+                return value
+            else:
+                if not out:
+                    self._sizeof_raw = np.array([]).nbytes / 1e6
+                    self._sizeof_compressed_str = sys.getsizeof(value) / 1e6
+                    if self._nones is None:
+                        self._nones = 0
+                return np.array([])
         if value[-1] == 0 or value[-1] == 1:  # is already raw
             if not out:
                 self._sizeof_raw = value.nbytes / 1e6
@@ -1019,13 +1033,15 @@ class Activation(ABC):
         """
         if isinstance(value, (int, bitarray)):
             raise TypeError("Can not compress an integer vector")
-        if not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
+        if not isinstance(value, np.ndarray) or (len(value) > 0 and value[-1] != 0 and value[-1] != 1):
             if isinstance(value, str) and dtype != str:
                 return np.array(value.split(",")).astype(np.ubyte)
             return value
         if isinstance(value, np.ndarray):
             # not ubyte (unsigned byte), because np.diff will produce negative value that ubyte can not handle
             value = value.astype(np.byte)
+            if len(value) == 0:
+                return np.array([])
         else:
             raise TypeError(f"Can not compress a {type(value)}")
         to_ret = [value[0]]
@@ -1046,7 +1062,7 @@ class Activation(ABC):
         """Casts a raw activation vector into a bitarray, dividing its size in MO by 8."""
         if isinstance(value, bitarray):
             return value
-        elif not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
+        elif not isinstance(value, np.ndarray) or (len(value) > 0 and value[-1] != 0 and value[-1] != 1):
             raise TypeError("Can not use _raw_to_bitarray on a compressed vector")
         elif isinstance(value, int):
             raise TypeError("Can not use _raw_to_bitarray on a integer vector")
@@ -1065,7 +1081,7 @@ class Activation(ABC):
         """
         if isinstance(value, int):
             return value
-        elif not isinstance(value, np.ndarray) or (value[-1] != 0 and value[-1] != 1):
+        elif not isinstance(value, np.ndarray) or (len(value) > 0 and value[-1] != 0 and value[-1] != 1):
             raise TypeError("Can not use _raw_to_integer or a compressed vector")
         elif isinstance(value, bitarray):
             raise TypeError("Can not use _raw_to_integer on a bitarray vector")
