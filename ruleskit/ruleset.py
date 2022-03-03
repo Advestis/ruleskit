@@ -414,6 +414,7 @@ class RuleSet(ABC):
         self,
         y: Union[np.ndarray, "pd.Series"],
         xs: Optional[Union["pd.DataFrame", np.ndarray]] = None,
+        keep_new_activations: bool = False,
         **kwargs,
     ) -> List[Rule]:
         """Evaluate the ruleset on y and xs to produce the rules' attributes relevant to the test set. Will recompute
@@ -423,6 +424,9 @@ class RuleSet(ABC):
         ----------
         y: Union[np.ndarray, "pd.Series"]
         xs: Optional[Union["pd.DataFrame", np.ndarray]]
+        keep_new_activations: bool
+            If True, activation vectgor and stacked activation vectors will be kept as ruleset's attribute and replace
+            the ones computed using the train set, if any. Will not change the activation vectors of the rules however.
         kwargs
 
 
@@ -451,24 +455,33 @@ class RuleSet(ABC):
                 raise ImportError("RuleSet's stacked fit requies pandas. Please run\npip install pandas")
 
             clean_activation = False
-            # If self.stacked_activation is None, compute it from the rules' activations. They must be available.
-            if self.stacked_activations is None:
-                # Else, will compute the stacked activation from the current rules activations
-                clean_activation = not self.stack_activation
-                self.stack_activation = True
-                self.compute_stacked_activation()
-                self.compute_self_activation()
-                if self.stacked_activations is None:
-                    raise ValueError("Rules activations must have been computed previously.")
-                self.stack_activation = not clean_activation
 
             # If test set is given, compute the activation used to evaluate test relative attributes.
             # Not the same as self.stacked_activation, computed from the train set.
             # Else, we evaluate on the train set, so we use self.stacked_actviation
             if xs is not None:
-                stacked_activation = self.evaluate_stacked_activation(xs)
-                activation = self.evaluate_self_activation(xs)
+                if keep_new_activations:
+                    clean_activation = not self.stack_activation
+                    self.stack_activation = True
+                    self.compute_stacked_activation(xs)
+                    self.compute_self_activation(xs)
+                    self.stack_activation = not clean_activation
+                    stacked_activation = self.stacked_activations
+                    activation = self._activation
+                else:
+                    stacked_activation = self.evaluate_stacked_activation(xs)
+                    activation = self.evaluate_self_activation(xs)
             else:
+                # If self.stacked_activation is None, compute it from the rules' activations. They must be available.
+                if self.stacked_activations is None:
+                    # Else, will compute the stacked activation from the current rules activations
+                    clean_activation = not self.stack_activation
+                    self.stack_activation = True
+                    self.compute_stacked_activation()
+                    self.compute_self_activation()
+                    if self.stacked_activations is None:
+                        raise ValueError("Rules activations must have been computed previously.")
+                    self.stack_activation = not clean_activation
                 stacked_activation = self.stacked_activations
                 activation = self._activation
 
