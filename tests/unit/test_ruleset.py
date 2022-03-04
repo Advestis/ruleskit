@@ -547,7 +547,8 @@ def test_unstacked_fit(
     else:
         prediction = res.calc_prediction(y=y, weights=weights)
         pd.testing.assert_series_equal(prediction, exp_pred)
-        assert round(res.calc_criterion(y=y, predictions_vector=prediction), 6) == round(exp_crit, 6)
+        res.calc_criterion(y=y, predictions_vector=prediction)
+        assert round(res.criterion, 6) == round(exp_crit, 6)
 
 
 @pytest.mark.parametrize(
@@ -1069,7 +1070,8 @@ def test_stacked_fit(
     else:
         prediction = res.calc_prediction(y=y, weights=weights)
         pd.testing.assert_series_equal(prediction, exp_pred)
-        assert round(res.calc_criterion(y=y, predictions_vector=prediction), 6) == round(exp_crit, 6)
+        res.calc_criterion(y=y, predictions_vector=prediction)
+        assert round(res.criterion, 6) == round(exp_crit, 6)
 
 
 @pytest.mark.parametrize(
@@ -1081,15 +1083,6 @@ def test_stacked_fit(
                 Rule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
             ]
         ),
-    ],
-)
-def test_save(rs):
-    rs.save("tests/unit/data/ruleset.csv")
-
-
-@pytest.mark.parametrize(
-    "rs",
-    [
         RuleSet(
             [
                 Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3])),
@@ -1098,15 +1091,11 @@ def test_save(rs):
         ),
     ],
 )
-def test_save(rs):
+def test_save_and_load(rs):
     rs.save("tests/unit/data/ruleset.csv")
-
-
-def test_load():
-    rs = RuleSet()
-    rs.load("tests/unit/data/ruleset_test.csv")
-    for rule in rs:
-        print(rule)
+    rs2 = RuleSet()
+    rs2.load("tests/unit/data/ruleset.csv")
+    assert rs.rules == rs2.rules
 
 
 def test_not_fitted():

@@ -782,6 +782,12 @@ class RuleSet(ABC):
             rules = path.read(**kwargs)
         else:
             rules = pd.read_csv(path, **kwargs)
+        if "ruleset coverage" in rules.iloc[:, 0].values:
+            self._coverage = rules[rules.iloc[:, 0] == "ruleset coverage"].iloc[0, 1]
+            rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset coverage"].index)
+        if "ruleset criterion" in rules.iloc[:, 0].values:
+            self.criterion = rules[rules.iloc[:, 0] == "ruleset criterion"].iloc[0, 1]
+            rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset criterion"].index)
         if rules.empty:
             self._rules = []
         else:
@@ -823,6 +829,19 @@ class RuleSet(ABC):
             df = pd.concat(dfs, axis=1).T
         else:
             df = pd.DataFrame(columns=idx)
+
+        s_cov = pd.DataFrame(
+            columns=df.columns,
+            data=[[self.ruleset_coverage if i == 0 else np.nan for i in range(len(df.columns))]],
+            index=["ruleset coverage"]
+        )
+        s_crit = pd.DataFrame(
+            columns=df.columns,
+            data=[[self.criterion if i == 0 else np.nan for i in range(len(df.columns))]],
+            index=["ruleset criterion"]
+        )
+        df = pd.concat([df, s_cov, s_crit])
+
         if hasattr(path, "write"):
             path.write(df)
         else:
@@ -1122,11 +1141,13 @@ class RuleSet(ABC):
         weights: Optional[Union["pd.Series", str]] = None,
         predictions_vector: Optional["pd.Series"] = None,
         **kwargs,
-    ) -> float:
-        """Computes the criterion vector of an entier ruleset. Criterions of rules must have been computed  beforehand.
+    ):
+        """Computes the criterion of an entier ruleset. Predictions of rules must have been computed beforehand.
 
         This uses the ruleset's stacked activation, so do not use it with too large rulesets otherwise your memory might
         not suffice.
+
+        Sets self.criterion so does not return anything
 
         Parameters
         ----------
@@ -1140,11 +1161,6 @@ class RuleSet(ABC):
         predictions_vector: Optional["pd.Series"]
             The vector of predictions of the ruleset. If not specified, is computed using self.calc_prediction
         kwargs
-
-        Returns
-        -------
-        float
-            The criterion of the ruleset
         """
         try:
             import pandas as pd
@@ -1157,14 +1173,14 @@ class RuleSet(ABC):
         if predictions_vector is None:
             predictions_vector = self.calc_prediction(y=y, weights=weights)
         if predictions_vector.empty:
-            return predictions_vector
+            self.criterion = np.nan
         if issubclass(self.rule_type, ClassificationRule):
             if self._activation is None:
                 self.compute_self_activation()
-            return functions.calc_classification_criterion(self.activation, predictions_vector, y, **kwargs)
+            self.criterion =  functions.calc_classification_criterion(self.activation, predictions_vector, y, **kwargs)
         elif issubclass(self.rule_type, RegressionRule):
             # noinspection PyTypeChecker
-            return functions.calc_regression_criterion(predictions_vector.values, y, **kwargs)
+            self.criterion = functions.calc_regression_criterion(predictions_vector.values, y, **kwargs)
         else:
             raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
