@@ -1106,6 +1106,10 @@ class RuleSet(ABC):
             return pd.Series(dtype=int)
         if self.rule_type is None:
             return pd.Series(dtype=int)
+
+        if self.stacked_activations is None:
+            raise ValueError("Ruleset's calc_prediction needs stacked_activations")
+
         if pd.api.types.is_string_dtype(y.dtype):
             prediction_vectors = self.stacked_activations.replace(0, np.nan).replace(1.0, "") + self.calc_predictions(y)
         else:
