@@ -555,7 +555,7 @@ class RuleSet(ABC):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (self._activation is None or (xs is not None and keep_new_activations)):
-                self._activation = None
+                self.stacked_activations = None
                 self.compute_stacked_activation()
 
         return to_drop
