@@ -788,7 +788,6 @@ class Activation(ABC):
             if isinstance(stat, dict):
                 self._sizeof_file = stat["st_size"] / 1e6
             else:
-                # noinspection PyUnresolvedReferences
                 self._sizeof_file = stat.st_size / 1e6
             self._sizeof_path = sys.getsizeof(self.data) / 1e6
             self._time_read = time() - t0

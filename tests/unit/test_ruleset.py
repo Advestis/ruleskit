@@ -474,10 +474,10 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
+            pd.Series([0., np.nan, np.nan],
                       index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, 2, 2, 2]),
-            2. / 3.,
+            None,
+            None,
             True
         ),
         (
@@ -500,10 +500,10 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series(["b", "c", "b"], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
+            pd.Series([0., np.nan, np.nan],
                       index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, "b", "b", "b"]),
-            2. / 3.,
+            None,
+            None,
             True
         ),
     ],
@@ -526,7 +526,7 @@ def test_unstacked_fit(
     exp_crit,
     ruleset_pred_crit_fails
 ):
-    res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
+    res = RuleSet(rule_list, compute_activation=True, stack_activation=True)
     res.fit(y, xs)
     res.eval(y_test, xs_test)
     assert res.ruleset_coverage == exp_coverage
@@ -541,11 +541,10 @@ def test_unstacked_fit(
             assert r.criterion == exp_crits[str(r.condition)]
     if ruleset_pred_crit_fails:
         with pytest.raises(ValueError) as e:
-            prediction = res.calc_prediction(y=y, weights=weights)
-            pd.testing.assert_series_equal(prediction, exp_pred)
+            _ = res.predict(xs=xs, weights=weights)
             assert "No rules had non-zero/non-NaN weights" in str(e)
     else:
-        prediction = res.calc_prediction(y=y, weights=weights)
+        prediction = res.predict(xs=xs, weights=weights)
         pd.testing.assert_series_equal(prediction, exp_pred)
         res.calc_criterion(y=y, predictions_vector=prediction)
         assert round(res.criterion, 6) == round(exp_crit, 6)
@@ -999,8 +998,8 @@ def test_unstacked_fit(
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([0, np.nan, np.nan],
                       index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, 2, 2, 2]),
-            2. / 3.,
+            None,
+            None,
             True
         ),
         (
@@ -1025,8 +1024,8 @@ def test_unstacked_fit(
             pd.Series(["b", "c", "b"], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([0, np.nan, np.nan],
                       index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, "b", "b", "b"]),
-            2. / 3.,
+            None,
+            None,
             True
         ),
     ],
@@ -1049,7 +1048,7 @@ def test_stacked_fit(
     exp_crit,
     ruleset_pred_crit_fails
 ):
-    res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
+    res = RuleSet(rule_list, compute_activation=True, stack_activation=True)
     res.fit(y, xs)
     res.eval(y_test, xs_test)
     assert res.ruleset_coverage == exp_coverage
@@ -1064,11 +1063,10 @@ def test_stacked_fit(
             assert r.criterion == exp_crits[str(r.condition)]
     if ruleset_pred_crit_fails:
         with pytest.raises(ValueError) as e:
-            prediction = res.calc_prediction(y=y, weights=weights)
-            pd.testing.assert_series_equal(prediction, exp_pred)
+            _ = res.predict(xs=xs, weights=weights)
             assert "No rules had non-zero/non-NaN weights" in str(e)
     else:
-        prediction = res.calc_prediction(y=y, weights=weights)
+        prediction = res.predict(xs=xs, weights=weights)
         pd.testing.assert_series_equal(prediction, exp_pred)
         res.calc_criterion(y=y, predictions_vector=prediction)
         assert round(res.criterion, 6) == round(exp_crit, 6)

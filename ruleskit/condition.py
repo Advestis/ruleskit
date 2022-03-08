@@ -3,6 +3,7 @@ from abc import ABC
 from copy import copy
 from typing import List, Union, Tuple
 import numpy as np
+import pandas as pd
 from numbers import Number
 from .activation import Activation
 import logging
@@ -14,7 +15,6 @@ class DuplicatedFeatures(Exception):
     pass
 
 
-# noinspection PyUnresolvedReferences
 class Condition(ABC):
     """Abstract class for Condition object. Used by Rule objets.
     A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
@@ -76,7 +76,7 @@ class Condition(ABC):
         """A Condition's length is the number of features it talks about"""
         return len(self._features_indexes)
 
-    def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
         To be implemented in daughter class.
         Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
@@ -100,7 +100,6 @@ class Condition(ABC):
         self._features_indexes = list(range(len(self.features_indexes)))
 
 
-# noinspection PyUnresolvedReferences
 class HyperrectangleCondition(Condition):
     """Condition class for Hyper Rectangle conditions.
 
@@ -402,7 +401,7 @@ class HyperrectangleCondition(Condition):
                     f" can be 'index' or 'name', not {self.__class__.SORT_ACCORDING_TO}"
                 )
 
-    def evaluate(self, xs: Union["pd.DataFrame", np.ndarray]) -> np.ndarray:
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
         """
         Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
 
@@ -421,13 +420,13 @@ class HyperrectangleCondition(Condition):
         --------
         >>> xs_ = np.array([[1, 3], [3, 4], [2, np.nan]])
         >>> c1 = HyperrectangleCondition([0], bmins=[1], bmaxs=[2])
-        >>> c1.evaluate_activation(xs_)
+        >>> c1.evaluate(xs_)
         np.array([1, 0, 1])
         >>> c2 = HyperrectangleCondition([1], bmins=[3], bmaxs=[5])
-        >>> c2.evaluate_activation(xs_)
+        >>> c2.evaluate(xs_)
         np.array([1, 1, 0])
         >>> c3 = HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5])
-        >>> c3.evaluate_activation(xs_)
+        >>> c3.evaluate(xs_)
         np.array([1, 0, 0])
         """
         if self.impossible:

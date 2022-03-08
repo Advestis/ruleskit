@@ -1,7 +1,6 @@
 numpy
 pytest
-pathlib
 scikit-learn
 bitarray
-pathlib
 psutil
+pandas
