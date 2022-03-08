@@ -1,6 +1,6 @@
 import numpy as np
 from collections import Counter
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Optional
 import logging
 import pandas as pd
 
@@ -410,7 +410,11 @@ def init_weights_stacked(prediction_vectors: pd.DataFrame, weights: pd.DataFrame
 
 
 # noinspection PyUnresolvedReferences
-def calc_ruleset_prediction_weighted_regressor_unstacked(rules: List["Rule"], weights: pd.Series) -> pd.Series:
+def calc_ruleset_prediction_weighted_regressor_unstacked(
+    rules: List["Rule"],
+    weights: pd.Series,
+    xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+) -> pd.Series:
     if len(rules) == 0:
         return pd.Series(dtype=int)
     cum_pred = None
@@ -426,7 +430,10 @@ def calc_ruleset_prediction_weighted_regressor_unstacked(rules: List["Rule"], we
         if np.isnan(weights[rulename]):
             logger.warning(f"Rule '{rulename}' has a nan weight and is ignored in ruleset's prediction")
             continue
-        activation = rule.activation
+        if xs is None:
+            activation = rule.activation
+        else:
+            activation = rule.evaluate_activation(xs).raw
         if activation is None:
             continue
         if len(activation) == 0:
@@ -436,10 +443,7 @@ def calc_ruleset_prediction_weighted_regressor_unstacked(rules: List["Rule"], we
             cum_w = activation * weights[rulename]
         else:
             cum_pred = (
-                (
-                    cum_pred.replace(0, "zero").replace(np.nan, 0)
-                    + activation * rule.prediction * weights[rulename]
-                )
+                (cum_pred.replace(0, "zero").replace(np.nan, 0) + activation * rule.prediction * weights[rulename])
                 .replace(0, np.nan)
                 .replace("zero", 0)
             )
@@ -460,13 +464,18 @@ def calc_ruleset_prediction_weighted_regressor_stacked(
 
 
 # noinspection PyUnresolvedReferences
-def calc_ruleset_prediction_equally_weighted_regressor_unstacked(rules: List["Rule"]) -> pd.Series:
+def calc_ruleset_prediction_equally_weighted_regressor_unstacked(
+    rules: List["Rule"], xs: Optional[Union[pd.DataFrame, np.ndarray]] = None
+) -> pd.Series:
     if len(rules) == 0:
         return pd.Series(dtype=int)
     cum_pred = None
     cum_w = None
     for rule in rules:
-        activation = rule.activation
+        if xs is None:
+            activation = rule.activation
+        else:
+            activation = rule.evaluate_activation(xs).raw
         if activation is None:
             continue
         if len(activation) == 0:
@@ -476,10 +485,7 @@ def calc_ruleset_prediction_equally_weighted_regressor_unstacked(rules: List["Ru
             cum_w = activation
         else:
             cum_pred = (
-                (
-                    cum_pred.replace(0, "zero").replace(np.nan, 0)
-                    + activation * rule.prediction
-                )
+                (cum_pred.replace(0, "zero").replace(np.nan, 0) + activation * rule.prediction)
                 .replace(0, np.nan)
                 .replace("zero", 0)
             )
@@ -497,7 +503,7 @@ def calc_ruleset_prediction_equally_weighted_regressor_stacked(prediction_vector
 
 # noinspection PyUnresolvedReferences
 def calc_ruleset_prediction_weighted_classificator_unstacked(
-    rules: List["Rule"], weights: pd.Series
+    rules: List["Rule"], weights: pd.Series, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None
 ) -> pd.Series:
     if len(rules) == 0:
         return pd.Series(dtype=int)
@@ -524,10 +530,16 @@ def calc_ruleset_prediction_weighted_classificator_unstacked(
         if np.isnan(weights[rulename]):
             logger.warning(f"Rule '{rulename}' has a nan weight and is ignored in ruleset's prediction")
             continue
-        activation = rule.activation
+        if xs is None:
+            activation = rule.activation
+            nones = rule.nones
+        else:
+            activation = rule.evaluate_activation(xs)
+            nones = activation.nones
+            activation = activation.raw
         if activation is None:
             continue
-        if len(activation) == 0:
+        if nones == 0:
             continue
         if preds is None:
             preds = pd.DataFrame(index=[rule.prediction], data=[activation * weights[rulename]])
@@ -553,9 +565,12 @@ def calc_ruleset_prediction_weighted_classificator_unstacked(
 
 
 # noinspection PyUnresolvedReferences
-def calc_ruleset_prediction_equally_weighted_classificator_unstacked(rules: List["Rule"]) -> pd.Series:
+def calc_ruleset_prediction_equally_weighted_classificator_unstacked(
+    rules: List["Rule"],
+    xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+) -> pd.Series:
     return calc_ruleset_prediction_weighted_classificator_unstacked(
-        rules, pd.Series({str(r.condition): 1 for r in rules})
+        rules, pd.Series({str(r.condition): 1 for r in rules}), xs=xs
     )
 
 
@@ -576,5 +591,9 @@ def calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_ve
     else:
         most_freq_pred = prediction_vectors.mode(axis=1)
     most_freq_pred = most_freq_pred.loc[most_freq_pred.count(axis=1) == 1].dropna(axis=1).squeeze()
+    # Happens if only on point is activated, in which case 'squeeze' will only extract this point's prediction as a
+    # float, int or str
+    if not isinstance(most_freq_pred, pd.Series):
+        most_freq_pred = pd.Series([most_freq_pred])
     most_freq_pred.name = None
     return most_freq_pred.reindex(idx)
