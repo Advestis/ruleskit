@@ -127,11 +127,11 @@ class Activation(ABC):
         format.
 
         The possible storing format are : compressed string or array, integer, bitarray or written on disk.
-        Activations are written on disk only if 'to_file' is True. In that case, the raw np.ndarray vector is stored
-        using np.save.
+        Activations are written on disk only if 'to_file' is True and Activation.STORE_RAW is False (default).
+        In that case, the raw np.ndarray vector is stored using np.save.
         If the vector is instantiated with any of compressed string or array, integer, bitarray, then this format is
-        privileged for storing the vector (unless to_file is True), but some other flags like 'optimize' and
-        'Activation.WILL_COMPARE' can determine the chosen format.
+        privileged for storing the vector (unless to_file is True or Activation.STORE_RAW is True), but some other flags
+        like 'optimize' and 'Activation.WILL_COMPARE' can determine the chosen format.
 
         If the raw np.ndarray or a path to it was given and if Activation.STORE_RAW is True, then no formatting is done
         and the raw np.ndarray is kept in RAM. This flag has no effect if activation is not the raw np.ndarray nor a
@@ -145,7 +145,7 @@ class Activation(ABC):
             decompression of both vectors.
             The vector is stored that was if compression is more memory-efficient than integer or bitarray format
             OR if optimize is False, or if 'activation' is already a compressed vector.
-            It is never stored this way if to_file is True.
+            It is never stored this way if to_file is True or Activation.STORE_RAW is True.
         Bitarray :
             The input vector [1 0 0 1 0 0 0 1 1...] where each entry uses up one bit of memory. Takes more RAM than
             compressed format if the vector does not change often, but is much quicker, both in conversion and in
@@ -154,18 +154,19 @@ class Activation(ABC):
             Activation.WILL_COMPARE is False (converting to bitarray is faster than to integer, but computing
             logical AND on integers is faster). Size is equivalent to integer : one bit per entry. It is also stored
             this way if 'activation' is a string and Activation.WILL_COMPARE is False.
-            It is never stored this way if to_file is True.
+            It is never stored this way if to_file is True or Activation.STORE_RAW is True.
         Integer :
             taking the input vector [1 0 0 1 0 0 0 1 1...], converts it to binary string representation :
             "100100011..." then casts it into int using int(s, 2).
             The vector is stored that way if it takes less RAM than compressed and if optimize is True and if
             Activation.WILL_COMPARE is True. It is also stored this way if 'activation' is a string and
-            Activation.WILL_COMPARE is True. It is never stored this way if to_file is True.
+            Activation.WILL_COMPARE is True. It is never stored this way if to_file is True or Activation.STORE_RAW is
+            True.
         File stored locally :
-            This is done if to_file is True. It is often the best solution, and is the default one. Indeed the I/O
-            operations using np.save and np.load are very fast, and the only thing in RAM is the path to the vector's
-            file. One need enough disk space of course. Using this method will save the np.array with dtype=np.ubyte,
-            so taking one byte (8 bits) per entry.
+            This is done if to_file is True and Activation.STORE_RAW is False (default). It is often the best solution,
+            and is the default one. Indeed the I/O operations using np.save and np.load are very fast, and the only
+            thing in RAM is the path to the vector's file. One need enough disk space of course. Using this method will
+            save the np.array with dtype=np.ubyte, so taking one byte (8 bits) per entry.
 
         If compression is used and dtype is np.ndarray, will check that numbers present in the compressed vector can be
         stored as int32 to gain memory. Else, uses int64.
@@ -188,7 +189,8 @@ class Activation(ABC):
             To get the leading zeros back, one must specify the length of the activation vector.
         to_file: bool
             If True, then activation vector is stored in a file in
-            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt (default value = True)
+            Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt if Activation.STORE_RAW
+            if False (default) (default value = True)
         """
 
         self._reset_data_related_attributes()
@@ -254,7 +256,7 @@ class Activation(ABC):
             if len(activation) > 0 and activation[-1] > 1:
                 self._init_with_compressed_array(activation)
             else:
-                if to_file:
+                if to_file and not self.__class__.STORE_RAW:
                     if not self._write(self.to_raw_from_any(activation, out=False)):
                         self._init_with_any(activation, length=length, to_file=False)
                     else:
