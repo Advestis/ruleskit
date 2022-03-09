@@ -330,7 +330,8 @@ class Rule(ABC):
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
-            kw = {item: kw[item] for item in kw if item in expected_args}
+            if "kwargs" not in expected_args:
+                kw = {item: kw[item] for item in kw if item in expected_args}
             method(**kw)
 
         if xs is not None and len(xs) == 0:
@@ -379,7 +380,8 @@ class Rule(ABC):
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
-            kw = {item: kw[item] for item in kw if item in expected_args}
+            if "kwargs" not in expected_args:
+                kw = {item: kw[item] for item in kw if item in expected_args}
             method(**kw)
 
         if xs is not None and len(xs) == 0:
@@ -485,7 +487,7 @@ class Rule(ABC):
         sign = (self.prediction / abs(self.prediction)) * (other.prediction / abs(other.prediction))
         return self._activation.get_correlation(other._activation) * sign
 
-    def calc_activation(self, xs: Union[pd.DataFrame, np.ndarray]):
+    def calc_activation(self, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None):
         """Uses self.evaluate to set self._activation.
 
         Parameters

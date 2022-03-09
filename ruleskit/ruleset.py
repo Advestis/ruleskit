@@ -314,7 +314,8 @@ class RuleSet(ABC):
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
-            kw = {item: kw[item] for item in kw if item in expected_args}
+            if "kwargs" not in expected_args:
+                kw = {item: kw[item] for item in kw if item in expected_args}
             return method(**kw)
 
         if xs is not None and len(xs) == 0:
@@ -446,7 +447,8 @@ class RuleSet(ABC):
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
-            kw = {item: kw[item] for item in kw if item in expected_args}
+            if "kwargs" not in expected_args:
+                kw = {item: kw[item] for item in kw if item in expected_args}
             return method(**kw)
 
         if xs is not None and len(xs) == 0:
