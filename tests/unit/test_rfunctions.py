@@ -162,12 +162,12 @@ def test_conditional_std(activation, y, expected):
     "prediction, y, expected",
     [
         (
-            np.array([2, np.nan, 2]),
-            np.array([-1, 0, 2]),
+            pd.Series([2, np.nan, 2]),
+            pd.Series([-1, 0, 2]),
             4.5,
         ),
         (
-            np.array([np.nan, np.nan, np.nan]),
+            pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
         ),
@@ -207,12 +207,12 @@ def test_mse_function(prediction, y, expected):
     "prediction, y, expected",
     [
         (
-            np.array([2, np.nan, 2]),
+            pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             1.5,
         ),
         (
-            np.array([np.nan, np.nan, np.nan]),
+            pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
         ),
@@ -253,12 +253,12 @@ def test_mae_function(prediction, y, expected):
     "prediction, y, expected",
     [
         (
-            np.array([2, np.nan, 2]),
+            pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             1.5,
         ),
         (
-            np.array([np.nan, np.nan, np.nan]),
+            pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
         ),
@@ -299,13 +299,13 @@ def test_aae_function(prediction, y, expected):
     "prediction, y, expected, kwargs",
     [
         (
-            np.array([2, np.nan, 2]),
+            pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             4.5,
             {}
         ),
         (
-            np.array([np.nan, np.nan, np.nan]),
+            pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
             {}
@@ -332,13 +332,13 @@ def test_aae_function(prediction, y, expected):
             {}
         ),
         (
-            np.array([2, np.nan, 2]),
+            pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             1.5,
             {"method": "mae"}
         ),
         (
-            np.array([np.nan, np.nan, np.nan]),
+            pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
             {"method": "mae"}
@@ -365,13 +365,13 @@ def test_aae_function(prediction, y, expected):
             {"method": "mae"}
         ),
         (
-            np.array([2, np.nan, 2]),
+            pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             1.5,
             {"method": "aae"}
         ),
         (
-            np.array([np.nan, np.nan, np.nan]),
+            pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
             {"method": "aae"}

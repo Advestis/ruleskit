@@ -459,7 +459,7 @@ def test_thresholds_fit(
         exp_crits_2,
         stacked_fit
 ):
-    res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
+    res = RuleSet(rule_list, compute_activation=True, stack_activation=True)
     if not stacked_fit:
         RuleSet.STACKED_FIT = False
     res.fit(y, xs)

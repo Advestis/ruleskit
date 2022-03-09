@@ -270,7 +270,6 @@ def test_add(rule1, rule2, rs):
             1.0,
             False,
         ),
-
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
             np.array([1, 3, 2, 1]),
@@ -283,13 +282,12 @@ def test_add(rule1, rule2, rs):
             None,
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.75]),
-            1.8125 / 3.0,
+            0.25,
             False,
         ),
         (
@@ -304,8 +302,7 @@ def test_add(rule1, rule2, rs):
             pd.Series([1, 0], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -325,8 +322,7 @@ def test_add(rule1, rule2, rs):
             pd.Series([1], index=["X_0 in [1, 2]"]),
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -346,13 +342,12 @@ def test_add(rule1, rule2, rs):
             pd.Series([0.75, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.785714286]),
-            0.6224489795918368,
+            0.25,
             False,
         ),
         (
@@ -367,8 +362,7 @@ def test_add(rule1, rule2, rs):
             "criterion",
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -396,10 +390,9 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, 3, 2, 2, np.nan]),
-            1.0,
+            0.0,
             False,
         ),
         (
@@ -422,10 +415,9 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, np.nan, 2, 2, 2]),
-            2 / 3,
+            0.0,
             False,
         ),
         (
@@ -448,11 +440,10 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, 3, np.nan, 2, 3]),
-            1.0,
-            False,
+            pd.Series([0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            None,
+            None,
+            True,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -474,11 +465,12 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, 2, 2, 2]),
-            2. / 3.,
-            True
+            pd.Series(
+                [0.0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]
+            ),
+            None,
+            None,
+            True,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -500,11 +492,12 @@ def test_add(rule1, rule2, rs):
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series(["b", "c", "b"], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, "b", "b", "b"]),
-            2. / 3.,
-            True
+            pd.Series(
+                [0.0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]
+            ),
+            None,
+            None,
+            True,
         ),
     ],
 )
@@ -524,11 +517,17 @@ def test_unstacked_fit(
     exp_crits,
     exp_pred,
     exp_crit,
-    ruleset_pred_crit_fails
+    ruleset_pred_crit_fails,
 ):
-    res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
+    res = RuleSet(rule_list, compute_activation=True, stack_activation=True)
     res.fit(y, xs)
-    res.eval(y_test, xs_test)
+    if ruleset_pred_crit_fails:
+        with pytest.raises(ValueError) as e:
+            res.eval(y_test, xs_test, weights=weights)
+            assert "No rules had non-zero/non-NaN weights" in str(e)
+        return
+    else:
+        res.eval(y_test, xs_test, weights=weights)
     assert res.ruleset_coverage == exp_coverage
     np.testing.assert_equal(res.activation, exp_act)
     pd.testing.assert_frame_equal(res.stacked_activations, exp_stacked_act)
@@ -539,16 +538,9 @@ def test_unstacked_fit(
             assert np.isnan(exp_crits[str(r.condition)])
         else:
             assert r.criterion == exp_crits[str(r.condition)]
-    if ruleset_pred_crit_fails:
-        with pytest.raises(ValueError) as e:
-            prediction = res.calc_prediction(y=y, weights=weights)
-            pd.testing.assert_series_equal(prediction, exp_pred)
-            assert "No rules had non-zero/non-NaN weights" in str(e)
-    else:
-        prediction = res.calc_prediction(y=y, weights=weights)
-        pd.testing.assert_series_equal(prediction, exp_pred)
-        res.calc_criterion(y=y, predictions_vector=prediction)
-        assert round(res.criterion, 6) == round(exp_crit, 6)
+    prediction = res.predict(xs=xs, weights=weights)
+    pd.testing.assert_series_equal(prediction, exp_pred)
+    assert round(res.criterion, 6) == round(exp_crit, 6)
 
 
 @pytest.mark.parametrize(
@@ -793,7 +785,6 @@ def test_unstacked_fit(
             1.0,
             False,
         ),
-
         (
             np.array([[5, 3], [3, 4], [2, np.nan], [2, 4]]),
             np.array([1, 3, 2, 1]),
@@ -806,13 +797,12 @@ def test_unstacked_fit(
             None,
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.75]),
-            1.8125 / 3.0,
+            0.25,
             False,
         ),
         (
@@ -827,8 +817,7 @@ def test_unstacked_fit(
             pd.Series([1, 0], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -848,8 +837,7 @@ def test_unstacked_fit(
             pd.Series([1], index=["X_0 in [1, 2]"]),
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -869,13 +857,12 @@ def test_unstacked_fit(
             pd.Series([0.75, 1], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([np.nan, 2, 1.5, 1.785714286]),
-            0.6224489795918368,
+            0.25,
             False,
         ),
         (
@@ -890,8 +877,7 @@ def test_unstacked_fit(
             "criterion",
             0.75,
             np.array([0, 1, 1, 1]),
-            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8,
-                         columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
+            pd.DataFrame([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8, columns=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.5, 0.5], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([1.5, 2], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
             pd.Series([0.25, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 5]"]),
@@ -919,10 +905,9 @@ def test_unstacked_fit(
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, 3, 2, 2, np.nan]),
-            1.0,
+            0.0,
             False,
         ),
         (
@@ -945,10 +930,9 @@ def test_unstacked_fit(
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            pd.Series([0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([np.nan, np.nan, 2, 2, 2]),
-            2 / 3,
+            0.0,
             False,
         ),
         (
@@ -971,11 +955,10 @@ def test_unstacked_fit(
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, 3, np.nan, 2, 3]),
-            1.0,
-            False,
+            pd.Series([0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
+            None,
+            None,
+            True,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -997,11 +980,12 @@ def test_unstacked_fit(
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series([2, 3, 2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, 2, 2, 2]),
-            2. / 3.,
-            True
+            pd.Series(
+                [0.0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]
+            ),
+            None,
+            None,
+            True,
         ),
         (
             np.array([[5, 3], [5, 4], [2, np.nan], [2, 4], [2, 6]]),
@@ -1023,11 +1007,12 @@ def test_unstacked_fit(
             ),
             pd.Series([0.6, 0.6, 0.2], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
             pd.Series(["b", "c", "b"], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([0, np.nan, np.nan],
-                      index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]),
-            pd.Series([np.nan, np.nan, "b", "b", "b"]),
-            2. / 3.,
-            True
+            pd.Series(
+                [0.0, np.nan, np.nan], index=["X_0 in [1, 2]", "X_1 in [4, 6]", "X_0 in [2, 3] AND X_1 in [4, 5]"]
+            ),
+            None,
+            None,
+            True,
         ),
     ],
 )
@@ -1047,11 +1032,17 @@ def test_stacked_fit(
     exp_crits,
     exp_pred,
     exp_crit,
-    ruleset_pred_crit_fails
+    ruleset_pred_crit_fails,
 ):
-    res = RuleSet(rule_list, remember_activation=True, stack_activation=True)
+    res = RuleSet(rule_list, compute_activation=True, stack_activation=True)
     res.fit(y, xs)
-    res.eval(y_test, xs_test)
+    if ruleset_pred_crit_fails:
+        with pytest.raises(ValueError) as e:
+            res.eval(y_test, xs_test, weights=weights)
+            assert "No rules had non-zero/non-NaN weights" in str(e)
+        return
+    else:
+        res.eval(y_test, xs_test, weights=weights)
     assert res.ruleset_coverage == exp_coverage
     np.testing.assert_equal(res.activation, exp_act)
     pd.testing.assert_frame_equal(res.stacked_activations, exp_stacked_act)
@@ -1062,16 +1053,9 @@ def test_stacked_fit(
             assert np.isnan(exp_crits[str(r.condition)])
         else:
             assert r.criterion == exp_crits[str(r.condition)]
-    if ruleset_pred_crit_fails:
-        with pytest.raises(ValueError) as e:
-            prediction = res.calc_prediction(y=y, weights=weights)
-            pd.testing.assert_series_equal(prediction, exp_pred)
-            assert "No rules had non-zero/non-NaN weights" in str(e)
-    else:
-        prediction = res.calc_prediction(y=y, weights=weights)
-        pd.testing.assert_series_equal(prediction, exp_pred)
-        res.calc_criterion(y=y, predictions_vector=prediction)
-        assert round(res.criterion, 6) == round(exp_crit, 6)
+    prediction = res.predict(xs=xs, weights=weights)
+    pd.testing.assert_series_equal(prediction, exp_pred)
+    assert round(res.criterion, 6) == round(exp_crit, 6)
 
 
 @pytest.mark.parametrize(
