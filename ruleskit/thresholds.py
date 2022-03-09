@@ -1,5 +1,6 @@
 import math
 import logging
+from copy import copy
 from typing import Union
 from pathlib import Path
 from json import load
@@ -64,7 +65,7 @@ class Thresholds:
         if value is None:
             return True
 
-        threshold = self.limits[tkey]
+        threshold = copy(self.limits[tkey])
         s = tkey
         if "arg" in threshold:
             if threshold["arg"] not in Thresholds.KWOWN_ARGS:
