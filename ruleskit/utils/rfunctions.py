@@ -164,6 +164,12 @@ def mse_function(
         return (error_vector ** 2).mean()
 
 
+def mse_norm(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -> Union[float, pd.Series]:
+    return mse_function(prediction_vector, y) / np.mean((np.mean(y) - y) ** 2)
+
+
 def mae_function(
     prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
 ) -> Union[float, pd.Series]:
@@ -198,6 +204,12 @@ def mae_function(
             raise ValueError("Predictions and y must have the same length")
         error_vect = prediction_vector.sub(y, axis=0).abs()
         return error_vect.mean()
+
+
+def mae_norm(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -> Union[float, pd.Series]:
+    return mae_function(prediction_vector, y) / np.mean(np.mean(y) - y)
 
 
 def aae_function(
@@ -249,7 +261,7 @@ def calc_regression_criterion(
     y: Union[np.ndarray, pd.Series]
       The real target values (real numbers)
     kwargs:
-      Can contain 'method', the method mse_function or mse_function criterion (default is 'mse')
+      Can contain 'criterion_method', the criterion_method mse_function or mse_function criterion (default is 'mse')
 
     Returns
     -------
@@ -257,16 +269,20 @@ def calc_regression_criterion(
         Criterion value of one rule or ruleset, or the Series of the criterion values of several rules
     """
 
-    method = kwargs.get("method", "mse")
+    criterion_method = kwargs.get("criterion_method", "mse")
 
-    if method.lower() == "mse":
+    if criterion_method.lower() == "mse":
         criterion = mse_function(prediction, y)
-    elif method.lower() == "mae":
+    elif criterion_method.lower() == "mse_norm":
+        criterion = mse_norm(prediction, y)
+    elif criterion_method.lower() == "mae":
         criterion = mae_function(prediction, y)
-    elif method.lower() == "aae":
+    elif criterion_method.lower() == "mae_norm":
+        criterion = mae_norm(prediction, y)
+    elif criterion_method.lower() == "aae":
         criterion = aae_function(prediction, y)
     else:
-        raise ValueError(f"Unknown criterion: {method}. Please choose among mse, mae and aae")
+        raise ValueError(f"Unknown criterion: {criterion_method}. Please choose among mse, mae and aae")
 
     return criterion
 

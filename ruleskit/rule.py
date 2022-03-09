@@ -320,6 +320,10 @@ class Rule(ABC):
         kwargs: dict
             Additionnal keyword arguments for calc_<any_attribute>
         """
+
+        if "method" in kwargs:
+            raise IndexError("Key 'method' can not be given to 'fit'")
+
         if self._fitted and xs is None:
             return
         t0 = time()
@@ -367,6 +371,10 @@ class Rule(ABC):
         kwargs
             Additionnal keyword arguments for calc_<any_attribute>
         """
+
+        if "method" in kwargs:
+            raise IndexError("Key 'method' can not be given to 'eval'")
+
         t0 = time()
 
         def launch_method(method, **kw):

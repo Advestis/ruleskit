@@ -335,13 +335,13 @@ def test_aae_function(prediction, y, expected):
             pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             1.5,
-            {"method": "mae"}
+            {"criterion_method": "mae"}
         ),
         (
             pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
-            {"method": "mae"}
+            {"criterion_method": "mae"}
         ),
         (
             pd.DataFrame(
@@ -351,7 +351,7 @@ def test_aae_function(prediction, y, expected):
             ),
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[1.5, 0.5, np.nan]),
-            {"method": "mae"}
+            {"criterion_method": "mae"}
         ),
         (
             pd.DataFrame(
@@ -362,19 +362,19 @@ def test_aae_function(prediction, y, expected):
             ),
             np.array([-1, 0, 2]),
             pd.Series(index=["chien", "chat", "cheval"], data=[1.5, 0.5, np.nan]),
-            {"method": "mae"}
+            {"criterion_method": "mae"}
         ),
         (
             pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             1.5,
-            {"method": "aae"}
+            {"criterion_method": "aae"}
         ),
         (
             pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
-            {"method": "aae"}
+            {"criterion_method": "aae"}
         ),
         (
             pd.DataFrame(
@@ -384,7 +384,7 @@ def test_aae_function(prediction, y, expected):
             ),
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[1.5, 0.5, np.nan]),
-            {"method": "aae"}
+            {"criterion_method": "aae"}
         ),
         (
             pd.DataFrame(
@@ -395,7 +395,7 @@ def test_aae_function(prediction, y, expected):
             ),
             np.array([-1, 0, 2]),
             pd.Series(index=["chien", "chat", "cheval"], data=[1.5, 0.5, np.nan]),
-            {"method": "aae"}
+            {"criterion_method": "aae"}
         ),
     ],
 )

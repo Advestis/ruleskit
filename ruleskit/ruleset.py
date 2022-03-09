@@ -309,6 +309,9 @@ class RuleSet(ABC):
             List of rules that were excluded from the ruleset after fitting because they were 'bad'
         """
 
+        if "method" in kwargs:
+            raise IndexError("Key 'method' can not be given to 'fit'")
+
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
             kw = {item: kw[item] for item in kw if item in expected_args}
@@ -437,6 +440,9 @@ class RuleSet(ABC):
         List[Rule]
             List of rules that were excluded from the ruleset after fitting because they were 'bad'
         """
+
+        if "method" in kwargs:
+            raise IndexError("Key 'method' can not be given to 'eval'")
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
