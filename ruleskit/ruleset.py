@@ -739,6 +739,10 @@ class RuleSet(ABC):
         """
         if len(self) == 0:
             raise ValueError("Can not use calc_activation : The ruleset is empty!")
+
+        if len(xs) == 0:
+            logger.warning("Given xs is empty")
+            return
         [rule.calc_activation(xs) for rule in self.rules]
 
         self._activation = None

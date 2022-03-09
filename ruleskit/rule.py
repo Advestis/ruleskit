@@ -477,7 +477,7 @@ class Rule(ABC):
         sign = (self.prediction / abs(self.prediction)) * (other.prediction / abs(other.prediction))
         return self._activation.get_correlation(other._activation) * sign
 
-    def calc_activation(self, xs: Union[pd.DataFrame, np.ndarray, None] = None):
+    def calc_activation(self, xs: Union[pd.DataFrame, np.ndarray]):
         """Uses self.evaluate to set self._activation.
 
         Parameters
@@ -493,6 +493,10 @@ class Rule(ABC):
                 )
             return
         t0 = time()
+
+        if len(xs) == 0:
+            logger.warning("Given xs is empty")
+            return
         self._activation = self.evaluate_activation(xs)
         self._time_calc_activation = time() - t0
         self.check_thresholds("coverage")
