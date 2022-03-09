@@ -314,6 +314,10 @@ class RuleSet(ABC):
             kw = {item: kw[item] for item in kw if item in expected_args}
             return method(**kw)
 
+        if xs is not None and len(xs) == 0:
+            logger.warning("Given xs is empty")
+            return []
+
         if len(self) == 0:
             logger.debug("Ruleset is empty. Nothing to fit.")
             return []
@@ -438,6 +442,10 @@ class RuleSet(ABC):
             expected_args = list(inspect.signature(method).parameters)
             kw = {item: kw[item] for item in kw if item in expected_args}
             return method(**kw)
+
+        if xs is not None and len(xs) == 0:
+            logger.warning("Given xs is empty")
+            return []
 
         if len(self) == 0:
             logger.debug("Ruleset is empty. Nothing to fit.")

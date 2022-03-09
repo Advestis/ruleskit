@@ -329,6 +329,10 @@ class Rule(ABC):
             kw = {item: kw[item] for item in kw if item in expected_args}
             method(**kw)
 
+        if xs is not None and len(xs) == 0:
+            logger.warning("Given xs is empty")
+            return
+
         self.calc_activation(xs=xs)
 
         for attr in self.__class__.attributes_from_train_set:
@@ -369,6 +373,10 @@ class Rule(ABC):
             expected_args = list(inspect.signature(method).parameters)
             kw = {item: kw[item] for item in kw if item in expected_args}
             method(**kw)
+
+        if xs is not None and len(xs) == 0:
+            logger.warning("Given xs is empty")
+            return
 
         if recompute_activation:
             self.calc_activation(xs=xs)
