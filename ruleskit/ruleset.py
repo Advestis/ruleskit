@@ -572,7 +572,7 @@ class RuleSet(ABC):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
 
-        self.calc_criterion(y=y, weights=weights, xs=xs if not keep_new_activations else None)
+        self.calc_criterion(y=y, weights=weights, xs=xs if not keep_new_activations else None, **kwargs)
 
         return to_drop
 

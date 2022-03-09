@@ -358,7 +358,7 @@ def calc_classification_criterion(
         Criterion value of one rule or ruleset (float) or of a set of rules (pd.Series)
     """
 
-    method = kwargs.get("method", "success_rate")
+    method = kwargs.get("criterion_method", "success_rate")
 
     if not isinstance(activation_vector, pd.DataFrame) and not isinstance(activation_vector, np.ndarray):
         raise TypeError("'activation_vector' in calc_classification_criterion must be a np.ndarray or a pd.DataFrame")
