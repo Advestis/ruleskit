@@ -48,8 +48,8 @@ class Rule(ABC):
     rule_index = ["prediction"]
     index = condition_index + rule_index
 
-    attributes_from_test_set = []
-    attributes_from_train_set = []
+    attributes_from_test_set = ["test_set_size"]
+    attributes_from_train_set = ["train_set_size"]
 
     fitted_if_has = "prediction"
 
@@ -356,11 +356,6 @@ class Rule(ABC):
             logger.warning("Given xs is empty")
             return
 
-        if isinstance(y, (pd.Series, pd.DataFrame)):
-            self.train_set_size = len(y.index)
-        else:
-            self.train_set_size = len(y)
-
         self.calc_activation(xs=xs)
 
         for attr in self.__class__.attributes_from_train_set:
@@ -410,11 +405,6 @@ class Rule(ABC):
         if xs is not None and len(xs) == 0:
             logger.warning("Given xs is empty")
             return
-
-        if isinstance(y, (pd.Series, pd.DataFrame)):
-            self.test_set_size = len(y.index)
-        else:
-            self.test_set_size = len(y)
 
         if recompute_activation:
             self.calc_activation(xs=xs)
@@ -538,6 +528,18 @@ class Rule(ABC):
         self._activation = self.evaluate_activation(xs)
         self._time_calc_activation = time() - t0
         self.check_thresholds("coverage")
+
+    def calc_train_set_size(self, y: Union[np.ndarray, pd.Series]):
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.train_set_size = len(y.index)
+        else:
+            self.train_set_size = len(y)
+
+    def calc_test_set_size(self, y: Union[np.ndarray, pd.Series]):
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.test_set_size = len(y.index)
+        else:
+            self.test_set_size = len(y)
 
 
 class RegressionRule(Rule):

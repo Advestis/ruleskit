@@ -38,6 +38,8 @@ class RuleSet(ABC):
     CHECK_DUPLICATED = False
     STACKED_FIT = False
     all_features_indexes = {}
+    attributes_from_train_set = ["train_set_size"]
+    attributes_from_test_set = ["criterion", "test_set_size"]
 
     @staticmethod
     def check_duplicated_rules(rules, name_or_index: str = "index"):
@@ -415,6 +417,14 @@ class RuleSet(ABC):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
 
+        for attr in self.__class__.attributes_from_train_set:
+            launch_method(
+                getattr(self, f"calc_{attr}"),
+                y=y,
+                xs=xs,
+                **kwargs,
+            )
+
         return to_drop
 
     # noinspection PyProtectedMember,PyUnresolvedReferences
@@ -466,11 +476,6 @@ class RuleSet(ABC):
             logger.debug("Ruleset is empty. Nothing to fit.")
             return []
 
-        if isinstance(y, (pd.Series, pd.DataFrame)):
-            self.test_set_size = len(y.index)
-        else:
-            self.test_set_size = len(y)
-
         if not all([r._fitted for r in self]):
             raise ValueError("Not all rules of the ruleset were fitted. Please do so before calling ruleset.eval")
 
@@ -519,12 +524,9 @@ class RuleSet(ABC):
             else:
                 computed_attrs = {}
 
-            available_for_self = []
             for attr in self.rule_type.attributes_from_test_set:
                 if attr == "activation":
                     raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
-                if hasattr(self, f"calc_{attr}"):
-                    available_for_self.append(attr)
                 computed_attrs[f"{attr}s"] = launch_method(
                     getattr(self, f"calc_{attr}s"),
                     y=y,
@@ -584,7 +586,14 @@ class RuleSet(ABC):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
 
-        self.calc_criterion(y=y, weights=weights, xs=xs if not keep_new_activations else None, **kwargs)
+        for attr in self.__class__.attributes_from_test_set:
+            launch_method(
+                getattr(self, f"calc_{attr}"),
+                y=y,
+                xs=xs if not keep_new_activations else None,
+                weights=weights,
+                **kwargs,
+            )
 
         return to_drop
 
@@ -1089,6 +1098,20 @@ class RuleSet(ABC):
         else:
             raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
+    def calc_train_set_sizes(self, y: Union[np.ndarray, pd.Series]) -> pd.Series:
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            s = len(y.index)
+        else:
+            s = len(y)
+        return pd.Series({str(r.condition): s for r in self})
+
+    def calc_test_set_sizes(self, y: Union[np.ndarray, pd.Series]) -> pd.Series:
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            s = len(y.index)
+        else:
+            s = len(y)
+        return pd.Series({str(r.condition): s for r in self})
+
     def predict(
         self,
         xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
@@ -1251,6 +1274,18 @@ class RuleSet(ABC):
             self.criterion = functions.calc_regression_criterion(predictions_vector, y, **kwargs)
         else:
             raise TypeError(f"Unexpected rule type '{self.rule_type}'")
+
+    def calc_test_set_size(self, y: Union[np.ndarray, pd.Series]):
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.test_set_size = len(y.index)
+        else:
+            self.test_set_size = len(y)
+
+    def calc_train_set_size(self, y: Union[np.ndarray, pd.Series]):
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.test_set_size = len(y.index)
+        else:
+            self.test_set_size = len(y)
 
 
 def traverse(o, tree_types=(list, tuple, RuleSet)):

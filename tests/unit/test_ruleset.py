@@ -1063,19 +1063,28 @@ def test_stacked_fit(
     [
         RuleSet(
             [
-                Rule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
-                Rule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
+                RegressionRule(HyperrectangleCondition([0], bmins=[1], bmaxs=[2])),
+                RegressionRule(HyperrectangleCondition([1], bmins=[4], bmaxs=[5])),
             ]
         ),
         RuleSet(
             [
-                Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3])),
-                Rule(HyperrectangleCondition([1, 2], bmins=[4, 4], bmaxs=[5, 4])),
+                RegressionRule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3])),
+                RegressionRule(HyperrectangleCondition([1, 2], bmins=[4, 4], bmaxs=[5, 4])),
             ]
         ),
     ],
 )
 def test_save_and_load(rs):
+    x = np.array(
+        [[1, 1, 0],
+         [0, 2, 3],
+         [0, 5, 4],
+         [1, 1, 5]],
+    )
+    y = np.array([0.1, 0.2, 0.3, 0.4])
+    rs.fit(y=y, xs=x)
+    rs.eval(y=y)
     rs.save("tests/unit/data/ruleset.csv")
     rs2 = RuleSet()
     rs2.load("tests/unit/data/ruleset.csv")
