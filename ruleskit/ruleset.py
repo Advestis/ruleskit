@@ -810,8 +810,12 @@ class RuleSet(ABC):
         if "ruleset train set size" in rules.iloc[:, 0].values:
             self.train_set_size = int(rules[rules.iloc[:, 0] == "ruleset train set size"].iloc[0, 1])
             rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset train set size"].index)
+            if isinstance(self.train_set_size, str):
+                self.train_set_size = int(self.train_set_size)
         if "ruleset test set size" in rules.iloc[:, 0].values:
-            self.test_set_size = int(rules[rules.iloc[:, 0] == "ruleset test set size"].iloc[0, 1])
+            self.test_set_size = rules[rules.iloc[:, 0] == "ruleset test set size"].iloc[0, 1]
+            if isinstance(self.test_set_size, str):
+                self.test_set_size = int(self.test_set_size)
             rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset test set size"].index)
         if rules.empty:
             self._rules = []
@@ -820,11 +824,11 @@ class RuleSet(ABC):
         for r in self:
             if r._train_set_size is None:
                 r._train_set_size = self.train_set_size
-            else:
+            elif isinstance(r._train_set_size, str):
                 r._train_set_size = int(r._train_set_size)
             if r._test_set_size is None:
                 r._test_set_size = self.test_set_size
-            else:
+            elif isinstance(r._test_set_size, str):
                 r._test_set_size = int(r._test_set_size)
 
         if len(self._rules) > 0:
