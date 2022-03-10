@@ -823,8 +823,10 @@ class RuleSet(ABC):
         else:
             self._rules = [self.series_to_rule(rules.loc[r]) for r in rules.index]
         for r in self:
-            r._train_set_size = self.train_set_size
-            r._test_set_size = self.test_set_size
+            if r._train_set_size is None:
+                r._train_set_size = self.train_set_size
+            if r._test_set_size is None:
+                r._test_set_size = self.test_set_size
 
         if len(self._rules) > 0:
             self.rule_type = type(self._rules[0])
