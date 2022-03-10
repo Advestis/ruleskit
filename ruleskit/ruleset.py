@@ -86,6 +86,8 @@ class RuleSet(ABC):
         self._activation: Optional[Activation] = None
         self._coverage: Optional[float] = None  # in case Activation is not available
         self.criterion: Optional[float] = None
+        self.train_set_size: Optional[int] = None
+        self.test_set_size: Optional[int] = None
         """Set by self.eval"""
         self.stacked_activations: Optional[pd.DataFrame] = None
         self.stack_activation: bool = stack_activation
@@ -329,6 +331,11 @@ class RuleSet(ABC):
         if all([r._fitted for r in self]) and xs is None:
             return []
 
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.train_set_size = len(y.index)
+        else:
+            self.train_set_size = len(y)
+
         if self.__class__.STACKED_FIT:
 
             clean_activation = False
@@ -458,6 +465,11 @@ class RuleSet(ABC):
         if len(self) == 0:
             logger.debug("Ruleset is empty. Nothing to fit.")
             return []
+
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.test_set_size = len(y.index)
+        else:
+            self.test_set_size = len(y)
 
         if not all([r._fitted for r in self]):
             raise ValueError("Not all rules of the ruleset were fitted. Please do so before calling ruleset.eval")
@@ -791,6 +803,12 @@ class RuleSet(ABC):
         if "ruleset criterion" in rules.iloc[:, 0].values:
             self.criterion = rules[rules.iloc[:, 0] == "ruleset criterion"].iloc[0, 1]
             rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset criterion"].index)
+        if "ruleset train set size" in rules.iloc[:, 0].values:
+            self.train_set_size = rules[rules.iloc[:, 0] == "ruleset train set size"].iloc[0, 1]
+            rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset train set size"].index)
+        if "ruleset test set size" in rules.iloc[:, 0].values:
+            self.test_set_size = rules[rules.iloc[:, 0] == "ruleset test set size"].iloc[0, 1]
+            rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset test set size"].index)
         if rules.empty:
             self._rules = []
         else:
@@ -836,7 +854,17 @@ class RuleSet(ABC):
             data=[[self.criterion if i == 0 else np.nan for i in range(len(df.columns))]],
             index=["ruleset criterion"]
         )
-        df = pd.concat([df, s_cov, s_crit])
+        s_train = pd.DataFrame(
+            columns=df.columns,
+            data=[[self.train_set_size if i == 0 else np.nan for i in range(len(df.columns))]],
+            index=["ruleset train set size"]
+        )
+        s_test = pd.DataFrame(
+            columns=df.columns,
+            data=[[self.train_set_size if i == 0 else np.nan for i in range(len(df.columns))]],
+            index=["ruleset test set size"]
+        )
+        df = pd.concat([df, s_cov, s_crit, s_train, s_test])
 
         if hasattr(path, "write"):
             path.write(df)
