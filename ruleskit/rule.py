@@ -77,24 +77,26 @@ class Rule(ABC):
         if activation is not None and condition is None:
             raise ValueError("Condition can not be None if activation is not None")
 
-        self._condition = condition
-        self._activation = activation
-        self._thresholds = self.__class__.THRESHOLDS
-        self._good = True
-        self._bad_because = None
+        self._condition: Optional[Condition] = condition
+        self._activation: Optional[Activation] = activation
+        self._thresholds: Optional[Thresholds] = self.__class__.THRESHOLDS
+        self._good: bool = True
+        self._bad_because: Optional[str] = None
 
-        self._coverage = None
-        self._prediction = None
-        self._criterion = None
+        self._coverage: Optional[float] = None
+        self._prediction: Optional[Union[float, str, int]] = None
+        self._criterion: Optional[float] = None
 
-        self._time_fit = -1
-        self._time_eval = -1
-        self._time_calc_activation = -1
-        self._time_predict = -1
-        self._time_calc_criterion = -1
-        self._time_calc_prediction = -1
-        self._fitted = False
+        self._time_fit: float = -1
+        self._time_eval: float = -1
+        self._time_calc_activation: float = -1
+        self._time_predict: float = -1
+        self._time_calc_criterion: float = -1
+        self._time_calc_prediction: float = -1
+        self._fitted: bool = False
         self._evaluated = False
+        self._train_set_size: Optional[int] = None
+        self._test_set_size: Optional[int] = None
         if self._activation is not None:
             self.check_thresholds("coverage")
 
@@ -135,19 +137,6 @@ class Rule(ABC):
                 return
         logger.debug(f"Rule {self} is good")
 
-    @property
-    def coverage(self) -> float:
-        if self._activation is not None:
-            self._coverage = self._activation.coverage
-            return self._activation.coverage
-        return self._coverage
-
-    @coverage.setter
-    def coverage(self, value):
-        if self._activation is not None:
-            self._activation.coverage = value
-        self._coverage = value
-
     def __and__(self, other: "Rule") -> "Rule":
         """Logical AND (&) of two rules. It is simply the logical AND of the two rule's conditions and activations."""
         condition = self._condition & other._condition
@@ -175,6 +164,35 @@ class Rule(ABC):
             return self._activation.data.is_file()
         else:
             return self._activation.data is not None
+
+    @property
+    def coverage(self) -> float:
+        if self._activation is not None:
+            self._coverage = self._activation.coverage
+            return self._activation.coverage
+        return self._coverage
+
+    @coverage.setter
+    def coverage(self, value: Union[int, None]):
+        if self._activation is not None:
+            self._activation._coverage = value
+        self._coverage = value
+
+    @property
+    def train_set_size(self) -> int:
+        return self._train_set_size
+
+    @property
+    def test_set_size(self) -> int:
+        return self._test_set_size
+
+    @train_set_size.setter
+    def train_set_size(self, value: Union[int, None]):
+        self._train_set_size = value
+
+    @test_set_size.setter
+    def test_set_size(self, value: Union[int, None]):
+        self._test_set_size = value
 
     @property
     def condition(self) -> Condition:
@@ -338,6 +356,11 @@ class Rule(ABC):
             logger.warning("Given xs is empty")
             return
 
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.train_set_size = len(y.index)
+        else:
+            self.train_set_size = len(y)
+
         self.calc_activation(xs=xs)
 
         for attr in self.__class__.attributes_from_train_set:
@@ -387,6 +410,11 @@ class Rule(ABC):
         if xs is not None and len(xs) == 0:
             logger.warning("Given xs is empty")
             return
+
+        if isinstance(y, (pd.Series, pd.DataFrame)):
+            self.test_set_size = len(y.index)
+        else:
+            self.test_set_size = len(y)
 
         if recompute_activation:
             self.calc_activation(xs=xs)
