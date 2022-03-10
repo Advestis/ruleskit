@@ -808,7 +808,7 @@ class RuleSet(ABC):
             self.criterion = rules[rules.iloc[:, 0] == "ruleset criterion"].iloc[0, 1]
             rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset criterion"].index)
         if "ruleset train set size" in rules.iloc[:, 0].values:
-            self.train_set_size = int(rules[rules.iloc[:, 0] == "ruleset train set size"].iloc[0, 1])
+            self.train_set_size = rules[rules.iloc[:, 0] == "ruleset train set size"].iloc[0, 1]
             rules = rules.drop(rules[rules.iloc[:, 0] == "ruleset train set size"].index)
             if isinstance(self.train_set_size, str):
                 self.train_set_size = int(self.train_set_size)
