@@ -333,11 +333,6 @@ class RuleSet(ABC):
         if all([r._fitted for r in self]) and xs is None:
             return []
 
-        if isinstance(y, (pd.Series, pd.DataFrame)):
-            self.train_set_size = len(y.index)
-        else:
-            self.train_set_size = len(y)
-
         if self.__class__.STACKED_FIT:
 
             clean_activation = False
@@ -1288,9 +1283,9 @@ class RuleSet(ABC):
 
     def calc_train_set_size(self, y: Union[np.ndarray, pd.Series]):
         if isinstance(y, (pd.Series, pd.DataFrame)):
-            self.test_set_size = len(y.index)
+            self.train_set_size = len(y.index)
         else:
-            self.test_set_size = len(y)
+            self.train_set_size = len(y)
 
 
 def traverse(o, tree_types=(list, tuple, RuleSet)):

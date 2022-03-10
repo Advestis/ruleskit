@@ -1036,6 +1036,7 @@ def test_stacked_fit(
 ):
     res = RuleSet(rule_list, compute_activation=True, stack_activation=True)
     res.fit(y, xs)
+    assert res.train_set_size == len(y)
     if ruleset_pred_crit_fails:
         with pytest.raises(ValueError) as e:
             res.eval(y_test, xs_test, weights=weights)
@@ -1043,6 +1044,7 @@ def test_stacked_fit(
         return
     else:
         res.eval(y_test, xs_test, weights=weights)
+        assert res.test_set_size == len(y_test)
     assert res.ruleset_coverage == exp_coverage
     np.testing.assert_equal(res.activation, exp_act)
     pd.testing.assert_frame_equal(res.stacked_activations, exp_stacked_act)
