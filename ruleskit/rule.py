@@ -355,8 +355,6 @@ class Rule(ABC):
         if xs is not None and len(xs) == 0:
             logger.warning("Given xs is empty")
             return
-        if len(xs.shape) == 1:
-            xs = xs.reshape(len(xs), 1)
 
         self.calc_activation(xs=xs)
 
