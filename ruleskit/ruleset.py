@@ -472,7 +472,12 @@ class RuleSet(ABC):
             return []
 
         if not all([r._fitted for r in self]):
-            raise ValueError("Not all rules of the ruleset were fitted. Please do so before calling ruleset.eval")
+            if xs is None:
+                raise ValueError(
+                    "Not all rules of the ruleset were fitted. Please do so before calling ruleset.eval or provide xs."
+                )
+            else:
+                keep_new_activations = True
 
         if self.__class__.STACKED_FIT:
             clean_activation = False

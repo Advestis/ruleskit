@@ -302,13 +302,13 @@ def test_aae_function(prediction, y, expected):
             pd.Series([2, np.nan, 2]),
             np.array([-1, 0, 2]),
             4.5,
-            {}
+            {"criterion_method": "mse"}
         ),
         (
             pd.Series([np.nan, np.nan, np.nan]),
             np.array([-1, 0, 2]),
             np.nan,
-            {}
+            {"criterion_method": "mse"}
         ),
         (
             pd.DataFrame(
@@ -318,7 +318,7 @@ def test_aae_function(prediction, y, expected):
             ),
             np.array([-1, 0, 2]),
             pd.Series(index=[0, 1, 2], data=[4.5, 0.5, np.nan]),
-            {}
+            {"criterion_method": "mse"}
         ),
         (
             pd.DataFrame(
@@ -329,7 +329,7 @@ def test_aae_function(prediction, y, expected):
             ),
             np.array([-1, 0, 2]),
             pd.Series(index=["chien", "chat", "cheval"], data=[4.5, 0.5, np.nan]),
-            {}
+            {"criterion_method": "mse"}
         ),
         (
             pd.Series([2, np.nan, 2]),
