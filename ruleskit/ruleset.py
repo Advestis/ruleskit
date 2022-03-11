@@ -259,7 +259,7 @@ class RuleSet(ABC):
     def _update_activation(self, other: Union[Rule, "RuleSet"]):
         """Updates the activation vector of the RuleSet with the activation vector of a new Rule or RuleSet."""
         if other.activation_available:
-            if self._activation is None:
+            if self._activation is None or self._activation.length == 0:
                 self._activation = Activation(other.activation, to_file=Rule.LOCAL_ACTIVATION)
             else:
                 self._activation = self._activation | other._activation
