@@ -269,7 +269,7 @@ def calc_regression_criterion(
         Criterion value of one rule or ruleset, or the Series of the criterion values of several rules
     """
 
-    criterion_method = kwargs.get("criterion_method", "mse")
+    criterion_method = kwargs.get("criterion_method", "mse_norm")
 
     if criterion_method.lower() == "mse":
         criterion = mse_function(prediction, y)

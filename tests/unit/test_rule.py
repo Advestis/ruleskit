@@ -436,7 +436,7 @@ def test_test(clean, condition_x_y_xtest_ytest_act_pred_crit, theclass):
         return
 
     rule.fit(xs=x, y=y)
-    rule.eval(xs=xtest, y=ytest)
+    rule.eval(xs=xtest, y=ytest, criterion_method="mse" if isinstance(rule, RegressionRule) else "success_rate")
     np.testing.assert_equal(act, rule.activation)
     np.testing.assert_equal(pred[theclass], rule.prediction)
     np.testing.assert_equal(crit[theclass], rule.criterion)
@@ -445,6 +445,5 @@ def test_test(clean, condition_x_y_xtest_ytest_act_pred_crit, theclass):
 def test_not_fitted():
     rule = Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3]))
     with pytest.raises(ValueError) as e:
-        rule.eval(y=np.array([0, 1, 2]))
+        rule.eval(y=np.array([0, 1, 2]), criterion_method="mse")
         assert "Must have fitted the rule before" in str(e)
-

@@ -523,11 +523,21 @@ def test_unstacked_fit(
     res.fit(y, xs)
     if ruleset_pred_crit_fails:
         with pytest.raises(ValueError) as e:
-            res.eval(y_test, xs_test, weights=weights)
+            res.eval(
+                y_test,
+                xs_test,
+                weights=weights,
+                criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+            )
             assert "No rules had non-zero/non-NaN weights" in str(e)
         return
     else:
-        res.eval(y_test, xs_test, weights=weights)
+        res.eval(
+            y_test,
+            xs_test,
+            weights=weights,
+            criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+        )
     assert res.ruleset_coverage == exp_coverage
     np.testing.assert_equal(res.activation, exp_act)
     pd.testing.assert_frame_equal(res.stacked_activations, exp_stacked_act)
@@ -1039,11 +1049,21 @@ def test_stacked_fit(
     assert res.train_set_size == len(y)
     if ruleset_pred_crit_fails:
         with pytest.raises(ValueError) as e:
-            res.eval(y_test, xs_test, weights=weights)
+            res.eval(
+                y_test,
+                xs_test,
+                weights=weights,
+                criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+            )
             assert "No rules had non-zero/non-NaN weights" in str(e)
         return
     else:
-        res.eval(y_test, xs_test, weights=weights)
+        res.eval(
+            y_test,
+            xs_test,
+            weights=weights,
+            criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+        )
         assert res.test_set_size == len(y_test)
     assert res.ruleset_coverage == exp_coverage
     np.testing.assert_equal(res.activation, exp_act)
@@ -1079,14 +1099,11 @@ def test_stacked_fit(
 )
 def test_save_and_load(rs):
     x = np.array(
-        [[1, 1, 0],
-         [0, 2, 3],
-         [0, 5, 4],
-         [1, 1, 5]],
+        [[1, 1, 0], [0, 2, 3], [0, 5, 4], [1, 1, 5]],
     )
     y = np.array([0.1, 0.2, 0.3, 0.4])
     rs.fit(y=y, xs=x)
-    rs.eval(y=y)
+    rs.eval(y=y, criterion_method="mse")
     rs.save("tests/unit/data/ruleset.csv")
     rs2 = RuleSet()
     rs2.load("tests/unit/data/ruleset.csv")
