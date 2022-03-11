@@ -220,7 +220,7 @@ class RuleSet(ABC):
     @property
     def activation_available(self) -> bool:
         """Returns True if the RuleSet has an activation vector, and if this Activation's object data is available."""
-        if self._activation is None:
+        if self._activation is None or self._activation.length == 0:
             return False
         if self._activation.data_format == "file":
             return self._activation.data.is_file()
@@ -230,7 +230,7 @@ class RuleSet(ABC):
     @property
     def stacked_activations_available(self) -> bool:
         """Returns True is the RuleSet has its rules' stacked activations."""
-        if self.stack_activation is None:
+        if self.stack_activation is None or self._activation.length == 0:
             return False
         return True
 
@@ -405,7 +405,7 @@ class RuleSet(ABC):
         # If not bad rules were dropped and stacked fit was not used, still compute self.activation since it has not
         # been done  (needed to set self.coverage), but not stacked (useless)
         elif not self.__class__.STACKED_FIT:
-            if self._activation is None or xs is not None:
+            if self._activation is None or self._activation.length == 0 or xs is not None:
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (self.stacked_activations is None or xs is not None):
@@ -568,7 +568,7 @@ class RuleSet(ABC):
                 self.append(r, update_activation=False)
 
             # Recompute activation now that bad rules have been droped
-            if self._activation is None or (xs is not None and keep_new_activations):
+            if self._activation is None or self._activation.length == 0 or (xs is not None and keep_new_activations):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (
@@ -579,7 +579,7 @@ class RuleSet(ABC):
         # If not bad rules were dropped and stacked fit was not used, still compute self.activation since it has not
         # been done
         elif not self.__class__.STACKED_FIT:
-            if self._activation is None or (xs is not None and keep_new_activations):
+            if self._activation is None or self._activation.length == 0 or (xs is not None and keep_new_activations):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (self._activation is None or (xs is not None and keep_new_activations)):
@@ -1276,7 +1276,7 @@ class RuleSet(ABC):
             if xs is not None:
                 activation = self.evaluate_self_activation(xs=xs).raw
             else:
-                if self._activation is None:
+                if self._activation is None or self._activation.length == 0:
                     self.compute_self_activation()
                 activation = self.activation
             self.criterion = functions.calc_classification_criterion(
