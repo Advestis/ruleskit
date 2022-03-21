@@ -549,10 +549,10 @@ class Rule(ABC):
 class RegressionRule(Rule):
     """Rule applied on continuous target data."""
 
-    rule_index = Rule.rule_index + ["coverage", "criterion", "std"]
+    rule_index = Rule.rule_index + ["coverage", "zscore", "criterion", "std"]
     index = Rule.condition_index + rule_index
-    attributes_from_test_set = ["criterion"]
     attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std", "sign"]
+    attributes_from_test_set = ["zscore", "criterion"]
 
     def __init__(
         self,
@@ -695,8 +695,8 @@ class ClassificationRule(Rule):
 
     rule_index = Rule.rule_index + ["coverage", "criterion"]
     index = Rule.condition_index + rule_index
-    attributes_from_test_set = ["criterion"]
     attributes_from_train_set = Rule.attributes_from_train_set + ["prediction"]
+    attributes_from_test_set = ["criterion"]
 
     @property
     def prediction(self) -> Union[int, str, np.integer, np.float, None]:
@@ -715,6 +715,10 @@ class ClassificationRule(Rule):
     @property
     def criterion(self) -> float:
         return self._criterion
+
+    @property
+    def zscore(self) -> float:
+        return self._zscore
 
     def calc_prediction(self, y: [np.ndarray, pd.Series]):
         """
