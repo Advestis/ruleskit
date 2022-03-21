@@ -21,10 +21,12 @@ from .utils.rfunctions import (
     calc_ruleset_prediction_weighted_regressor_stacked,
     calc_ruleset_prediction_weighted_classificator_stacked,
     calc_ruleset_prediction_equally_weighted_classificator_stacked,
-    calc_ruleset_prediction_equally_weighted_regressor_stacked, calc_ruleset_prediction_weighted_regressor_unstacked,
+    calc_ruleset_prediction_equally_weighted_regressor_stacked,
+    calc_ruleset_prediction_weighted_regressor_unstacked,
     calc_ruleset_prediction_equally_weighted_regressor_unstacked,
     calc_ruleset_prediction_weighted_classificator_unstacked,
-    calc_ruleset_prediction_equally_weighted_classificator_unstacked, calc_zscore_external,
+    calc_ruleset_prediction_equally_weighted_classificator_unstacked,
+    calc_zscore_external,
 )
 
 logger = logging.getLogger(__name__)
@@ -572,7 +574,7 @@ class RuleSet(ABC):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (
-                    self.stacked_activations is None or (xs is not None and keep_new_activations)
+                self.stacked_activations is None or (xs is not None and keep_new_activations)
             ):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
@@ -869,22 +871,22 @@ class RuleSet(ABC):
         s_cov = pd.DataFrame(
             columns=df.columns,
             data=[[self.ruleset_coverage if i == 0 else np.nan for i in range(len(df.columns))]],
-            index=["ruleset coverage"]
+            index=["ruleset coverage"],
         )
         s_crit = pd.DataFrame(
             columns=df.columns,
             data=[[self.criterion if i == 0 else np.nan for i in range(len(df.columns))]],
-            index=["ruleset criterion"]
+            index=["ruleset criterion"],
         )
         s_train = pd.DataFrame(
             columns=df.columns,
             data=[[self.train_set_size if i == 0 else np.nan for i in range(len(df.columns))]],
-            index=["ruleset train set size"]
+            index=["ruleset train set size"],
         )
         s_test = pd.DataFrame(
             columns=df.columns,
             data=[[self.train_set_size if i == 0 else np.nan for i in range(len(df.columns))]],
-            index=["ruleset test set size"]
+            index=["ruleset test set size"],
         )
         df = pd.concat([df, s_cov, s_crit, s_train, s_test])
 
@@ -1004,9 +1006,7 @@ class RuleSet(ABC):
             else:
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
-    def calc_stds(
-        self, y: [np.ndarray, pd.Series], stacked_activations: Optional[pd.DataFrame] = None
-    ) -> pd.Series:
+    def calc_stds(self, y: [np.ndarray, pd.Series], stacked_activations: Optional[pd.DataFrame] = None) -> pd.Series:
         """
         Will compute the std of each rule in the ruleset. Does NOT set anything in either the rules nor the
         ruleset.
@@ -1063,7 +1063,11 @@ class RuleSet(ABC):
             raise TypeError(f"'sign' can not be computed for '{self.rule_type}'")
 
     def calc_zscores(
-        self, y: np.ndarray, predictions: Optional[pd.Series] = None, nones: Optional[pd.Series] = None
+        self,
+        y: np.ndarray,
+        predictions: Optional[pd.Series] = None,
+        nones: Optional[pd.Series] = None,
+        horizon: int = 1,
     ):
         if nones is None:
             nones = pd.Series({str(r.condition): r.nones for r in self})
@@ -1072,12 +1076,7 @@ class RuleSet(ABC):
             predictions = self.calc_predictions(y=y)
             """unique prediction of each rules in a pd.Series"""
 
-        return calc_zscore_external(
-            prediction=predictions,
-            length=nones,
-            y=y,
-            horizon=self.__class__.ENVIRONMENTS.horizon
-        )
+        return calc_zscore_external(prediction=predictions, length=nones, y=y, horizon=horizon)
 
     def calc_criterions(
         self,
@@ -1170,7 +1169,7 @@ class RuleSet(ABC):
             return pd.Series(dtype=int)
         if self.rule_type is None:
             return pd.Series(dtype=int)
-        
+
         stacked = self.__class__.STACKED_FIT and self.stacked_activations is not None
 
         stacked_activations = None
@@ -1182,8 +1181,7 @@ class RuleSet(ABC):
             return self._calc_prediction_unstacked(weights=weights, xs=xs)
 
     def _calc_prediction_stacked(
-        self, weights: Optional[Union[pd.Series, str]] = None,
-        stacked_activations: Optional[pd.DataFrame] = None
+        self, weights: Optional[Union[pd.Series, str]] = None, stacked_activations: Optional[pd.DataFrame] = None
     ) -> Union[None, pd.Series]:
         predictions = pd.Series({str(r.condition): getattr(r, "prediction") for r in self})
 
@@ -1223,8 +1221,10 @@ class RuleSet(ABC):
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
         # noinspection PyUnresolvedReferences
+
     def _calc_prediction_unstacked(
-        self, weights: Optional[Union[pd.Series, str]] = None,
+        self,
+        weights: Optional[Union[pd.Series, str]] = None,
         xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
     ) -> pd.Series:
 
@@ -1296,9 +1296,7 @@ class RuleSet(ABC):
                 if self._activation is None or self._activation.length == 0:
                     self.compute_self_activation()
                 activation = self.activation
-            self.criterion = functions.calc_classification_criterion(
-                activation, predictions_vector, y, **kwargs
-            )
+            self.criterion = functions.calc_classification_criterion(activation, predictions_vector, y, **kwargs)
         elif issubclass(self.rule_type, RegressionRule):
             # noinspection PyTypeChecker
             self.criterion = functions.calc_regression_criterion(predictions_vector, y, **kwargs)
