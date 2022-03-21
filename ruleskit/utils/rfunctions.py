@@ -271,6 +271,9 @@ def calc_regression_criterion(
 
     criterion_method = kwargs.get("criterion_method", "mse_norm")
 
+    if isinstance(y, pd.Series):
+        y = y.values
+
     if criterion_method.lower() == "mse":
         criterion = mse_function(prediction, y)
     elif criterion_method.lower() == "mse_norm":
