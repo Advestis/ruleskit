@@ -922,8 +922,8 @@ class RuleSet(ABC):
             rule = ClassificationRule()
         else:
             rule = Rule()
-        rule_idx = copy(type(rule).rule_index)
-        condition_index = {c: None for c in type(rule).condition_index}
+        rule_idx = copy(rule.__class__.rule_index)
+        condition_index = {c: None for c in rule.__class__.condition_index}
 
         for rule_ind in srule.index:
             str_value = str(srule[rule_ind])
