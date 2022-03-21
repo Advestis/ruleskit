@@ -24,7 +24,7 @@ from .utils.rfunctions import (
     calc_ruleset_prediction_equally_weighted_regressor_stacked, calc_ruleset_prediction_weighted_regressor_unstacked,
     calc_ruleset_prediction_equally_weighted_regressor_unstacked,
     calc_ruleset_prediction_weighted_classificator_unstacked,
-    calc_ruleset_prediction_equally_weighted_classificator_unstacked,
+    calc_ruleset_prediction_equally_weighted_classificator_unstacked, calc_zscore_external,
 )
 
 logger = logging.getLogger(__name__)
@@ -952,7 +952,7 @@ class RuleSet(ABC):
         return rule
 
     def calc_predictions(
-        self, y: [np.ndarray, pd.Series], stacked_activation: Optional[pd.DataFrame] = None
+        self, y: [np.ndarray, pd.Series], stacked_activations: Optional[pd.DataFrame] = None
     ) -> Union[pd.Series, pd.DataFrame]:
         """
         Will compute the prediction of each rule in the ruleset. Does NOT set anything in either the rules nor the
@@ -966,7 +966,7 @@ class RuleSet(ABC):
         y: [np.ndarray, pd.Series]
             The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D
             np.ndarray or pd.Series.
-        stacked_activation: Optional[pd.DataFrame)
+        stacked_activations: Optional[pd.DataFrame)
             If specified, uses this activation instead of self.activation
 
         Returns
@@ -976,9 +976,9 @@ class RuleSet(ABC):
             Classification : A pd.DataFrame with rules as index and classes as columns, and class probabilities as
             values
         """
-        if stacked_activation is None:
-            stacked_activation = self.stacked_activations
-            if stacked_activation is None:
+        if stacked_activations is None:
+            stacked_activations = self.stacked_activations
+            if stacked_activations is None:
                 raise ValueError("Stacked activation vectors are needed")
 
         with warnings.catch_warnings():
@@ -994,18 +994,18 @@ class RuleSet(ABC):
                     raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
             if issubclass(self.rule_type, ClassificationRule):
-                class_probabilities = functions.class_probabilities(stacked_activation, y)
+                class_probabilities = functions.class_probabilities(stacked_activations, y)
                 maxs = class_probabilities.max()
                 return class_probabilities[class_probabilities == maxs].apply(
                     lambda x: x.dropna().sort_index().index[0]
                 )
             elif issubclass(self.rule_type, RegressionRule):
-                return functions.conditional_mean(stacked_activation, y)
+                return functions.conditional_mean(stacked_activations, y)
             else:
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
     def calc_stds(
-        self, y: [np.ndarray, pd.Series], stacked_activation: Optional[pd.DataFrame] = None
+        self, y: [np.ndarray, pd.Series], stacked_activations: Optional[pd.DataFrame] = None
     ) -> pd.Series:
         """
         Will compute the std of each rule in the ruleset. Does NOT set anything in either the rules nor the
@@ -1019,7 +1019,7 @@ class RuleSet(ABC):
         y: [np.ndarray, pd.Series]
           The targets on which to evaluate the rules predictions, and possibly other criteria. Must be a 1-D np.ndarray
           or pd.Series.
-        stacked_activation: Optional[pd.DataFrame]
+        stacked_activations: Optional[pd.DataFrame]
             If specified, uses this activation instead of self.activation
 
         Returns
@@ -1030,9 +1030,9 @@ class RuleSet(ABC):
         if not issubclass(self.rule_type, RegressionRule):
             raise TypeError(f"'std' can not be computed for '{self.rule_type}'")
 
-        if stacked_activation is None:
-            stacked_activation = self.stacked_activations
-            if stacked_activation is None:
+        if stacked_activations is None:
+            stacked_activations = self.stacked_activations
+            if stacked_activations is None:
                 raise ValueError("Stacked activation vectors are needed")
 
         with warnings.catch_warnings():
@@ -1046,7 +1046,7 @@ class RuleSet(ABC):
                     raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
             if issubclass(self.rule_type, RegressionRule):
-                return functions.conditional_std(stacked_activation, y)
+                return functions.conditional_std(stacked_activations, y)
             else:
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
@@ -1061,6 +1061,23 @@ class RuleSet(ABC):
             [r.calc_sign() for r in self]
         else:
             raise TypeError(f"'sign' can not be computed for '{self.rule_type}'")
+
+    def calc_zscores(
+        self, y: np.ndarray, predictions: Optional[pd.Series] = None, nones: Optional[pd.Series] = None
+    ):
+        if nones is None:
+            nones = pd.Series({str(r.condition): r.nones for r in self})
+
+        if predictions is None:
+            predictions = self.calc_predictions(y=y)
+            """unique prediction of each rules in a pd.Series"""
+
+        return calc_zscore_external(
+            prediction=predictions,
+            length=nones,
+            y=y,
+            horizon=self.__class__.ENVIRONMENTS.horizon
+        )
 
     def calc_criterions(
         self,

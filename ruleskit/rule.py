@@ -11,6 +11,8 @@ from .utils import rfunctions as functions
 from .thresholds import Thresholds
 import logging
 
+from .utils.rfunctions import calc_zscore_external
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,13 +88,15 @@ class Rule(ABC):
         self._coverage: Optional[float] = None
         self._prediction: Optional[Union[float, str, int]] = None
         self._criterion: Optional[float] = None
+        self._zscore: Optional[float] = None
 
         self._time_fit: float = -1
         self._time_eval: float = -1
         self._time_calc_activation: float = -1
         self._time_predict: float = -1
-        self._time_calc_criterion: float = -1
         self._time_calc_prediction: float = -1
+        self._time_calc_criterion: float = -1
+        self._time_calc_zscore: float = -1
         self._fitted: bool = False
         self._evaluated = False
         self._train_set_size: Optional[int] = None
@@ -668,6 +672,23 @@ class RegressionRule(Rule):
         self._time_calc_criterion = time() - t0
         self.check_thresholds("criterion")
 
+    def calc_zscore(
+        self, y: np.ndarray, activation: Optional[Activation] = None, horizon: int = 1
+    ) -> Union[None, float]:
+        t0 = time()
+        if activation is None:
+            activation = self._activation
+            if activation is None:
+                return None
+        length = activation.nones
+        if length == 0:
+            return np.nan
+        num = abs(self.prediction - np.nanmean(y))
+        deno = np.sqrt(horizon / length) * np.nanstd(y)
+        self._zscore = num / deno
+        self._time_calc_zscore = time() - t0
+        self.check_thresholds("zscore")
+
 
 class ClassificationRule(Rule):
     """Rule applied on discret target data."""
@@ -709,6 +730,20 @@ class ClassificationRule(Rule):
         self._prediction = functions.class_probabilities(self.activation, y)
         self._time_calc_prediction = time() - t0
         self.check_thresholds("prediction")
+
+    def calc_zscore(self, y: np.ndarray, activation: Optional[Activation] = None, horizon: int = 1):
+        t0 = time()
+        if activation is None:
+            activation = self._activation
+            if activation is None:
+                return None
+        if not isinstance(activation, Activation):
+            raise TypeError("Needs 'Activation' type activation vector")
+        self._zscore = calc_zscore_external(
+            prediction=self.prediction, length=activation.nones, y=y, horizon=horizon
+        )
+        self.check_thresholds("zscore")
+        self._time_calc_zscore = time() - t0
 
     def calc_criterion(
             self,

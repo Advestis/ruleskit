@@ -616,3 +616,13 @@ def calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_ve
         most_freq_pred = pd.Series([most_freq_pred])
     most_freq_pred.name = None
     return most_freq_pred.reindex(idx)
+
+
+def calc_zscore_external(
+    prediction: Union[pd.Series, float], length: Union[pd.Series, int], y: np.ndarray, horizon: int = 1
+) -> Union[None, float]:
+    if isinstance(length, int) and length == 0:
+        return np.nan
+    num = abs(prediction - np.nanmean(y))
+    deno = np.sqrt(horizon / length) * np.nanstd(y)
+    return num / deno
