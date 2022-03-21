@@ -576,6 +576,10 @@ class RegressionRule(Rule):
         return self._criterion
 
     @property
+    def zscore(self) -> float:
+        return self._zscore
+
+    @property
     def time_calc_prediction(self):
         return self._time_calc_prediction
 
@@ -715,10 +719,6 @@ class ClassificationRule(Rule):
     @property
     def criterion(self) -> float:
         return self._criterion
-
-    @property
-    def zscore(self) -> float:
-        return self._zscore
 
     def calc_prediction(self, y: [np.ndarray, pd.Series]):
         """
