@@ -374,10 +374,7 @@ class RuleSet(ABC):
             for attr in self.rule_type.attributes_from_train_set:
                 if attr == "activation":
                     raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
-                res = launch_method(getattr(self, f"calc_{attr}s"), y=y, xs=xs, **computed_attrs, **kwargs)
-                # If res is None, assumes the calc_(attr)s method set the attribute of the rules itself
-                if res is not None:
-                    computed_attrs[f"{attr}s"] = res
+                computed_attrs[f"{attr}s"] = launch_method(getattr(self, f"calc_{attr}s"), y=y, xs=xs, **computed_attrs, **kwargs)
             to_drop = []
 
             if clean_activation:
@@ -1096,15 +1093,16 @@ class RuleSet(ABC):
             else:
                 raise TypeError(f"Unexpected rule type '{self.rule_type}'")
 
-    def calc_signs(self):
+    def calc_signs(self, predictions: Optional[pd.Series] = None) -> pd.Series:
         """
-        Computes and sets the sign of each rule in the ruleset. DOES set the signs in the rules in place, so does not
-        return anything.
+        Computes the sign of each rule in the ruleset.
 
-        Rules predictions must have been set.
+        Rules predictions must have been set or be given to the method.
         """
         if issubclass(self.rule_type, RegressionRule):
-            [r.calc_sign() for r in self]
+            if predictions is None:
+                predictions = pd.Series({str(r.condition): r.prediction for r in self})
+            return predictions.apply(lambda x: None if x is None else ("-" if x < 0 else "+"))
         else:
             raise TypeError(f"'sign' can not be computed for '{self.rule_type}'")
 
@@ -1114,7 +1112,7 @@ class RuleSet(ABC):
         predictions: Optional[pd.Series] = None,
         nones: Optional[pd.Series] = None,
         horizon: int = 1,
-    ):
+    ) -> pd.Series:
         if not issubclass(self.rule_type, RegressionRule):
             raise TypeError(f"'sign' can not be computed for '{self.rule_type}'")
         if nones is None:

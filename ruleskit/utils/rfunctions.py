@@ -620,7 +620,7 @@ def calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_ve
 
 def calc_zscore_external(
     prediction: Union[pd.Series, float], length: Union[pd.Series, int], y: np.ndarray, horizon: int = 1
-) -> Union[None, float]:
+) -> Union[None, float, pd.Series]:
     if isinstance(length, int) and length == 0:
         return np.nan
     num = abs(prediction - np.nanmean(y))

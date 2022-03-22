@@ -588,6 +588,10 @@ class RegressionRule(Rule):
         return self._std
 
     @property
+    def sign(self) -> str:
+        return self._sign
+
+    @property
     def criterion(self) -> float:
         # noinspection PyTypeChecker
         return self._criterion
@@ -597,15 +601,15 @@ class RegressionRule(Rule):
         return self._zscore
 
     @property
-    def time_calc_prediction(self):
+    def time_calc_prediction(self) -> float:
         return self._time_calc_prediction
 
     @property
-    def time_calc_criterion(self):
+    def time_calc_criterion(self) -> float:
         return self._time_calc_criterion
 
     @property
-    def time_calc_std(self):
+    def time_calc_std(self) -> float:
         return self._time_calc_std
 
     def calc_prediction(self, y: [np.ndarray, pd.Series], activation: Optional[Activation] = None):
