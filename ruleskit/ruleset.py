@@ -894,13 +894,9 @@ class RuleSet(ABC):
             self.compute_stacked_activation()
         self.features_names = list(set(traverse([rule.features_names for rule in self])))
 
-    def save(self, path):
+    def to_df(self) -> pd.DataFrame:
         if len(self) == 0:
-            if hasattr(path, "write"):
-                path.write(pd.DataFrame())
-            else:
-                pd.DataFrame().to_csv(path)
-            return
+            return pd.DataFrame()
         if self.rule_type is None:
             raise TypeError("Rule type unset : can not save Ruleset")
         idx = copy(self.rule_type.index)
@@ -937,7 +933,10 @@ class RuleSet(ABC):
             data=[[self.train_set_size if i == 0 else np.nan for i in range(len(df.columns))]],
             index=["ruleset test set size"],
         )
-        df = pd.concat([df, s_cov, s_crit, s_train, s_test])
+        return pd.concat([df, s_cov, s_crit, s_train, s_test])
+
+    def save(self, path):
+        df = self.to_df()
 
         if hasattr(path, "write"):
             path.write(df)
