@@ -391,8 +391,8 @@ class RuleSet(ABC):
                     setattr(self._rules[ir], f"_{attr[:-1]}", computed_attrs[attr].iloc[ir])
                     if self._rules[ir].good:
                         self._rules[ir].check_thresholds(attr[:-1])
-                        if not self._rules[ir].good:
-                            to_drop.append(self._rules[ir])
+                    if not self._rules[ir].good:
+                        to_drop.append(self._rules[ir])
                 # To check attributes that are set along side others, like coverage
                 if self._rules[ir].good:
                     self._rules[ir].check_thresholds()
@@ -586,8 +586,8 @@ class RuleSet(ABC):
                     setattr(self._rules[ir], f"_{attr[:-1]}", computed_attrs[attr].iloc[ir])
                     if self._rules[ir].good:
                         self._rules[ir].check_thresholds(attr[:-1])
-                        if not self._rules[ir].good:
-                            to_drop.append(self._rules[ir])
+                    if not self._rules[ir].good:
+                        to_drop.append(self._rules[ir])
                 if self._rules[ir].good:
                     self._rules[ir].check_thresholds()
         else:
