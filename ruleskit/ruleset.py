@@ -393,6 +393,9 @@ class RuleSet(ABC):
                         self._rules[ir].check_thresholds(attr[:-1])
                         if not self._rules[ir].good:
                             to_drop.append(self._rules[ir])
+                # To check attributes that are set along side others, like coverage
+                if not self._rules[ir].good:
+                    self._rules[ir].check_thresholds()
         else:
             [r.fit(xs=xs, y=y, force_if_not_good=force_if_not_good, **kwargs) for r in self]
             to_drop = [r for r in self if not r.good]
@@ -585,6 +588,8 @@ class RuleSet(ABC):
                         self._rules[ir].check_thresholds(attr[:-1])
                         if not self._rules[ir].good:
                             to_drop.append(self._rules[ir])
+                if not self._rules[ir].good:
+                    self._rules[ir].check_thresholds()
         else:
             [
                 r.eval(
