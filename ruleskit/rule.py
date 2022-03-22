@@ -11,6 +11,8 @@ from .utils import rfunctions as functions
 from .thresholds import Thresholds
 import logging
 
+from .utils.rfunctions import calc_zscore_external
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,13 +88,15 @@ class Rule(ABC):
         self._coverage: Optional[float] = None
         self._prediction: Optional[Union[float, str, int]] = None
         self._criterion: Optional[float] = None
+        self._zscore: Optional[float] = None
 
         self._time_fit: float = -1
         self._time_eval: float = -1
         self._time_calc_activation: float = -1
         self._time_predict: float = -1
-        self._time_calc_criterion: float = -1
         self._time_calc_prediction: float = -1
+        self._time_calc_criterion: float = -1
+        self._time_calc_zscore: float = -1
         self._fitted: bool = False
         self._evaluated = False
         self._train_set_size: Optional[int] = None
@@ -327,6 +331,7 @@ class Rule(ABC):
         self,
         y: Union[np.ndarray, pd.Series],
         xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+        force_if_not_good: bool = False,
         **kwargs
     ):
         """Computes activation and attributes relevant to the train set
@@ -335,6 +340,7 @@ class Rule(ABC):
         ----------
         y: Union[np.ndarray, pd.Series]
         xs: Union[pd.DataFrame, np.ndarray]
+        force_if_not_good: bool
         kwargs: dict
             Additionnal keyword arguments for calc_<any_attribute>
         """
@@ -344,6 +350,7 @@ class Rule(ABC):
 
         if self._fitted and xs is None:
             return
+
         t0 = time()
 
         def launch_method(method, **kw):
@@ -361,13 +368,15 @@ class Rule(ABC):
         for attr in self.__class__.attributes_from_train_set:
             if attr == "activation":
                 raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
+            if not self.good and not force_if_not_good:
+                setattr(self, f"_{attr}", np.nan)
+                continue
             launch_method(getattr(self, f"calc_{attr}"), y=y, xs=xs, **kwargs)
-            self.check_thresholds(attr)
-            if not self.good:
-                self._time_fit = time() - t0
-                self._fitted = True
-                return
-        self.check_thresholds()
+            if self.good:
+                self.check_thresholds(attr)
+
+        if self.good:
+            self.check_thresholds()
         self.trigger_subattributes_computation()
         self._time_fit = time() - t0
         self._fitted = True
@@ -377,6 +386,7 @@ class Rule(ABC):
         y: Union[np.ndarray, pd.Series],
         xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
         recompute_activation: bool = False,
+        force_if_not_good: bool = False,
         **kwargs,
     ):
         """Computes prediction, standard deviation, and regression criterion
@@ -387,6 +397,8 @@ class Rule(ABC):
         xs: Union[pd.DataFrame, np.ndarray]
         recompute_activation: bool
             To reset self.activation using the given xs
+        force_if_not_good: bool
+            If the rule was seen as "bad", eval will not trigger unless this boolean is True (Default value = False)
         kwargs
             Additionnal keyword arguments for calc_<any_attribute>
         """
@@ -395,6 +407,13 @@ class Rule(ABC):
             raise IndexError("Key 'method' can not be given to 'eval'")
 
         t0 = time()
+
+        if not self.good and not force_if_not_good:
+            self._time_eval = time() - t0
+            self._fitted = True
+            for attr in self.__class__.attributes_from_test_set:
+                setattr(self, f"_{attr}", np.nan)
+            return
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
@@ -424,13 +443,15 @@ class Rule(ABC):
         for attr in self.__class__.attributes_from_test_set:
             if attr == "activation":
                 raise ValueError("'activation' can not be specified in 'attributes_from_test_set'")
+            if not self.good and not force_if_not_good:
+                setattr(self, f"_{attr}", np.nan)
+                continue
             launch_method(getattr(self, f"calc_{attr}"), y=y, xs=xs, activation=activation, **kwargs)
-            self.check_thresholds(attr)
-            if not self.good:
-                self._time_fit = time() - t0
-                self._fitted = True
-                return
-        self.check_thresholds()
+            if self.good:
+                self.check_thresholds(attr)
+
+        if self.good:
+            self.check_thresholds()
         self._time_eval = time() - t0
         self._evaluated = True
 
@@ -545,10 +566,10 @@ class Rule(ABC):
 class RegressionRule(Rule):
     """Rule applied on continuous target data."""
 
-    rule_index = Rule.rule_index + ["coverage", "criterion", "std"]
+    rule_index = Rule.rule_index + ["coverage", "zscore", "criterion", "std"]
     index = Rule.condition_index + rule_index
-    attributes_from_test_set = ["criterion"]
     attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std", "sign"]
+    attributes_from_test_set = ["zscore", "criterion"]
 
     def __init__(
         self,
@@ -567,20 +588,28 @@ class RegressionRule(Rule):
         return self._std
 
     @property
+    def sign(self) -> str:
+        return self._sign
+
+    @property
     def criterion(self) -> float:
         # noinspection PyTypeChecker
         return self._criterion
 
     @property
-    def time_calc_prediction(self):
+    def zscore(self) -> float:
+        return self._zscore
+
+    @property
+    def time_calc_prediction(self) -> float:
         return self._time_calc_prediction
 
     @property
-    def time_calc_criterion(self):
+    def time_calc_criterion(self) -> float:
         return self._time_calc_criterion
 
     @property
-    def time_calc_std(self):
+    def time_calc_std(self) -> float:
         return self._time_calc_std
 
     def calc_prediction(self, y: [np.ndarray, pd.Series], activation: Optional[Activation] = None):
@@ -668,14 +697,28 @@ class RegressionRule(Rule):
         self._time_calc_criterion = time() - t0
         self.check_thresholds("criterion")
 
+    def calc_zscore(self, y: np.ndarray, activation: Optional[Activation] = None, horizon: int = 1):
+        t0 = time()
+        if activation is None:
+            activation = self._activation
+            if activation is None:
+                return
+        if not isinstance(activation, Activation):
+            raise TypeError("Needs 'Activation' type activation vector")
+        self._zscore = calc_zscore_external(
+            prediction=self.prediction, nones=activation.nones, y=y, horizon=horizon
+        )
+        self.check_thresholds("zscore")
+        self._time_calc_zscore = time() - t0
+
 
 class ClassificationRule(Rule):
     """Rule applied on discret target data."""
 
     rule_index = Rule.rule_index + ["coverage", "criterion"]
     index = Rule.condition_index + rule_index
-    attributes_from_test_set = ["criterion"]
     attributes_from_train_set = Rule.attributes_from_train_set + ["prediction"]
+    attributes_from_test_set = ["criterion"]
 
     @property
     def prediction(self) -> Union[int, str, np.integer, np.float, None]:
