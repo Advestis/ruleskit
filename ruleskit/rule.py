@@ -331,6 +331,7 @@ class Rule(ABC):
         self,
         y: Union[np.ndarray, pd.Series],
         xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+        force_if_not_good: bool = False,
         **kwargs
     ):
         """Computes activation and attributes relevant to the train set
@@ -339,6 +340,7 @@ class Rule(ABC):
         ----------
         y: Union[np.ndarray, pd.Series]
         xs: Union[pd.DataFrame, np.ndarray]
+        force_if_not_good: bool
         kwargs: dict
             Additionnal keyword arguments for calc_<any_attribute>
         """
@@ -348,6 +350,7 @@ class Rule(ABC):
 
         if self._fitted and xs is None:
             return
+
         t0 = time()
 
         def launch_method(method, **kw):
@@ -365,13 +368,15 @@ class Rule(ABC):
         for attr in self.__class__.attributes_from_train_set:
             if attr == "activation":
                 raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
+            if not self.good and not force_if_not_good:
+                setattr(self, f"_{attr}", np.nan)
+                continue
             launch_method(getattr(self, f"calc_{attr}"), y=y, xs=xs, **kwargs)
-            self.check_thresholds(attr)
-            if not self.good:
-                self._time_fit = time() - t0
-                self._fitted = True
-                return
-        self.check_thresholds()
+            if self.good:
+                self.check_thresholds(attr)
+
+        if self.good:
+            self.check_thresholds()
         self.trigger_subattributes_computation()
         self._time_fit = time() - t0
         self._fitted = True
@@ -381,6 +386,7 @@ class Rule(ABC):
         y: Union[np.ndarray, pd.Series],
         xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
         recompute_activation: bool = False,
+        force_if_not_good: bool = False,
         **kwargs,
     ):
         """Computes prediction, standard deviation, and regression criterion
@@ -391,6 +397,8 @@ class Rule(ABC):
         xs: Union[pd.DataFrame, np.ndarray]
         recompute_activation: bool
             To reset self.activation using the given xs
+        force_if_not_good: bool
+            If the rule was seen as "bad", eval will not trigger unless this boolean is True (Default value = False)
         kwargs
             Additionnal keyword arguments for calc_<any_attribute>
         """
@@ -399,6 +407,13 @@ class Rule(ABC):
             raise IndexError("Key 'method' can not be given to 'eval'")
 
         t0 = time()
+
+        if not self.good and not force_if_not_good:
+            self._time_eval = time() - t0
+            self._fitted = True
+            for attr in self.__class__.attributes_from_test_set:
+                setattr(self, f"_{attr}", np.nan)
+            return
 
         def launch_method(method, **kw):
             expected_args = list(inspect.signature(method).parameters)
@@ -428,13 +443,15 @@ class Rule(ABC):
         for attr in self.__class__.attributes_from_test_set:
             if attr == "activation":
                 raise ValueError("'activation' can not be specified in 'attributes_from_test_set'")
+            if not self.good and not force_if_not_good:
+                setattr(self, f"_{attr}", np.nan)
+                continue
             launch_method(getattr(self, f"calc_{attr}"), y=y, xs=xs, activation=activation, **kwargs)
-            self.check_thresholds(attr)
-            if not self.good:
-                self._time_fit = time() - t0
-                self._fitted = True
-                return
-        self.check_thresholds()
+            if self.good:
+                self.check_thresholds(attr)
+
+        if self.good:
+            self.check_thresholds()
         self._time_eval = time() - t0
         self._evaluated = True
 
@@ -740,7 +757,7 @@ class ClassificationRule(Rule):
         if activation is None:
             activation = self._activation
             if activation is None:
-                return None
+                return
         if not isinstance(activation, Activation):
             raise TypeError("Needs 'Activation' type activation vector")
         self._zscore = calc_zscore_external(

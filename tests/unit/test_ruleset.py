@@ -1113,8 +1113,8 @@ def test_save_and_load(rs):
 def test_not_fitted():
     res = RuleSet(
         [
-            Rule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3])),
-            Rule(HyperrectangleCondition([1, 2], bmins=[4, 4], bmaxs=[5, 4])),
+            RegressionRule(HyperrectangleCondition([0, 1], bmins=[1, 1], bmaxs=[2, 3])),
+            RegressionRule(HyperrectangleCondition([1, 2], bmins=[4, 4], bmaxs=[5, 4])),
         ]
     )
     with pytest.raises(ValueError) as e:
