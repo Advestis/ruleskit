@@ -1127,7 +1127,7 @@ class RuleSet(ABC):
             predictions = self.calc_predictions(y=y)
             """unique prediction of each rules in a pd.Series"""
 
-        return calc_zscore_external(prediction=predictions, length=nones, y=y, horizon=horizon)
+        return calc_zscore_external(prediction=predictions, nones=nones, y=y, horizon=horizon)
 
     def calc_criterions(
         self,

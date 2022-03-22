@@ -706,7 +706,7 @@ class RegressionRule(Rule):
         if not isinstance(activation, Activation):
             raise TypeError("Needs 'Activation' type activation vector")
         self._zscore = calc_zscore_external(
-            prediction=self.prediction, length=activation.nones, y=y, horizon=horizon
+            prediction=self.prediction, nones=activation.nones, y=y, horizon=horizon
         )
         self.check_thresholds("zscore")
         self._time_calc_zscore = time() - t0
