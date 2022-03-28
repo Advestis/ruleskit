@@ -97,7 +97,7 @@ class RuleSet(ABC):
         """Set by self.eval"""
         self.stacked_activations: Optional[pd.DataFrame] = None
         self.stack_activation: bool = stack_activation
-        self.rule_type = None
+        self._rule_type = None
         self._compute_activation = True  # Should NOT be equal to given compute_activation argument, but always True.
         if rules_list is not None:
             names_available = all([hasattr(r.condition, "features_names") for r in self])
@@ -197,6 +197,21 @@ class RuleSet(ABC):
             str_rule = str(other.features_names) + str(other.bmins) + str(other.bmaxs) + str(other.prediction)
 
         return str_rule in str_rules
+
+    @property
+    def rule_type(self) -> type:
+        if self._rule_type is None:
+            raise ValueError("Ruleset's rule type is not set !")
+        return self._rule_type
+
+    @rule_type.setter
+    def rule_type(self, rule_type: type):
+        if not issubclass(rule_type, (ClassificationRule, RegressionRule, Rule)):
+            raise TypeError(
+                "Ruleset's rule type must be a subclass of ruleskit.RegressionRule or ruleskit.ClassificationRule, not"
+                f" {rule_type}"
+            )
+        self._rule_type = rule_type
 
     @property
     def rules(self) -> List[Rule]:
@@ -371,10 +386,13 @@ class RuleSet(ABC):
                 self.stacked_activations.index = y.index
 
             computed_attrs = {}
+            # noinspection PyUnresolvedReferences
             for attr in self.rule_type.attributes_from_train_set:
                 if attr == "activation":
                     raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
-                computed_attrs[f"{attr}s"] = launch_method(getattr(self, f"calc_{attr}s"), y=y, xs=xs, **computed_attrs, **kwargs)
+                computed_attrs[f"{attr}s"] = launch_method(
+                    getattr(self, f"calc_{attr}s"), y=y, xs=xs, **computed_attrs, **kwargs
+                )
             to_drop = []
 
             if clean_activation:
@@ -516,10 +534,12 @@ class RuleSet(ABC):
                     self.stack_activation = not clean_activation
                     stacked_activations = self.stacked_activations
                     activation = self._activation
+                    # noinspection PyUnresolvedReferences
                     if "zscore" in self.rule_type.attributes_from_test_set:
                         nones = pd.Series({str(r.condition): r.nones for r in self})
                 else:
                     stacked_activations = self.evaluate_stacked_activations(xs)
+                    # noinspection PyUnresolvedReferences
                     if "zscore" in self.rule_type.attributes_from_test_set:
                         activation, nones = self.evaluate_self_activation(xs, return_nones=True)
                     else:
@@ -537,6 +557,7 @@ class RuleSet(ABC):
                     self.stack_activation = not clean_activation
                 stacked_activations = self.stacked_activations
                 activation = self._activation
+                # noinspection PyUnresolvedReferences
                 if "zscore" in self.rule_type.attributes_from_test_set:
                     nones = pd.Series({str(r.condition): r.nones for r in self})
 
@@ -548,6 +569,7 @@ class RuleSet(ABC):
                     raise IndexError("Stacked activation and y have different number of rows.")
                 stacked_activations.index = y.index
 
+            # noinspection PyUnresolvedReferences
             if "prediction" in self.rule_type.attributes_from_train_set:
                 # Do NOT recompute prediction from test set : it does not make sense !
                 predictions = pd.Series({str(r.condition): r.prediction for r in self})
@@ -555,6 +577,7 @@ class RuleSet(ABC):
                 predictions = None
             computed_attrs = {}
 
+            # noinspection PyUnresolvedReferences
             for attr in self.rule_type.attributes_from_test_set:
                 if attr == "activation":
                     raise ValueError("'activation' can not be specified in 'attributes_from_train_set'")
@@ -644,7 +667,7 @@ class RuleSet(ABC):
         updates should be done or not."""
         if not isinstance(rule, Rule):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
-        if self.rule_type is None:
+        if self._rule_type is None:
             self.rule_type = type(rule)
         else:
             if not isinstance(rule, self.rule_type):
@@ -897,9 +920,7 @@ class RuleSet(ABC):
     def to_df(self) -> pd.DataFrame:
         if len(self) == 0:
             return pd.DataFrame()
-        if self.rule_type is None:
-            raise TypeError("Rule type unset : can not save Ruleset")
-        idx = copy(self.rule_type.index)
+        idx = copy(self._rule_type.index)
 
         dfs = [
             self.rule_to_series(
@@ -1085,7 +1106,7 @@ class RuleSet(ABC):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             if len(self) == 0:
-                if self.rule_type is None:
+                if self._rule_type is None:
                     return pd.Series(dtype=int)
                 elif issubclass(self.rule_type, RegressionRule):
                     return pd.Series(dtype=int)
@@ -1168,7 +1189,7 @@ class RuleSet(ABC):
             predictions = self.calc_predictions(y=y)
             """unique prediction of each rules in a pd.Series"""
 
-        if self.rule_type is None:
+        if self._rule_type is None:
             return pd.Series(dtype=int)
         if issubclass(self.rule_type, ClassificationRule):
             return functions.calc_classification_criterion(stacked_activations, predictions, y, **kwargs)
@@ -1219,7 +1240,7 @@ class RuleSet(ABC):
         """
         if len(self) == 0:
             return pd.Series(dtype=int)
-        if self.rule_type is None:
+        if self._rule_type is None:
             return pd.Series(dtype=int)
 
         stacked = self.__class__.STACKED_FIT and self.stacked_activations is not None
@@ -1332,7 +1353,7 @@ class RuleSet(ABC):
         """
         if len(self) == 0:
             return np.nan
-        if self.rule_type is None:
+        if self._rule_type is None:
             return np.nan
         if predictions is None:
             predictions = self.predict(xs=xs, weights=weights)

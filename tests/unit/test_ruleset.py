@@ -527,7 +527,7 @@ def test_unstacked_fit(
                 y_test,
                 xs_test,
                 weights=weights,
-                criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+                criterion_method="mse" if issubclass(res._rule_type, RegressionRule) else "success_rate",
             )
             assert "No rules had non-zero/non-NaN weights" in str(e)
         return
@@ -536,7 +536,7 @@ def test_unstacked_fit(
             y_test,
             xs_test,
             weights=weights,
-            criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+            criterion_method="mse" if issubclass(res._rule_type, RegressionRule) else "success_rate",
         )
     assert res.ruleset_coverage == exp_coverage
     np.testing.assert_equal(res.activation, exp_act)
@@ -1053,7 +1053,7 @@ def test_stacked_fit(
                 y_test,
                 xs_test,
                 weights=weights,
-                criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+                criterion_method="mse" if issubclass(res._rule_type, RegressionRule) else "success_rate",
             )
             assert "No rules had non-zero/non-NaN weights" in str(e)
         return
@@ -1062,7 +1062,7 @@ def test_stacked_fit(
             y_test,
             xs_test,
             weights=weights,
-            criterion_method="mse" if issubclass(res.rule_type, RegressionRule) else "success_rate",
+            criterion_method="mse" if issubclass(res._rule_type, RegressionRule) else "success_rate",
         )
         assert res.test_set_size == len(y_test)
     assert res.ruleset_coverage == exp_coverage
