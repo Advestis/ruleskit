@@ -312,7 +312,8 @@ def success_rate(
     """
     if not isinstance(prediction, (pd.Series, int, str, np.integer)):
         raise TypeError(
-            "'prediction' in success_rate must be an integer, a string or a pd.Series/np.ndarray of one of those."
+            "'prediction' in success_rate must be an integer, a string or a pd.Series/np.ndarray of one of those,"
+            f"got {prediction} ({type(prediction)})."
         )
     if isinstance(prediction, (int, str, np.integer)):
         if len(y) == 0:
