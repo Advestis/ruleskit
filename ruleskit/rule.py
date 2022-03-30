@@ -721,12 +721,12 @@ class ClassificationRule(Rule):
     attributes_from_test_set = ["criterion"]
 
     @property
-    def prediction(self) -> Union[int, str, np.integer, np.float, None]:
+    def prediction(self) -> Union[int, float, str, np.integer, np.float64, None]:
         """Returns the rule prediction. If rule was fitted alone, the self._prediction should be a np.ndarray
         containing the probability of each class. In that case, the most probable class is returned. If the rule was
         fitted in a stacked fit, then the prediction is already the most probable class and it is just returned."""
         if self._prediction is not None:
-            if isinstance(self._prediction, (float, int, str, np.integer, np.float)):
+            if isinstance(self._prediction, (float, int, str, np.integer, np.float64)):
                 return self._prediction
             prop = [p[1] for p in self._prediction]
             idx = prop.index(max(prop))
