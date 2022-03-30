@@ -291,15 +291,15 @@ def calc_regression_criterion(
 
 
 def success_rate(
-    prediction: Union[float, int, str, np.integer, np.float, pd.Series], y: Union[np.ndarray, pd.DataFrame]
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64], y: Union[np.ndarray, pd.DataFrame]
 ) -> Union[float, pd.Series]:
     """
     Returns the number fraction of y that equal the prediction.
 
     Parameters
     ----------
-    prediction: Union[int, np.integer, np.float, str, pd.Series]
-        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series),
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+        The label prediction, of one rule (float ,int or str) or of a set of rules (pd.Series),
         of a prediction vector (pd.Series)
     y: Union[np.ndarray, pd.DataFrame]
         The real target points activated by the rule (np.ndarray, without nans) or the rules
@@ -310,11 +310,12 @@ def success_rate(
     Union[float, pd.Series]
         The fraction of y that equal one rule or ruleset's prediction (float) or many rules predictions (pd.Series).
     """
-    if not isinstance(prediction, (pd.Series, float, int, np.integer, np.float, str)):
+    if not isinstance(prediction, (pd.Series, float, int, str, np.integer, np.float64)):
         raise TypeError(
-            "'prediction' in success_rate must be an integer, a string or a pd.Series/np.ndarray of one of those."
+            "'prediction' in success_rate must be an integer, a string or a pd.Series/np.ndarray of one of those,"
+            f"got {prediction} ({type(prediction)})."
         )
-    if isinstance(prediction, (float, int, np.integer, np.float, str)):
+    if isinstance(prediction, (int, float, str, np.integer, np.float64)):
         if len(y) == 0:
             return np.nan
         return sum(prediction == y) / len(y)
@@ -336,7 +337,7 @@ def success_rate(
 
 def calc_classification_criterion(
     activation_vector: Union[np.ndarray, pd.DataFrame],
-    prediction: Union[float, int, np.integer, np.float, str, pd.Series],
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64],
     y: Union[np.ndarray, pd.Series],
     **kwargs,
 ) -> Union[float, pd.Series]:
@@ -347,8 +348,8 @@ def calc_classification_criterion(
     ----------
     activation_vector: Union[np.ndarray, pd.DataFrame]
         The activation vector of one rule, or of one ruleset, or the stacked activation vectors of a ruleset
-    prediction: Union[float, int, np.integer, np.float, str, pd.Series]
-        The label prediction, of one rule (int, np.integer, np.float or str) or of a set of rules (pd.Series), or
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+        The label prediction, of one rule (float, int, or str) or of a set of rules (pd.Series), or
         the label prediction of one ruleset at each observations (pd.Series)
     y: Union[np.ndarray, pd.Series, pd.DataFrame]
         The real target values. If a dataframe is given, it must have one column only.
