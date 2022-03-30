@@ -568,8 +568,8 @@ class RegressionRule(Rule):
 
     rule_index = Rule.rule_index + ["coverage", "zscore", "criterion", "std"]
     index = Rule.condition_index + rule_index
-    attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std", "sign"]
-    attributes_from_test_set = ["zscore", "criterion"]
+    attributes_from_train_set = Rule.attributes_from_train_set + ["prediction", "std", "sign", "zscore"]
+    attributes_from_test_set = ["criterion"]
 
     def __init__(
         self,
