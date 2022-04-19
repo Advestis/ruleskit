@@ -1,0 +1,1636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>ruleskit.utils.rfunctions API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ruleskit.utils.rfunctions</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import numpy as np
+from collections import Counter
+from typing import Union, Tuple, List, Optional
+import logging
+import pandas as pd
+
+
+logger = logging.getLogger(__name__)
+
+
+def class_probabilities(
+    activation: Union[np.ndarray, pd.DataFrame, None], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[np.ndarray, pd.DataFrame]:
+    &#34;&#34;&#34;Computes the class probability of each rule(s)
+
+    Parameters
+    ----------
+    activation: Union[np.ndarray, pd.DataFrame, None]
+      Either the activation vector of one rule (np.ndarray) or a DataFrame of activation vectors of many rules (one rule
+      is one column)
+    y: Union[np.ndarray, pd.Series]
+      The target classes
+
+    Returns
+    -------
+    Union[np.ndarray, pd.DataFrame]
+        If given one activation vector, returns a np.ndarray of the form [(class1, prob 1), ..., (class n, prob n)].
+        If given a df of activation vectors, returns a df with the classes as index, the rules as columns and the
+        probabilities as values.
+    &#34;&#34;&#34;
+    if activation is None:
+        return np.bincount(y).argmax()
+
+    if not isinstance(activation, pd.DataFrame) and not isinstance(activation, np.ndarray):
+        raise TypeError(&#34;&#39;activation&#39; in most_common_class must be None or a np.ndarray or a pd.DataFrame&#34;)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        count = Counter(y_conditional)
+        n = len(y_conditional)
+        prop = [v / n for v in count.values()]
+        proba = np.array([(c, v) for c, v in zip(count.keys(), prop)])
+        proba = proba[proba[:, 0].argsort()]
+        return proba
+    else:
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        y_conditional = (
+            activation.mul(y.replace(0, &#34;zero&#34;), axis=0).replace(0, np.nan).replace(&#34;&#34;, np.nan).replace(&#34;zero&#34;, 0)
+        )
+        count = y_conditional.apply(lambda x: x.value_counts())
+        count.index = count.index.astype(y.dtype)
+        return count.apply(lambda x: x / x.dropna().sum())
+
+
+def conditional_mean(
+    activation: Union[np.ndarray, pd.DataFrame, None], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;Mean of all activated values
+
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    &#34;&#34;&#34;
+    if activation is None:
+        return float(np.nanmean(y))
+
+    if not isinstance(activation, pd.DataFrame) and not isinstance(activation, np.ndarray):
+        raise TypeError(&#34;&#39;activation&#39; in conditional_mean must be None or a np.ndarray or a pd.DataFrame&#34;)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
+        if len(non_nans_conditional_y) == 0:
+            logger.debug(
+                &#34;None of the activated points have a non-nan value in target y.&#34; &#34; Conditional mean is set to nan.&#34;
+            )
+            return np.nan
+        return float(np.mean(non_nans_conditional_y))
+    else:
+        return activation.apply(lambda x: np.nanmean(np.extract(x, y)))
+
+
+def conditional_std(
+    activation: Union[np.ndarray, pd.DataFrame, None], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;Standard deviation of all activated values
+
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    &#34;&#34;&#34;
+    if activation is None:
+        return float(np.nanstd(y))
+
+    if not isinstance(activation, pd.DataFrame) and not isinstance(activation, np.ndarray):
+        raise TypeError(&#34;&#39;activation&#39; in conditional_std must be None or a np.ndarray or a pd.DataFrame&#34;)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        if len(y_conditional) == 0:
+            return np.nan
+        if len(y_conditional) == 1:
+            return 0
+        # ddof ensures numpy uses non-biased estimator of std, like pandas&#39; default
+        return float(np.nanstd(y_conditional, ddof=1))
+    else:
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        y_conditional = (
+            activation.mul(y.replace(0, &#34;zero&#34;), axis=0).replace(0, np.nan).replace(&#34;&#34;, np.nan).replace(&#34;zero&#34;, 0)
+        )
+        return y_conditional.std()
+
+
+def mse_function(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the mean squared error
+    &#34;$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)^2 $&#34;
+
+    Parameters
+    ----------
+    prediction_vector: Union[pd.Series, pd.DataFrame]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, pd.Series]
+        The real target values (real numbers)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+        the mean squared error
+    &#34;&#34;&#34;
+    if not isinstance(prediction_vector, pd.DataFrame) and not isinstance(prediction_vector, pd.Series):
+        raise TypeError(&#34;&#39;prediction_vector&#39; in mse_function must be a pd.Series or a pd.DataFrame&#34;)
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError(&#34;Predictions and y must have have the same length&#34;)
+        error_vector = prediction_vector - y
+        criterion = np.nanmean(error_vector ** 2)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        if len(prediction_vector.index) != len(y):
+            raise ValueError(&#34;Predictions and y must have the same length&#34;)
+        error_vector = prediction_vector.sub(y, axis=0)
+        return (error_vector ** 2).mean()
+
+
+def mse_norm(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    return mse_function(prediction_vector, y) / np.mean((np.mean(y) - y) ** 2)
+
+
+def mae_function(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the mean absolute error
+    &#34;$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} |\\hat{y}_i - y_i| $&#34;
+
+    Parameters
+    ----------
+    prediction_vector: Union[pd.Series, pd.DataFrame]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, pd.Series]
+      The real target values (real numbers)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+        the mean absolute error
+    &#34;&#34;&#34;
+    if not isinstance(prediction_vector, pd.DataFrame) and not isinstance(prediction_vector, pd.Series):
+        raise TypeError(&#34;&#39;prediction_vector&#39; in mae_function must be a pd.Series or a pd.DataFrame&#34;)
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError(&#34;The two array must have the same length&#34;)
+        error_vect = np.abs(prediction_vector - y)
+        criterion = np.nanmean(error_vect)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        if len(prediction_vector.index) != len(y):
+            raise ValueError(&#34;Predictions and y must have the same length&#34;)
+        error_vect = prediction_vector.sub(y, axis=0).abs()
+        return error_vect.mean()
+
+
+def mae_norm(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    return mae_function(prediction_vector, y) / np.mean(np.mean(y) - y)
+
+
+def aae_function(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the mean squared error
+    &#34;$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)$&#34;
+
+    Parameters
+    ----------
+    prediction_vector: Union[pd.Series, pd.DataFrame]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, pd.Series]
+      The real target values (real numbers)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+      the mean squared error, or a Series of mean squared errors
+    &#34;&#34;&#34;
+    if not isinstance(prediction_vector, pd.DataFrame) and not isinstance(prediction_vector, pd.Series):
+        raise TypeError(&#34;&#39;prediction_vector&#39; in aae_function must be a pd.Series or a pd.DataFrame&#34;)
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError(&#34;The two array must have the same length&#34;)
+        error = np.nanmean(np.abs(prediction_vector - y))
+        median = np.nanmean(np.abs(y - np.median(y)))
+        return error / median
+    else:
+        if len(prediction_vector.index) != len(y):
+            raise ValueError(&#34;Predictions and y must have the same length&#34;)
+        error_vector = prediction_vector.sub(y, axis=0).abs().mean()
+        median = np.mean(np.abs(y - np.median(y)))
+        return error_vector / median
+
+
+def calc_regression_criterion(
+    prediction: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series], **kwargs
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the criterion
+
+    Parameters
+    ----------
+    prediction: Union[pd.Series, pd.DataFrame]
+      The prediction vector of one rule, or the stacked prediction vectors of a ruleset
+    y: Union[np.ndarray, pd.Series]
+      The real target values (real numbers)
+    kwargs:
+      Can contain &#39;criterion_method&#39;, the criterion_method mse_function or mse_function criterion (default is &#39;mse&#39;)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+        Criterion value of one rule or ruleset, or the Series of the criterion values of several rules
+    &#34;&#34;&#34;
+
+    criterion_method = kwargs.get(&#34;criterion_method&#34;, &#34;mse_norm&#34;)
+
+    if isinstance(y, pd.Series):
+        y = y.values
+
+    if criterion_method.lower() == &#34;mse&#34;:
+        criterion = mse_function(prediction, y)
+    elif criterion_method.lower() == &#34;mse_norm&#34;:
+        criterion = mse_norm(prediction, y)
+    elif criterion_method.lower() == &#34;mae&#34;:
+        criterion = mae_function(prediction, y)
+    elif criterion_method.lower() == &#34;mae_norm&#34;:
+        criterion = mae_norm(prediction, y)
+    elif criterion_method.lower() == &#34;aae&#34;:
+        criterion = aae_function(prediction, y)
+    else:
+        raise ValueError(f&#34;Unknown criterion: {criterion_method}. Please choose among mse, mae and aae&#34;)
+
+    return criterion
+
+
+def success_rate(
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64], y: Union[np.ndarray, pd.DataFrame]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Returns the number fraction of y that equal the prediction.
+
+    Parameters
+    ----------
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+        The label prediction, of one rule (float ,int or str) or of a set of rules (pd.Series),
+        of a prediction vector (pd.Series)
+    y: Union[np.ndarray, pd.DataFrame]
+        The real target points activated by the rule (np.ndarray, without nans) or the rules
+        (pd.DataFrame, can contain nans even alongside strings)
+
+    Returns
+    -------
+    Union[float, pd.Series]
+        The fraction of y that equal one rule or ruleset&#39;s prediction (float) or many rules predictions (pd.Series).
+    &#34;&#34;&#34;
+    if not isinstance(prediction, (pd.Series, float, int, str, np.integer, np.float64)):
+        raise TypeError(
+            &#34;&#39;prediction&#39; in success_rate must be an integer, a string or a pd.Series/np.ndarray of one of those,&#34;
+            f&#34;got {prediction} ({type(prediction)}).&#34;
+        )
+    if isinstance(prediction, (int, float, str, np.integer, np.float64)):
+        if len(y) == 0:
+            return np.nan
+        return sum(prediction == y) / len(y)
+    elif isinstance(y, np.ndarray) and isinstance(prediction, pd.Series):
+        if len(y) == 0:
+            return pd.Series(dtype=int)
+        return sum(prediction == y) / len(prediction.dropna())
+    else:
+        if not isinstance(y, pd.DataFrame):
+            raise TypeError(
+                f&#34;If passing several predictions as a Series, then activated Y must be a DataFrame, not {type(y)}&#34;
+            )
+        if len(y.index) == 0:
+            return pd.Series(dtype=int)
+        activated_points = (~y.isnull()).sum()
+        correctly_predicted = y == prediction
+        return correctly_predicted.sum() / activated_points
+
+
+def calc_classification_criterion(
+    activation_vector: Union[np.ndarray, pd.DataFrame],
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64],
+    y: Union[np.ndarray, pd.Series],
+    **kwargs,
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Computes the criterion
+
+    Parameters
+    ----------
+    activation_vector: Union[np.ndarray, pd.DataFrame]
+        The activation vector of one rule, or of one ruleset, or the stacked activation vectors of a ruleset
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+        The label prediction, of one rule (float, int, or str) or of a set of rules (pd.Series), or
+        the label prediction of one ruleset at each observations (pd.Series)
+    y: Union[np.ndarray, pd.Series, pd.DataFrame]
+        The real target values. If a dataframe is given, it must have one column only.
+    kwargs:
+        Can contain &#39;method&#39;, indicating how to evaluate the criterion. For now, one can use:\n * success_rate (default)
+
+    Returns
+    -------
+    Union[float, pd.Series]
+        Criterion value of one rule or ruleset (float) or of a set of rules (pd.Series)
+    &#34;&#34;&#34;
+
+    method = kwargs.get(&#34;criterion_method&#34;, &#34;success_rate&#34;)
+
+    if not isinstance(activation_vector, pd.DataFrame) and not isinstance(activation_vector, np.ndarray):
+        raise TypeError(&#34;&#39;activation_vector&#39; in calc_classification_criterion must be a np.ndarray or a pd.DataFrame&#34;)
+
+    if isinstance(prediction, np.ndarray):
+        raise TypeError(&#34;Prediction should not be a numpy array&#34;)
+
+    if isinstance(activation_vector, np.ndarray):
+        y_conditional = np.extract(activation_vector != 0, y)
+        if isinstance(prediction, pd.Series):
+            if len(prediction) != len(activation_vector):
+                raise IndexError(&#34;Activation vector and prediction vector should have the same length&#34;)
+            prediction = prediction[activation_vector != 0]
+        if method.lower() == &#34;success_rate&#34;:
+            return success_rate(prediction, y_conditional)
+        else:
+            raise ValueError(f&#34;Unknown criterion: {method}. Please choose among:\n* success_rate&#34;)
+    else:
+        if not isinstance(prediction, pd.Series):
+            raise TypeError(
+                &#34;If passing several activation vector as a DataFrame, then prediction must be a pd.Series,&#34;
+                f&#34; not {type(prediction)}&#34;
+            )
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        y_conditional = (
+            activation_vector.mul(y.replace(0, &#34;zero&#34;), axis=0)
+            .replace(0, np.nan)
+            .replace(&#34;&#34;, np.nan)
+            .replace(&#34;zero&#34;, 0)
+        )
+        return success_rate(prediction, y_conditional)
+
+
+def init_weights_stacked(prediction_vectors: pd.DataFrame, weights: pd.DataFrame) -&gt; Tuple[pd.DataFrame, pd.DataFrame]:
+    if weights.empty:
+        raise ValueError(&#34;Weights not None but empty : can not evaluate prediction&#34;)
+    weights = weights.replace(0, np.nan).fillna(value=np.nan).dropna(axis=1, how=&#34;all&#34;)
+    absent_rules = prediction_vectors.loc[:, ~prediction_vectors.columns.isin(weights.columns)].columns
+    present_rules = prediction_vectors.loc[:, prediction_vectors.columns.isin(weights.columns)].columns
+    if len(absent_rules) &gt; 0:
+        s = (
+            &#34;Some rules given in the prediction vector did not have a weight and will be ignored in the&#34;
+            &#34; computation of the ruleset prediction. The concerned rules are :&#34;
+        )
+        s = &#34;\n&#34;.join([s] + list(absent_rules.astype(str)))
+        logger.warning(s)
+    prediction_vectors = prediction_vectors[present_rules]
+    weights = (~prediction_vectors.isna() * 1).replace(0, np.nan) * weights
+    if prediction_vectors.empty:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    return prediction_vectors, weights
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_weighted_regressor_unstacked(
+    rules: List[&#34;Rule&#34;],
+    weights: pd.Series,
+    xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+) -&gt; pd.Series:
+    if len(rules) == 0:
+        return pd.Series(dtype=int)
+    cum_pred = None
+    cum_w = None
+    for rule in rules:
+        rulename = str(rule.condition)
+        if rulename not in weights.index:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has no weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if weights[rulename] == 0:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a null weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if np.isnan(weights[rulename]):
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a nan weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if xs is None:
+            activation = rule.activation
+        else:
+            activation = rule.evaluate_activation(xs).raw
+        if activation is None:
+            continue
+        if len(activation) == 0:
+            continue
+        if cum_pred is None:
+            cum_pred = rule.calc_prediction_vector(activation=activation) * weights[rulename]
+            cum_w = activation * weights[rulename]
+        else:
+            cum_pred = (
+                (cum_pred.replace(0, &#34;zero&#34;).replace(np.nan, 0) + activation * rule.prediction * weights[rulename])
+                .replace(0, np.nan)
+                .replace(&#34;zero&#34;, 0)
+            )
+            cum_w += activation * weights[rulename]
+    if cum_pred is None:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    return cum_pred / cum_w
+
+
+def calc_ruleset_prediction_weighted_regressor_stacked(
+    prediction_vectors: pd.DataFrame, weights: pd.DataFrame
+) -&gt; pd.Series:
+    prediction_vectors, weights = init_weights_stacked(prediction_vectors, weights)
+    idx = prediction_vectors.index
+    return ((prediction_vectors * weights).sum(axis=1) / weights.sum(axis=1)).reindex(idx)
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_equally_weighted_regressor_unstacked(
+    rules: List[&#34;Rule&#34;], xs: Optional[Union[pd.DataFrame, np.ndarray]] = None
+) -&gt; pd.Series:
+    if len(rules) == 0:
+        return pd.Series(dtype=int)
+    cum_pred = None
+    cum_w = None
+    for rule in rules:
+        if xs is None:
+            activation = rule.activation
+        else:
+            activation = rule.evaluate_activation(xs).raw
+        if activation is None:
+            continue
+        if len(activation) == 0:
+            continue
+        if cum_pred is None:
+            cum_pred = rule.calc_prediction_vector(activation=activation)
+            cum_w = activation
+        else:
+            cum_pred = (
+                (cum_pred.replace(0, &#34;zero&#34;).replace(np.nan, 0) + activation * rule.prediction)
+                .replace(0, np.nan)
+                .replace(&#34;zero&#34;, 0)
+            )
+            cum_w += activation
+    if cum_pred is None:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    return cum_pred / cum_w
+
+
+def calc_ruleset_prediction_equally_weighted_regressor_stacked(prediction_vectors: pd.DataFrame) -&gt; pd.Series:
+    return prediction_vectors.mean(axis=1)
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_weighted_classificator_unstacked(
+    rules: List[&#34;Rule&#34;], weights: pd.Series, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None
+) -&gt; pd.Series:
+    if len(rules) == 0:
+        return pd.Series(dtype=int)
+
+    def get_max(s: pd.Series):
+        ps = s.index
+        m = s.max()
+        if isinstance(ps[0], str):
+            s = (s == m).astype(int).replace(0, np.nan)
+            s[~s.isna()] = ps[~s.isna()]
+            return s
+        else:
+            return (s == m).astype(int).replace(0, np.nan) * ps
+
+    preds = None
+    for rule in rules:
+        rulename = str(rule.condition)
+        if rulename not in weights.index:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has no weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if weights[rulename] == 0:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a null weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if np.isnan(weights[rulename]):
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a nan weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if xs is None:
+            activation = rule.activation
+            nones = rule.nones
+        else:
+            activation = rule.evaluate_activation(xs)
+            nones = activation.nones
+            activation = activation.raw
+        if activation is None:
+            continue
+        if nones == 0:
+            continue
+        if preds is None:
+            preds = pd.DataFrame(index=[rule.prediction], data=[activation * weights[rulename]])
+        else:
+            if rule.prediction not in preds.index:
+                preds.loc[rule.prediction] = activation * weights[rulename]
+            else:
+                preds.loc[rule.prediction] += activation * weights[rulename]
+    if preds is None:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    best_preds = preds.max().replace(0, np.nan)
+    best_preds = best_preds[(preds == best_preds).sum() == 1]
+    preds.loc[:, ~preds.columns.isin(best_preds.index)] = np.nan
+    preds2 = preds.dropna(axis=1).apply(get_max)
+    if isinstance(preds.index[0], str):
+        preds2 = preds2.bfill().ffill().iloc[0].reindex(preds.columns)
+        preds2.name = None
+        return preds2
+    else:
+        return preds2.sum().reindex(preds.columns)
+
+
+# noinspection PyUnresolvedReferences
+def calc_ruleset_prediction_equally_weighted_classificator_unstacked(
+    rules: List[&#34;Rule&#34;],
+    xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+) -&gt; pd.Series:
+    return calc_ruleset_prediction_weighted_classificator_unstacked(
+        rules, pd.Series({str(r.condition): 1 for r in rules}), xs=xs
+    )
+
+
+def calc_ruleset_prediction_weighted_classificator_stacked(
+    prediction_vectors: pd.DataFrame, weights: pd.DataFrame
+) -&gt; pd.Series:
+    prediction_vectors, weights = init_weights_stacked(prediction_vectors, weights)
+    # noinspection PyUnresolvedReferences
+    mask = (weights.T == weights.max(axis=1)).T
+    prediction_vectors = prediction_vectors[mask]
+    return calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_vectors)
+
+
+def calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_vectors: pd.DataFrame) -&gt; pd.Series:
+    idx = prediction_vectors.index
+    if pd.api.types.is_string_dtype(prediction_vectors.dtypes.iloc[0]):
+        most_freq_pred = prediction_vectors.fillna(value=np.nan).replace(&#34;nan&#34;, np.nan).mode(axis=1)
+    else:
+        most_freq_pred = prediction_vectors.mode(axis=1)
+    most_freq_pred = most_freq_pred.loc[most_freq_pred.count(axis=1) == 1].dropna(axis=1).squeeze()
+    # Happens if only on point is activated, in which case &#39;squeeze&#39; will only extract this point&#39;s prediction as a
+    # float, int or str
+    if not isinstance(most_freq_pred, pd.Series):
+        most_freq_pred = pd.Series([most_freq_pred])
+    most_freq_pred.name = None
+    return most_freq_pred.reindex(idx)
+
+
+def calc_zscore_external(
+    prediction: Union[pd.Series, float], nones: Union[pd.Series, int], y: np.ndarray, horizon: int = 1
+) -&gt; Union[None, float, pd.Series]:
+    if isinstance(nones, int) and nones == 0:
+        return np.nan
+    num = abs(prediction - np.nanmean(y))
+    deno = np.sqrt(horizon / nones) * np.nanstd(y)
+    return num / deno</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="ruleskit.utils.rfunctions.aae_function"><code class="name flex">
+<span>def <span class="ident">aae_function</span></span>(<span>prediction_vector: Union[pandas.core.series.Series, pandas.core.frame.DataFrame], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the mean squared error
+"$ \dfrac{1}{n} \Sigma_{i=1}^{n} (\hat{y}_i - y_i)$"</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prediction_vector</code></strong> :&ensp;<code>Union[pd.Series, pd.DataFrame]</code></dt>
+<dd>&nbsp;</dd>
+<dt>A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two</dt>
+<dt>different values ymean, if the rule is not active and the prediction is the rule is active.</dt>
+<dt><strong><code>y</code></strong> :&ensp;<code>Union[np.ndarray, pd.Series]</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>The real target values (real numbers)</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>criterion</code></strong> :&ensp;<code>Union[float, pd.Series]</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>the mean squared error, or a Series of mean squared errors</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def aae_function(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the mean squared error
+    &#34;$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)$&#34;
+
+    Parameters
+    ----------
+    prediction_vector: Union[pd.Series, pd.DataFrame]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, pd.Series]
+      The real target values (real numbers)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+      the mean squared error, or a Series of mean squared errors
+    &#34;&#34;&#34;
+    if not isinstance(prediction_vector, pd.DataFrame) and not isinstance(prediction_vector, pd.Series):
+        raise TypeError(&#34;&#39;prediction_vector&#39; in aae_function must be a pd.Series or a pd.DataFrame&#34;)
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError(&#34;The two array must have the same length&#34;)
+        error = np.nanmean(np.abs(prediction_vector - y))
+        median = np.nanmean(np.abs(y - np.median(y)))
+        return error / median
+    else:
+        if len(prediction_vector.index) != len(y):
+            raise ValueError(&#34;Predictions and y must have the same length&#34;)
+        error_vector = prediction_vector.sub(y, axis=0).abs().mean()
+        median = np.mean(np.abs(y - np.median(y)))
+        return error_vector / median</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_classification_criterion"><code class="name flex">
+<span>def <span class="ident">calc_classification_criterion</span></span>(<span>activation_vector: Union[pandas.core.frame.DataFrame, numpy.ndarray], prediction: Union[float, int, str, pandas.core.series.Series, numpy.integer, numpy.float64], y: Union[numpy.ndarray, pandas.core.series.Series], **kwargs) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes the criterion</p>
+<p>Parameters</p>
+<hr>
+<p>activation_vector: Union[np.ndarray, pd.DataFrame]
+The activation vector of one rule, or of one ruleset, or the stacked activation vectors of a ruleset
+prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+The label prediction, of one rule (float, int, or str) or of a set of rules (pd.Series), or
+the label prediction of one ruleset at each observations (pd.Series)
+y: Union[np.ndarray, pd.Series, pd.DataFrame]
+The real target values. If a dataframe is given, it must have one column only.
+kwargs:
+Can contain 'method', indicating how to evaluate the criterion. For now, one can use:
+* success_rate (default)</p>
+<p>Returns</p>
+<hr>
+<p>Union[float, pd.Series]
+Criterion value of one rule or ruleset (float) or of a set of rules (pd.Series)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_classification_criterion(
+    activation_vector: Union[np.ndarray, pd.DataFrame],
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64],
+    y: Union[np.ndarray, pd.Series],
+    **kwargs,
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Computes the criterion
+
+    Parameters
+    ----------
+    activation_vector: Union[np.ndarray, pd.DataFrame]
+        The activation vector of one rule, or of one ruleset, or the stacked activation vectors of a ruleset
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+        The label prediction, of one rule (float, int, or str) or of a set of rules (pd.Series), or
+        the label prediction of one ruleset at each observations (pd.Series)
+    y: Union[np.ndarray, pd.Series, pd.DataFrame]
+        The real target values. If a dataframe is given, it must have one column only.
+    kwargs:
+        Can contain &#39;method&#39;, indicating how to evaluate the criterion. For now, one can use:\n * success_rate (default)
+
+    Returns
+    -------
+    Union[float, pd.Series]
+        Criterion value of one rule or ruleset (float) or of a set of rules (pd.Series)
+    &#34;&#34;&#34;
+
+    method = kwargs.get(&#34;criterion_method&#34;, &#34;success_rate&#34;)
+
+    if not isinstance(activation_vector, pd.DataFrame) and not isinstance(activation_vector, np.ndarray):
+        raise TypeError(&#34;&#39;activation_vector&#39; in calc_classification_criterion must be a np.ndarray or a pd.DataFrame&#34;)
+
+    if isinstance(prediction, np.ndarray):
+        raise TypeError(&#34;Prediction should not be a numpy array&#34;)
+
+    if isinstance(activation_vector, np.ndarray):
+        y_conditional = np.extract(activation_vector != 0, y)
+        if isinstance(prediction, pd.Series):
+            if len(prediction) != len(activation_vector):
+                raise IndexError(&#34;Activation vector and prediction vector should have the same length&#34;)
+            prediction = prediction[activation_vector != 0]
+        if method.lower() == &#34;success_rate&#34;:
+            return success_rate(prediction, y_conditional)
+        else:
+            raise ValueError(f&#34;Unknown criterion: {method}. Please choose among:\n* success_rate&#34;)
+    else:
+        if not isinstance(prediction, pd.Series):
+            raise TypeError(
+                &#34;If passing several activation vector as a DataFrame, then prediction must be a pd.Series,&#34;
+                f&#34; not {type(prediction)}&#34;
+            )
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        y_conditional = (
+            activation_vector.mul(y.replace(0, &#34;zero&#34;), axis=0)
+            .replace(0, np.nan)
+            .replace(&#34;&#34;, np.nan)
+            .replace(&#34;zero&#34;, 0)
+        )
+        return success_rate(prediction, y_conditional)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_regression_criterion"><code class="name flex">
+<span>def <span class="ident">calc_regression_criterion</span></span>(<span>prediction: Union[pandas.core.series.Series, pandas.core.frame.DataFrame], y: Union[numpy.ndarray, pandas.core.series.Series], **kwargs) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the criterion</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prediction</code></strong> :&ensp;<code>Union[pd.Series, pd.DataFrame]</code></dt>
+<dd>&nbsp;</dd>
+<dt>The prediction vector of one rule, or the stacked prediction vectors of a ruleset</dt>
+<dt><strong><code>y</code></strong> :&ensp;<code>Union[np.ndarray, pd.Series]</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>The real target values (real numbers)
+kwargs:
+Can contain 'criterion_method', the criterion_method mse_function or mse_function criterion (default is 'mse')</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>criterion</code></strong> :&ensp;<code>Union[float, pd.Series]</code></dt>
+<dd>Criterion value of one rule or ruleset, or the Series of the criterion values of several rules</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_regression_criterion(
+    prediction: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series], **kwargs
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the criterion
+
+    Parameters
+    ----------
+    prediction: Union[pd.Series, pd.DataFrame]
+      The prediction vector of one rule, or the stacked prediction vectors of a ruleset
+    y: Union[np.ndarray, pd.Series]
+      The real target values (real numbers)
+    kwargs:
+      Can contain &#39;criterion_method&#39;, the criterion_method mse_function or mse_function criterion (default is &#39;mse&#39;)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+        Criterion value of one rule or ruleset, or the Series of the criterion values of several rules
+    &#34;&#34;&#34;
+
+    criterion_method = kwargs.get(&#34;criterion_method&#34;, &#34;mse_norm&#34;)
+
+    if isinstance(y, pd.Series):
+        y = y.values
+
+    if criterion_method.lower() == &#34;mse&#34;:
+        criterion = mse_function(prediction, y)
+    elif criterion_method.lower() == &#34;mse_norm&#34;:
+        criterion = mse_norm(prediction, y)
+    elif criterion_method.lower() == &#34;mae&#34;:
+        criterion = mae_function(prediction, y)
+    elif criterion_method.lower() == &#34;mae_norm&#34;:
+        criterion = mae_norm(prediction, y)
+    elif criterion_method.lower() == &#34;aae&#34;:
+        criterion = aae_function(prediction, y)
+    else:
+        raise ValueError(f&#34;Unknown criterion: {criterion_method}. Please choose among mse, mae and aae&#34;)
+
+    return criterion</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_classificator_stacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_equally_weighted_classificator_stacked</span></span>(<span>prediction_vectors: pandas.core.frame.DataFrame) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_vectors: pd.DataFrame) -&gt; pd.Series:
+    idx = prediction_vectors.index
+    if pd.api.types.is_string_dtype(prediction_vectors.dtypes.iloc[0]):
+        most_freq_pred = prediction_vectors.fillna(value=np.nan).replace(&#34;nan&#34;, np.nan).mode(axis=1)
+    else:
+        most_freq_pred = prediction_vectors.mode(axis=1)
+    most_freq_pred = most_freq_pred.loc[most_freq_pred.count(axis=1) == 1].dropna(axis=1).squeeze()
+    # Happens if only on point is activated, in which case &#39;squeeze&#39; will only extract this point&#39;s prediction as a
+    # float, int or str
+    if not isinstance(most_freq_pred, pd.Series):
+        most_freq_pred = pd.Series([most_freq_pred])
+    most_freq_pred.name = None
+    return most_freq_pred.reindex(idx)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_classificator_unstacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_equally_weighted_classificator_unstacked</span></span>(<span>rules: List[ForwardRef('Rule')], xs: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)] = None) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_equally_weighted_classificator_unstacked(
+    rules: List[&#34;Rule&#34;],
+    xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+) -&gt; pd.Series:
+    return calc_ruleset_prediction_weighted_classificator_unstacked(
+        rules, pd.Series({str(r.condition): 1 for r in rules}), xs=xs
+    )</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_regressor_stacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_equally_weighted_regressor_stacked</span></span>(<span>prediction_vectors: pandas.core.frame.DataFrame) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_equally_weighted_regressor_stacked(prediction_vectors: pd.DataFrame) -&gt; pd.Series:
+    return prediction_vectors.mean(axis=1)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_regressor_unstacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_equally_weighted_regressor_unstacked</span></span>(<span>rules: List[ForwardRef('Rule')], xs: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)] = None) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_equally_weighted_regressor_unstacked(
+    rules: List[&#34;Rule&#34;], xs: Optional[Union[pd.DataFrame, np.ndarray]] = None
+) -&gt; pd.Series:
+    if len(rules) == 0:
+        return pd.Series(dtype=int)
+    cum_pred = None
+    cum_w = None
+    for rule in rules:
+        if xs is None:
+            activation = rule.activation
+        else:
+            activation = rule.evaluate_activation(xs).raw
+        if activation is None:
+            continue
+        if len(activation) == 0:
+            continue
+        if cum_pred is None:
+            cum_pred = rule.calc_prediction_vector(activation=activation)
+            cum_w = activation
+        else:
+            cum_pred = (
+                (cum_pred.replace(0, &#34;zero&#34;).replace(np.nan, 0) + activation * rule.prediction)
+                .replace(0, np.nan)
+                .replace(&#34;zero&#34;, 0)
+            )
+            cum_w += activation
+    if cum_pred is None:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    return cum_pred / cum_w</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_classificator_stacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_weighted_classificator_stacked</span></span>(<span>prediction_vectors: pandas.core.frame.DataFrame, weights: pandas.core.frame.DataFrame) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_weighted_classificator_stacked(
+    prediction_vectors: pd.DataFrame, weights: pd.DataFrame
+) -&gt; pd.Series:
+    prediction_vectors, weights = init_weights_stacked(prediction_vectors, weights)
+    # noinspection PyUnresolvedReferences
+    mask = (weights.T == weights.max(axis=1)).T
+    prediction_vectors = prediction_vectors[mask]
+    return calc_ruleset_prediction_equally_weighted_classificator_stacked(prediction_vectors)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_classificator_unstacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_weighted_classificator_unstacked</span></span>(<span>rules: List[ForwardRef('Rule')], weights: pandas.core.series.Series, xs: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)] = None) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_weighted_classificator_unstacked(
+    rules: List[&#34;Rule&#34;], weights: pd.Series, xs: Optional[Union[pd.DataFrame, np.ndarray]] = None
+) -&gt; pd.Series:
+    if len(rules) == 0:
+        return pd.Series(dtype=int)
+
+    def get_max(s: pd.Series):
+        ps = s.index
+        m = s.max()
+        if isinstance(ps[0], str):
+            s = (s == m).astype(int).replace(0, np.nan)
+            s[~s.isna()] = ps[~s.isna()]
+            return s
+        else:
+            return (s == m).astype(int).replace(0, np.nan) * ps
+
+    preds = None
+    for rule in rules:
+        rulename = str(rule.condition)
+        if rulename not in weights.index:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has no weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if weights[rulename] == 0:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a null weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if np.isnan(weights[rulename]):
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a nan weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if xs is None:
+            activation = rule.activation
+            nones = rule.nones
+        else:
+            activation = rule.evaluate_activation(xs)
+            nones = activation.nones
+            activation = activation.raw
+        if activation is None:
+            continue
+        if nones == 0:
+            continue
+        if preds is None:
+            preds = pd.DataFrame(index=[rule.prediction], data=[activation * weights[rulename]])
+        else:
+            if rule.prediction not in preds.index:
+                preds.loc[rule.prediction] = activation * weights[rulename]
+            else:
+                preds.loc[rule.prediction] += activation * weights[rulename]
+    if preds is None:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    best_preds = preds.max().replace(0, np.nan)
+    best_preds = best_preds[(preds == best_preds).sum() == 1]
+    preds.loc[:, ~preds.columns.isin(best_preds.index)] = np.nan
+    preds2 = preds.dropna(axis=1).apply(get_max)
+    if isinstance(preds.index[0], str):
+        preds2 = preds2.bfill().ffill().iloc[0].reindex(preds.columns)
+        preds2.name = None
+        return preds2
+    else:
+        return preds2.sum().reindex(preds.columns)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_regressor_stacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_weighted_regressor_stacked</span></span>(<span>prediction_vectors: pandas.core.frame.DataFrame, weights: pandas.core.frame.DataFrame) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_weighted_regressor_stacked(
+    prediction_vectors: pd.DataFrame, weights: pd.DataFrame
+) -&gt; pd.Series:
+    prediction_vectors, weights = init_weights_stacked(prediction_vectors, weights)
+    idx = prediction_vectors.index
+    return ((prediction_vectors * weights).sum(axis=1) / weights.sum(axis=1)).reindex(idx)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_regressor_unstacked"><code class="name flex">
+<span>def <span class="ident">calc_ruleset_prediction_weighted_regressor_unstacked</span></span>(<span>rules: List[ForwardRef('Rule')], weights: pandas.core.series.Series, xs: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)] = None) ‑> pandas.core.series.Series</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_ruleset_prediction_weighted_regressor_unstacked(
+    rules: List[&#34;Rule&#34;],
+    weights: pd.Series,
+    xs: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+) -&gt; pd.Series:
+    if len(rules) == 0:
+        return pd.Series(dtype=int)
+    cum_pred = None
+    cum_w = None
+    for rule in rules:
+        rulename = str(rule.condition)
+        if rulename not in weights.index:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has no weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if weights[rulename] == 0:
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a null weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if np.isnan(weights[rulename]):
+            logger.warning(f&#34;Rule &#39;{rulename}&#39; has a nan weight and is ignored in ruleset&#39;s prediction&#34;)
+            continue
+        if xs is None:
+            activation = rule.activation
+        else:
+            activation = rule.evaluate_activation(xs).raw
+        if activation is None:
+            continue
+        if len(activation) == 0:
+            continue
+        if cum_pred is None:
+            cum_pred = rule.calc_prediction_vector(activation=activation) * weights[rulename]
+            cum_w = activation * weights[rulename]
+        else:
+            cum_pred = (
+                (cum_pred.replace(0, &#34;zero&#34;).replace(np.nan, 0) + activation * rule.prediction * weights[rulename])
+                .replace(0, np.nan)
+                .replace(&#34;zero&#34;, 0)
+            )
+            cum_w += activation * weights[rulename]
+    if cum_pred is None:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    return cum_pred / cum_w</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.calc_zscore_external"><code class="name flex">
+<span>def <span class="ident">calc_zscore_external</span></span>(<span>prediction: Union[float, pandas.core.series.Series], nones: Union[pandas.core.series.Series, int], y: numpy.ndarray, horizon: int = 1) ‑> Union[ForwardRef(None), float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_zscore_external(
+    prediction: Union[pd.Series, float], nones: Union[pd.Series, int], y: np.ndarray, horizon: int = 1
+) -&gt; Union[None, float, pd.Series]:
+    if isinstance(nones, int) and nones == 0:
+        return np.nan
+    num = abs(prediction - np.nanmean(y))
+    deno = np.sqrt(horizon / nones) * np.nanstd(y)
+    return num / deno</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.class_probabilities"><code class="name flex">
+<span>def <span class="ident">class_probabilities</span></span>(<span>activation: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[pandas.core.frame.DataFrame, numpy.ndarray]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes the class probability of each rule(s)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>activation</code></strong> :&ensp;<code>Union[np.ndarray, pd.DataFrame, None]</code></dt>
+<dd>&nbsp;</dd>
+<dt>Either the activation vector of one rule (np.ndarray) or a DataFrame of activation vectors of many rules (one rule</dt>
+<dt>is one column)</dt>
+<dt><strong><code>y</code></strong> :&ensp;<code>Union[np.ndarray, pd.Series]</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>The target classes</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Union[np.ndarray, pd.DataFrame]</code></dt>
+<dd>If given one activation vector, returns a np.ndarray of the form [(class1, prob 1), &hellip;, (class n, prob n)].
+If given a df of activation vectors, returns a df with the classes as index, the rules as columns and the
+probabilities as values.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def class_probabilities(
+    activation: Union[np.ndarray, pd.DataFrame, None], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[np.ndarray, pd.DataFrame]:
+    &#34;&#34;&#34;Computes the class probability of each rule(s)
+
+    Parameters
+    ----------
+    activation: Union[np.ndarray, pd.DataFrame, None]
+      Either the activation vector of one rule (np.ndarray) or a DataFrame of activation vectors of many rules (one rule
+      is one column)
+    y: Union[np.ndarray, pd.Series]
+      The target classes
+
+    Returns
+    -------
+    Union[np.ndarray, pd.DataFrame]
+        If given one activation vector, returns a np.ndarray of the form [(class1, prob 1), ..., (class n, prob n)].
+        If given a df of activation vectors, returns a df with the classes as index, the rules as columns and the
+        probabilities as values.
+    &#34;&#34;&#34;
+    if activation is None:
+        return np.bincount(y).argmax()
+
+    if not isinstance(activation, pd.DataFrame) and not isinstance(activation, np.ndarray):
+        raise TypeError(&#34;&#39;activation&#39; in most_common_class must be None or a np.ndarray or a pd.DataFrame&#34;)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        count = Counter(y_conditional)
+        n = len(y_conditional)
+        prop = [v / n for v in count.values()]
+        proba = np.array([(c, v) for c, v in zip(count.keys(), prop)])
+        proba = proba[proba[:, 0].argsort()]
+        return proba
+    else:
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        y_conditional = (
+            activation.mul(y.replace(0, &#34;zero&#34;), axis=0).replace(0, np.nan).replace(&#34;&#34;, np.nan).replace(&#34;zero&#34;, 0)
+        )
+        count = y_conditional.apply(lambda x: x.value_counts())
+        count.index = count.index.astype(y.dtype)
+        return count.apply(lambda x: x / x.dropna().sum())</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.conditional_mean"><code class="name flex">
+<span>def <span class="ident">conditional_mean</span></span>(<span>activation: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mean of all activated values</p>
+<p>If activation is None, we assume the given y have already been extracted from the activation vector,
+which saves time.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def conditional_mean(
+    activation: Union[np.ndarray, pd.DataFrame, None], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;Mean of all activated values
+
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    &#34;&#34;&#34;
+    if activation is None:
+        return float(np.nanmean(y))
+
+    if not isinstance(activation, pd.DataFrame) and not isinstance(activation, np.ndarray):
+        raise TypeError(&#34;&#39;activation&#39; in conditional_mean must be None or a np.ndarray or a pd.DataFrame&#34;)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        non_nans_conditional_y = y_conditional[~np.isnan(y_conditional)]
+        if len(non_nans_conditional_y) == 0:
+            logger.debug(
+                &#34;None of the activated points have a non-nan value in target y.&#34; &#34; Conditional mean is set to nan.&#34;
+            )
+            return np.nan
+        return float(np.mean(non_nans_conditional_y))
+    else:
+        return activation.apply(lambda x: np.nanmean(np.extract(x, y)))</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.conditional_std"><code class="name flex">
+<span>def <span class="ident">conditional_std</span></span>(<span>activation: Union[pandas.core.frame.DataFrame, numpy.ndarray, ForwardRef(None)], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Standard deviation of all activated values</p>
+<p>If activation is None, we assume the given y have already been extracted from the activation vector,
+which saves time.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def conditional_std(
+    activation: Union[np.ndarray, pd.DataFrame, None], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;Standard deviation of all activated values
+
+    If activation is None, we assume the given y have already been extracted from the activation vector,
+    which saves time.
+    &#34;&#34;&#34;
+    if activation is None:
+        return float(np.nanstd(y))
+
+    if not isinstance(activation, pd.DataFrame) and not isinstance(activation, np.ndarray):
+        raise TypeError(&#34;&#39;activation&#39; in conditional_std must be None or a np.ndarray or a pd.DataFrame&#34;)
+    if isinstance(activation, np.ndarray):
+        y_conditional = np.extract(activation, y)
+        if len(y_conditional) == 0:
+            return np.nan
+        if len(y_conditional) == 1:
+            return 0
+        # ddof ensures numpy uses non-biased estimator of std, like pandas&#39; default
+        return float(np.nanstd(y_conditional, ddof=1))
+    else:
+        if isinstance(y, pd.DataFrame):
+            if len(y.columns) == 1:
+                y = y.squeeze()
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        elif isinstance(y, np.ndarray):
+            if len(y.shape) == 1:
+                y = pd.Series(y)
+            elif y.shape[1] == 1:
+                y = pd.Series(y.squeeze())
+            else:
+                raise ValueError(&#34;y must be a 1-D DataFrame or ndarray or pd.Series&#34;)
+        y_conditional = (
+            activation.mul(y.replace(0, &#34;zero&#34;), axis=0).replace(0, np.nan).replace(&#34;&#34;, np.nan).replace(&#34;zero&#34;, 0)
+        )
+        return y_conditional.std()</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.init_weights_stacked"><code class="name flex">
+<span>def <span class="ident">init_weights_stacked</span></span>(<span>prediction_vectors: pandas.core.frame.DataFrame, weights: pandas.core.frame.DataFrame) ‑> Tuple[pandas.core.frame.DataFrame, pandas.core.frame.DataFrame]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_weights_stacked(prediction_vectors: pd.DataFrame, weights: pd.DataFrame) -&gt; Tuple[pd.DataFrame, pd.DataFrame]:
+    if weights.empty:
+        raise ValueError(&#34;Weights not None but empty : can not evaluate prediction&#34;)
+    weights = weights.replace(0, np.nan).fillna(value=np.nan).dropna(axis=1, how=&#34;all&#34;)
+    absent_rules = prediction_vectors.loc[:, ~prediction_vectors.columns.isin(weights.columns)].columns
+    present_rules = prediction_vectors.loc[:, prediction_vectors.columns.isin(weights.columns)].columns
+    if len(absent_rules) &gt; 0:
+        s = (
+            &#34;Some rules given in the prediction vector did not have a weight and will be ignored in the&#34;
+            &#34; computation of the ruleset prediction. The concerned rules are :&#34;
+        )
+        s = &#34;\n&#34;.join([s] + list(absent_rules.astype(str)))
+        logger.warning(s)
+    prediction_vectors = prediction_vectors[present_rules]
+    weights = (~prediction_vectors.isna() * 1).replace(0, np.nan) * weights
+    if prediction_vectors.empty:
+        raise ValueError(
+            &#34;No rules had non-zero/non-NaN weights, or all predictions left after applying weights where NaN&#34;
+        )
+    return prediction_vectors, weights</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.mae_function"><code class="name flex">
+<span>def <span class="ident">mae_function</span></span>(<span>prediction_vector: Union[pandas.core.series.Series, pandas.core.frame.DataFrame], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the mean absolute error
+"$ \dfrac{1}{n} \Sigma_{i=1}^{n} |\hat{y}_i - y_i| $"</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prediction_vector</code></strong> :&ensp;<code>Union[pd.Series, pd.DataFrame]</code></dt>
+<dd>&nbsp;</dd>
+<dt>A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two</dt>
+<dt>different values ymean, if the rule is not active and the prediction is the rule is active.</dt>
+<dt><strong><code>y</code></strong> :&ensp;<code>Union[np.ndarray, pd.Series]</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<p>The real target values (real numbers)</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>criterion</code></strong> :&ensp;<code>Union[float, pd.Series]</code></dt>
+<dd>the mean absolute error</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mae_function(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the mean absolute error
+    &#34;$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} |\\hat{y}_i - y_i| $&#34;
+
+    Parameters
+    ----------
+    prediction_vector: Union[pd.Series, pd.DataFrame]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, pd.Series]
+      The real target values (real numbers)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+        the mean absolute error
+    &#34;&#34;&#34;
+    if not isinstance(prediction_vector, pd.DataFrame) and not isinstance(prediction_vector, pd.Series):
+        raise TypeError(&#34;&#39;prediction_vector&#39; in mae_function must be a pd.Series or a pd.DataFrame&#34;)
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError(&#34;The two array must have the same length&#34;)
+        error_vect = np.abs(prediction_vector - y)
+        criterion = np.nanmean(error_vect)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        if len(prediction_vector.index) != len(y):
+            raise ValueError(&#34;Predictions and y must have the same length&#34;)
+        error_vect = prediction_vector.sub(y, axis=0).abs()
+        return error_vect.mean()</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.mae_norm"><code class="name flex">
+<span>def <span class="ident">mae_norm</span></span>(<span>prediction_vector: Union[pandas.core.series.Series, pandas.core.frame.DataFrame], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mae_norm(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    return mae_function(prediction_vector, y) / np.mean(np.mean(y) - y)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.mse_function"><code class="name flex">
+<span>def <span class="ident">mse_function</span></span>(<span>prediction_vector: Union[pandas.core.series.Series, pandas.core.frame.DataFrame], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Compute the mean squared error
+"$ \dfrac{1}{n} \Sigma_{i=1}^{n} (\hat{y}_i - y_i)^2 $"</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prediction_vector</code></strong> :&ensp;<code>Union[pd.Series, pd.DataFrame]</code></dt>
+<dd>&nbsp;</dd>
+<dt>A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two</dt>
+<dt>different values ymean, if the rule is not active and the prediction is the rule is active.</dt>
+<dt><strong><code>y</code></strong> :&ensp;<code>Union[np.ndarray, pd.Series]</code></dt>
+<dd>The real target values (real numbers)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>criterion</code></strong> :&ensp;<code>Union[float, pd.Series]</code></dt>
+<dd>the mean squared error</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mse_function(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Compute the mean squared error
+    &#34;$ \\dfrac{1}{n} \\Sigma_{i=1}^{n} (\\hat{y}_i - y_i)^2 $&#34;
+
+    Parameters
+    ----------
+    prediction_vector: Union[pd.Series, pd.DataFrame]
+      A predictor vector or stacked prediction vectors. It means one or many sparse arrays with two
+      different values ymean, if the rule is not active and the prediction is the rule is active.
+    y: Union[np.ndarray, pd.Series]
+        The real target values (real numbers)
+
+    Returns
+    -------
+    criterion: Union[float, pd.Series]
+        the mean squared error
+    &#34;&#34;&#34;
+    if not isinstance(prediction_vector, pd.DataFrame) and not isinstance(prediction_vector, pd.Series):
+        raise TypeError(&#34;&#39;prediction_vector&#39; in mse_function must be a pd.Series or a pd.DataFrame&#34;)
+    if isinstance(prediction_vector, np.ndarray):
+        if len(prediction_vector) != len(y):
+            raise ValueError(&#34;Predictions and y must have have the same length&#34;)
+        error_vector = prediction_vector - y
+        criterion = np.nanmean(error_vector ** 2)
+        # noinspection PyTypeChecker
+        return criterion
+    else:
+        if len(prediction_vector.index) != len(y):
+            raise ValueError(&#34;Predictions and y must have the same length&#34;)
+        error_vector = prediction_vector.sub(y, axis=0)
+        return (error_vector ** 2).mean()</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.mse_norm"><code class="name flex">
+<span>def <span class="ident">mse_norm</span></span>(<span>prediction_vector: Union[pandas.core.series.Series, pandas.core.frame.DataFrame], y: Union[numpy.ndarray, pandas.core.series.Series]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mse_norm(
+    prediction_vector: Union[pd.Series, pd.DataFrame], y: Union[np.ndarray, pd.Series]
+) -&gt; Union[float, pd.Series]:
+    return mse_function(prediction_vector, y) / np.mean((np.mean(y) - y) ** 2)</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.utils.rfunctions.success_rate"><code class="name flex">
+<span>def <span class="ident">success_rate</span></span>(<span>prediction: Union[float, int, str, pandas.core.series.Series, numpy.integer, numpy.float64], y: Union[pandas.core.frame.DataFrame, numpy.ndarray]) ‑> Union[float, pandas.core.series.Series]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the number fraction of y that equal the prediction.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prediction</code></strong> :&ensp;<code>Union[float, int, str, pd.Series, np.integer, np.float64]</code></dt>
+<dd>The label prediction, of one rule (float ,int or str) or of a set of rules (pd.Series),
+of a prediction vector (pd.Series)</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>Union[np.ndarray, pd.DataFrame]</code></dt>
+<dd>The real target points activated by the rule (np.ndarray, without nans) or the rules
+(pd.DataFrame, can contain nans even alongside strings)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Union[float, pd.Series]</code></dt>
+<dd>The fraction of y that equal one rule or ruleset's prediction (float) or many rules predictions (pd.Series).</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def success_rate(
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64], y: Union[np.ndarray, pd.DataFrame]
+) -&gt; Union[float, pd.Series]:
+    &#34;&#34;&#34;
+    Returns the number fraction of y that equal the prediction.
+
+    Parameters
+    ----------
+    prediction: Union[float, int, str, pd.Series, np.integer, np.float64]
+        The label prediction, of one rule (float ,int or str) or of a set of rules (pd.Series),
+        of a prediction vector (pd.Series)
+    y: Union[np.ndarray, pd.DataFrame]
+        The real target points activated by the rule (np.ndarray, without nans) or the rules
+        (pd.DataFrame, can contain nans even alongside strings)
+
+    Returns
+    -------
+    Union[float, pd.Series]
+        The fraction of y that equal one rule or ruleset&#39;s prediction (float) or many rules predictions (pd.Series).
+    &#34;&#34;&#34;
+    if not isinstance(prediction, (pd.Series, float, int, str, np.integer, np.float64)):
+        raise TypeError(
+            &#34;&#39;prediction&#39; in success_rate must be an integer, a string or a pd.Series/np.ndarray of one of those,&#34;
+            f&#34;got {prediction} ({type(prediction)}).&#34;
+        )
+    if isinstance(prediction, (int, float, str, np.integer, np.float64)):
+        if len(y) == 0:
+            return np.nan
+        return sum(prediction == y) / len(y)
+    elif isinstance(y, np.ndarray) and isinstance(prediction, pd.Series):
+        if len(y) == 0:
+            return pd.Series(dtype=int)
+        return sum(prediction == y) / len(prediction.dropna())
+    else:
+        if not isinstance(y, pd.DataFrame):
+            raise TypeError(
+                f&#34;If passing several predictions as a Series, then activated Y must be a DataFrame, not {type(y)}&#34;
+            )
+        if len(y.index) == 0:
+            return pd.Series(dtype=int)
+        activated_points = (~y.isnull()).sum()
+        correctly_predicted = y == prediction
+        return correctly_predicted.sum() / activated_points</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="ruleskit.utils" href="index.html">ruleskit.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="ruleskit.utils.rfunctions.aae_function" href="#ruleskit.utils.rfunctions.aae_function">aae_function</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_classification_criterion" href="#ruleskit.utils.rfunctions.calc_classification_criterion">calc_classification_criterion</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_regression_criterion" href="#ruleskit.utils.rfunctions.calc_regression_criterion">calc_regression_criterion</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_classificator_stacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_classificator_stacked">calc_ruleset_prediction_equally_weighted_classificator_stacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_classificator_unstacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_classificator_unstacked">calc_ruleset_prediction_equally_weighted_classificator_unstacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_regressor_stacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_regressor_stacked">calc_ruleset_prediction_equally_weighted_regressor_stacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_regressor_unstacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_equally_weighted_regressor_unstacked">calc_ruleset_prediction_equally_weighted_regressor_unstacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_classificator_stacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_classificator_stacked">calc_ruleset_prediction_weighted_classificator_stacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_classificator_unstacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_classificator_unstacked">calc_ruleset_prediction_weighted_classificator_unstacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_regressor_stacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_regressor_stacked">calc_ruleset_prediction_weighted_regressor_stacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_regressor_unstacked" href="#ruleskit.utils.rfunctions.calc_ruleset_prediction_weighted_regressor_unstacked">calc_ruleset_prediction_weighted_regressor_unstacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.calc_zscore_external" href="#ruleskit.utils.rfunctions.calc_zscore_external">calc_zscore_external</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.class_probabilities" href="#ruleskit.utils.rfunctions.class_probabilities">class_probabilities</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.conditional_mean" href="#ruleskit.utils.rfunctions.conditional_mean">conditional_mean</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.conditional_std" href="#ruleskit.utils.rfunctions.conditional_std">conditional_std</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.init_weights_stacked" href="#ruleskit.utils.rfunctions.init_weights_stacked">init_weights_stacked</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.mae_function" href="#ruleskit.utils.rfunctions.mae_function">mae_function</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.mae_norm" href="#ruleskit.utils.rfunctions.mae_norm">mae_norm</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.mse_function" href="#ruleskit.utils.rfunctions.mse_function">mse_function</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.mse_norm" href="#ruleskit.utils.rfunctions.mse_norm">mse_norm</a></code></li>
+<li><code><a title="ruleskit.utils.rfunctions.success_rate" href="#ruleskit.utils.rfunctions.success_rate">success_rate</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
