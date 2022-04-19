@@ -1,6 +1,0 @@
-numpy
-pytest
-scikit-learn
-bitarray
-psutil
-pandas
