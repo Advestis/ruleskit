@@ -5,7 +5,5 @@ from .ruleset import RuleSet
 from .thresholds import Thresholds
 from .utils.rule_utils import extract_rules_from_tree
 
-try:
-    from ._version import __version__
-except ImportError:
-    pass
+from . import _version
+__version__ = _version.get_versions()['version']
