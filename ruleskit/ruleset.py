@@ -3,7 +3,7 @@ from abc import ABC
 import ast
 import pandas as pd
 from copy import copy
-from typing import List, Union, Tuple, Any, Optional
+from typing import List, Union, Tuple, Any, Optional, Callable
 from collections import Counter
 import numpy as np
 import itertools
@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 
 class RuleSet(ABC):
-
     """A set of rules"""
 
     NLINES = 5  # half how many rules to show in str(self)
@@ -246,7 +245,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self) -> Tuple[str]:
         if len(self) == 0:
-            return ("rs",)
+            return "rs",
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -653,7 +652,7 @@ class RuleSet(ABC):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (
-                self.stacked_activations is None or (xs is not None and keep_new_activations)
+                    self.stacked_activations is None or (xs is not None and keep_new_activations)
             ):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
@@ -928,22 +927,33 @@ class RuleSet(ABC):
             self.compute_stacked_activation()
         self.features_names = list(set(traverse([rule.features_names for rule in self])))
 
-    def to_df(self) -> pd.DataFrame:
+    def to_df(self, custom_rules_to_series: Optional[Callable] = None, ruleset_attributes: bool = True) -> pd.DataFrame:
         if len(self) == 0:
             return pd.DataFrame()
         idx = copy(self._rule_type.index)
 
-        dfs = [
-            self.rule_to_series(
-                (i, r),
-                index=idx,
-            )
-            for i, r in enumerate(self.rules)
-        ]
+        if custom_rules_to_series is None:
+            dfs = [
+                self.rule_to_series(
+                    (i, r),
+                    index=idx,
+                )
+                for i, r in enumerate(self.rules)
+            ]
+        else:
+            dfs = custom_rules_to_series(index=idx)
+
         if len(dfs) > 0:
             df = pd.concat(dfs, axis=1).T
         else:
             df = pd.DataFrame(columns=idx)
+
+        for i in range(len(df.index)):
+            # noinspection PyProtectedMember
+            self._rules[i]._name = df.index[i]
+
+        if not ruleset_attributes:
+            return df
 
         s_cov = pd.DataFrame(
             columns=df.columns,
@@ -980,7 +990,9 @@ class RuleSet(ABC):
     def rule_to_series(irule: Tuple[int, Rule], index: list) -> pd.Series:
         i = irule[0]
         rule = irule[1]
-        if hasattr(rule, "sign"):
+        if rule._name is not None:
+            name = rule._name
+        elif hasattr(rule, "sign"):
             name = f"R_{i}({len(rule)}){rule.sign}"
         else:
             name = f"R_{i}({len(rule)})"
@@ -1004,6 +1016,7 @@ class RuleSet(ABC):
             rule = Rule()
         rule_idx = copy(rule.__class__.rule_index)
         condition_index = {c: None for c in rule.__class__.condition_index}
+        rule._name = srule.index[0]
 
         for rule_ind in srule.index:
             str_value = str(srule[rule_ind])
