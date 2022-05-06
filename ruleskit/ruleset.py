@@ -42,7 +42,8 @@ class RuleSet(ABC):
     all_features_indexes = {}
     attributes_from_train_set = {ClassificationRule: ["train_set_size"], RegressionRule: ["train_set_size"]}
     attributes_from_test_set = {
-        ClassificationRule: ["criterion", "test_set_size"], RegressionRule: ["criterion", "test_set_size"]
+        ClassificationRule: ["criterion", "test_set_size"],
+        RegressionRule: ["criterion", "test_set_size"],
     }
 
     @staticmethod
@@ -121,9 +122,25 @@ class RuleSet(ABC):
         """Appends a rule or each rules of another RuleSet to self and updates activation vector and stacked activations
         if needed. Also updates features_indexes, and features_names if possible."""
         if isinstance(other, Rule):
+            if self._rule_type is None:
+                self.rule_type = type(other)
+            else:
+                if not isinstance(other, self.rule_type):
+                    raise TypeError(
+                        f"Ruleset previously had rules of type {self.rule_type},"
+                        f" so can not add rule of type {type(other)}"
+                    )
             self._rules.append(other)
         else:
+            if self._rule_type is not None and other._rule_type is not None and self.rule_type != other.rule_type:
+                raise TypeError(
+                    f"Ruleset previously had rules of type {self.rule_type},"
+                    f" so can not add rules of type {other.rule_type}"
+                )
+            if self._rule_type is None and other._rule_type is not None:
+                self.rule_type = other.rule_type
             self._rules += other._rules
+
         self.features_indexes = list(set(self.features_indexes + other.features_indexes))
         if hasattr(other, "features_names"):
             self.features_names = list(set(self.features_names + other.features_names))
@@ -229,7 +246,7 @@ class RuleSet(ABC):
     @property
     def to_hash(self) -> Tuple[str]:
         if len(self) == 0:
-            return "rs",
+            return ("rs",)
         to_hash = ("rs",)
         for r in self:
             rule_hash = r.to_hash[1:]
@@ -616,9 +633,9 @@ class RuleSet(ABC):
         else:
             [
                 r.eval(
-                    xs=xs, y=y, recompute_activation=keep_new_activations,
-                    force_if_not_good=force_if_not_good, **kwargs
-                ) for r in self
+                    xs=xs, y=y, recompute_activation=keep_new_activations, force_if_not_good=force_if_not_good, **kwargs
+                )
+                for r in self
             ]
             to_drop = [r for r in self if not r.good]
 
@@ -665,15 +682,9 @@ class RuleSet(ABC):
         """Appends a new rule to self. The updates of activation vector and the stacked activation vectors can be
         blocked by specifying update_activation=False. Otherwise, will use self.stack_activation to determine if the
         updates should be done or not."""
+
         if not isinstance(rule, Rule):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
-        if self._rule_type is None:
-            self.rule_type = type(rule)
-        else:
-            if not isinstance(rule, self.rule_type):
-                raise TypeError(
-                    f"Ruleset previously had rules of type {self.rule_type}, so can not add rule of type {type(rule)}"
-                )
         stack_activation = self.stack_activation
         if not update_activation:
             self._compute_activation = False
@@ -745,7 +756,7 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember
     def evaluate_self_activation(
-            self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False
+        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False
     ):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if len(self) == 0:
