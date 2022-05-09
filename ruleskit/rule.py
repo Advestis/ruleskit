@@ -79,6 +79,8 @@ class Rule(ABC):
         if activation is not None and condition is None:
             raise ValueError("Condition can not be None if activation is not None")
 
+        self._name = None
+
         self._condition: Optional[Condition] = condition
         self._activation: Optional[Activation] = activation
         self._thresholds: Optional[Thresholds] = self.__class__.THRESHOLDS

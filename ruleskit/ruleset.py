@@ -3,7 +3,7 @@ from abc import ABC
 import ast
 import pandas as pd
 from copy import copy
-from typing import List, Union, Tuple, Any, Optional
+from typing import List, Union, Tuple, Any, Optional, Callable
 from collections import Counter
 import numpy as np
 import itertools
@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 
 
 class RuleSet(ABC):
-
     """A set of rules"""
 
     NLINES = 5  # half how many rules to show in str(self)
@@ -42,7 +41,8 @@ class RuleSet(ABC):
     all_features_indexes = {}
     attributes_from_train_set = {ClassificationRule: ["train_set_size"], RegressionRule: ["train_set_size"]}
     attributes_from_test_set = {
-        ClassificationRule: ["criterion", "test_set_size"], RegressionRule: ["criterion", "test_set_size"]
+        ClassificationRule: ["criterion", "test_set_size"],
+        RegressionRule: ["criterion", "test_set_size"],
     }
 
     @staticmethod
@@ -121,9 +121,25 @@ class RuleSet(ABC):
         """Appends a rule or each rules of another RuleSet to self and updates activation vector and stacked activations
         if needed. Also updates features_indexes, and features_names if possible."""
         if isinstance(other, Rule):
+            if self._rule_type is None:
+                self.rule_type = type(other)
+            else:
+                if not isinstance(other, self.rule_type):
+                    raise TypeError(
+                        f"Ruleset previously had rules of type {self.rule_type},"
+                        f" so can not add rule of type {type(other)}"
+                    )
             self._rules.append(other)
         else:
+            if self._rule_type is not None and other._rule_type is not None and self.rule_type != other.rule_type:
+                raise TypeError(
+                    f"Ruleset previously had rules of type {self.rule_type},"
+                    f" so can not add rules of type {other.rule_type}"
+                )
+            if self._rule_type is None and other._rule_type is not None:
+                self.rule_type = other.rule_type
             self._rules += other._rules
+
         self.features_indexes = list(set(self.features_indexes + other.features_indexes))
         if hasattr(other, "features_names"):
             self.features_names = list(set(self.features_names + other.features_names))
@@ -616,9 +632,9 @@ class RuleSet(ABC):
         else:
             [
                 r.eval(
-                    xs=xs, y=y, recompute_activation=keep_new_activations,
-                    force_if_not_good=force_if_not_good, **kwargs
-                ) for r in self
+                    xs=xs, y=y, recompute_activation=keep_new_activations, force_if_not_good=force_if_not_good, **kwargs
+                )
+                for r in self
             ]
             to_drop = [r for r in self if not r.good]
 
@@ -636,7 +652,7 @@ class RuleSet(ABC):
                 self._activation = None
                 self.compute_self_activation()
             if self.stack_activation and (
-                self.stacked_activations is None or (xs is not None and keep_new_activations)
+                    self.stacked_activations is None or (xs is not None and keep_new_activations)
             ):
                 self.stacked_activations = None
                 self.compute_stacked_activation()
@@ -665,15 +681,9 @@ class RuleSet(ABC):
         """Appends a new rule to self. The updates of activation vector and the stacked activation vectors can be
         blocked by specifying update_activation=False. Otherwise, will use self.stack_activation to determine if the
         updates should be done or not."""
+
         if not isinstance(rule, Rule):
             raise TypeError(f"RuleSet's append method expects a Rule object, got {type(rule)}")
-        if self._rule_type is None:
-            self.rule_type = type(rule)
-        else:
-            if not isinstance(rule, self.rule_type):
-                raise TypeError(
-                    f"Ruleset previously had rules of type {self.rule_type}, so can not add rule of type {type(rule)}"
-                )
         stack_activation = self.stack_activation
         if not update_activation:
             self._compute_activation = False
@@ -745,7 +755,7 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember
     def evaluate_self_activation(
-            self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False
+        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False
     ):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if len(self) == 0:
@@ -917,22 +927,33 @@ class RuleSet(ABC):
             self.compute_stacked_activation()
         self.features_names = list(set(traverse([rule.features_names for rule in self])))
 
-    def to_df(self) -> pd.DataFrame:
+    def to_df(self, custom_rules_to_series: Optional[Callable] = None, ruleset_attributes: bool = True) -> pd.DataFrame:
         if len(self) == 0:
             return pd.DataFrame()
         idx = copy(self._rule_type.index)
 
-        dfs = [
-            self.rule_to_series(
-                (i, r),
-                index=idx,
-            )
-            for i, r in enumerate(self.rules)
-        ]
+        if custom_rules_to_series is None:
+            dfs = [
+                self.rule_to_series(
+                    (i, r),
+                    index=idx,
+                )
+                for i, r in enumerate(self.rules)
+            ]
+        else:
+            dfs = custom_rules_to_series(index=idx)
+
         if len(dfs) > 0:
             df = pd.concat(dfs, axis=1).T
         else:
             df = pd.DataFrame(columns=idx)
+
+        for i in range(len(df.index)):
+            # noinspection PyProtectedMember
+            self._rules[i]._name = df.index[i]
+
+        if not ruleset_attributes:
+            return df
 
         s_cov = pd.DataFrame(
             columns=df.columns,
@@ -969,7 +990,9 @@ class RuleSet(ABC):
     def rule_to_series(irule: Tuple[int, Rule], index: list) -> pd.Series:
         i = irule[0]
         rule = irule[1]
-        if hasattr(rule, "sign"):
+        if rule._name is not None:
+            name = rule._name
+        elif hasattr(rule, "sign"):
             name = f"R_{i}({len(rule)}){rule.sign}"
         else:
             name = f"R_{i}({len(rule)})"
@@ -993,6 +1016,7 @@ class RuleSet(ABC):
             rule = Rule()
         rule_idx = copy(rule.__class__.rule_index)
         condition_index = {c: None for c in rule.__class__.condition_index}
+        rule._name = srule.index[0]
 
         for rule_ind in srule.index:
             str_value = str(srule[rule_ind])
