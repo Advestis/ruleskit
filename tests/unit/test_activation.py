@@ -1,14 +1,14 @@
 import itertools
-from copy import copy
+# from copy import copy
 
 import numpy as np
-import psutil
+# import psutil
 
 from ruleskit import Activation
 import pytest
 import pandas as pd
 from pathlib import Path
-from transparentpath import TransparentPath
+# from transparentpath import TransparentPath
 from bitarray import bitarray
 
 data_path = Path("tests/unit/data")
