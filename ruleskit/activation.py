@@ -6,7 +6,6 @@ import sys
 from copy import copy
 import random
 import psutil
-from math import ceil
 from time import time
 from bitarray import bitarray
 from tempfile import gettempdir
@@ -584,31 +583,37 @@ class Activation(ABC):
     def multi_logical_and(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL AND on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
-
-        available_memory = psutil.virtual_memory().available / 1e6
-        single_act_size = acs[0].sizeof_raw
+        available_memory = psutil.virtual_memory().available / 1e6  # In MB
+        _ = acs[0].raw
+        single_act_size = available_memory - psutil.virtual_memory().available / 1e6
+        del _
         expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
-        if available_memory == 0:
-            raise ValueError("No memory left to compute 'multi_logical_and'")
-        nbatches = ceil(expected_size / available_memory)
-        if nbatches == 0:
-            raise ValueError(
-                f"Not enough memory left to compute 'multi_logical_and' : need {expected_size}MB,"
-                f" has {available_memory}MB"
-            )
-        batches = np.array_split(acs, nbatches)
 
-        if len(acs) == 1:
+        if available_memory < 2 * single_act_size:
+            raise MemoryError(
+                f"Not enough memory left to compute 'multi_logical_or'. Need at least 2x{single_act_size} MB,"
+                f" has only {available_memory} MB"
+            )
+
+        if available_memory < expected_size:
+            logger.warning(
+                "Not enough memory to compute 'multi_logical_or' with all the vectors at once."
+                " Will do it by pairs, taking more time but less memory."
+            )
             res = acs[0].raw
+            for a in acs[1:]:
+                res = np.vstack([res, a.raw]).all(axis=0).astype(np.ubyte)
+
         else:
-            if 2 * single_act_size > available_memory:
-                raise MemoryError(
-                    "Will not be able to fit two activation vectors of size" f" {acs[0].sizeof_raw} in memory"
-                )
-            res = []
-            for batch in batches:
-                res = np.vstack([a.raw for a in batch]).all(axis=0).astype(np.ubyte)
-            res = np.vstack([a for a in res]).all(axis=0).astype(np.ubyte)
+            # noinspection PyProtectedMember
+            try:
+                res = np.vstack([a.raw for a in acs]).all(axis=0).astype(np.ubyte)
+            except (MemoryError, np.core._exceptions._ArrayMemoryError) as e:
+                logger.warning(str(e))
+                res = acs[0].raw
+                for a in acs[1:]:
+                    res = np.vstack([res, a.raw]).all(axis=0).astype(np.ubyte)
+
         if asarray:
             return res
         return Activation(
@@ -644,26 +649,32 @@ class Activation(ABC):
         single_act_size = available_memory - psutil.virtual_memory().available / 1e6
         del _
         expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
+
         if available_memory < 2 * single_act_size:
             raise MemoryError(
                 f"Not enough memory left to compute 'multi_logical_or'. Need at least 2x{single_act_size} MB,"
                 f" has only {available_memory} MB"
             )
-        nbatches = ceil(expected_size / available_memory)
-        if nbatches == 0:
-            raise MemoryError(
-                f"Not enough memory left to compute 'multi_logical_or' : need {expected_size}MB,"
-                f" has {available_memory}MB"
-            )
-        batches = np.array_split(acs, nbatches)
 
-        if len(acs) == 1:
+        if available_memory < expected_size:
+            logger.warning(
+                "Not enough memory to compute 'multi_logical_or' with all the vectors at once."
+                " Will do it by pairs, taking more time but less memory."
+            )
             res = acs[0].raw
+            for a in acs[1:]:
+                res = np.vstack([res, a.raw]).any(axis=0).astype(np.ubyte)
+
         else:
-            res = []
-            for batch in batches:
-                res.append(np.vstack([a.raw for a in batch]).any(axis=0).astype(np.ubyte))
-            res = np.vstack([a for a in res]).any(axis=0).astype(np.ubyte)
+            # noinspection PyProtectedMember
+            try:
+                res = np.vstack([a.raw for a in acs]).any(axis=0).astype(np.ubyte)
+            except (MemoryError, np.core._exceptions._ArrayMemoryError) as e:
+                logger.warning(str(e))
+                res = acs[0].raw
+                for a in acs[1:]:
+                    res = np.vstack([res, a.raw]).any(axis=0).astype(np.ubyte)
+
         if asarray:
             return res
         return Activation(
