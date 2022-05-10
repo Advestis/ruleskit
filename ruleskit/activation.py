@@ -201,7 +201,7 @@ class Activation(ABC):
         self.to_file = False  # set by _init_with_any
         self.data_format = None  # Will be set by init methods
         self.loaded = False
-        self.lasy = lasy
+        self.lasy = False
 
         # does not use instance to avoid conflicts if using TransparentPath
         if type(activation) == "str" and "," not in activation:
@@ -244,6 +244,7 @@ class Activation(ABC):
         # noinspection PyTypeChecker
         if isinstance(activation, Path) or TransparentPath is not None and isinstance(activation, TransparentPath):
             if lasy:
+                self.lasy = True
                 self.data = activation
                 self.data_format = "file"
             else:
@@ -308,18 +309,20 @@ class Activation(ABC):
         number = random.randint(*arange)
         data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{number}.txt"
         attempts = 0
-        while data.is_file():
-            if attempts > 99:
-                logger.warning(
-                    "Failed to save activation vector locally after 100 attempts at finding an available"
-                    " name. Will keep it in RAM."
-                )
-                return False
-            number += 1
-            attempts += 1
-            arange.remove(number)
-            number = random.randint(*arange)
-            data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{number}.txt"
+        if not self.lasy:
+            # If is lasy, then the vector was loaded from a file that should be re-used for writing
+            while data.is_file():
+                if attempts > 99:
+                    logger.warning(
+                        "Failed to save activation vector locally after 100 attempts at finding an available"
+                        " name. Will keep it in RAM."
+                    )
+                    return False
+                number += 1
+                attempts += 1
+                arange.remove(number)
+                number = random.randint(*arange)
+                data = Activation.DEFAULT_TEMPDIR / f"ACTIVATION_VECTOR_{number}.txt"
         data.touch()
         self.data = data
         self.data_format = "file"
