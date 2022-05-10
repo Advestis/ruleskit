@@ -116,10 +116,11 @@ class Activation(ABC):
 
     def __init__(
         self,
-        activation: Union[np.ndarray, bitarray, str, int, Path],
+        activation: Union[np.ndarray, bitarray, str, int, Path, "TransparentPath"],
         optimize: bool = True,
         length: Optional[int] = None,
         to_file: bool = True,
+        lasy: bool = False,
     ):
         """
         An activation vector is an array of 0 and 1, possibly millions of points. The whole purpose of this class is
@@ -173,7 +174,7 @@ class Activation(ABC):
 
         Parameters:
         -----------
-        activation: Union[np.ndarray, bitarray, str, int, Path]
+        activation: Union[np.ndarray, bitarray, str, int, Path, TransparentPath]
             If np.ndarray : Of the form [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1], or compressed vector
             If str : compressed vector, or '010011100011111', or path
             If bitarray : same as np.array but takes 8x less memory (each entry is stored in one bit only)
@@ -191,12 +192,17 @@ class Activation(ABC):
             If True, then activation vector is stored in a file in
             Activation.DEFAULT_TEMPDIR / ACTIVATION_VECTOR_available_number.txt if Activation.STORE_RAW
             if False (default) (default value = True)
+        lasy: bool
+            If specifying a file path, and if 'lasy' is True, will not read the file until the vector's data are
+            required. Else, read the file upon vector creation to set its many attributes (default = False).
         """
 
         self._reset_data_related_attributes()
         self.optimize = optimize
         self.to_file = False  # set by _init_with_any
         self.data_format = None  # Will be set by init methods
+        self.loaded = False
+        self.lasy = lasy
 
         # does not use instance to avoid conflicts if using TransparentPath
         if type(activation) == "str" and "," not in activation:
@@ -238,11 +244,19 @@ class Activation(ABC):
 
         # noinspection PyTypeChecker
         if isinstance(activation, Path) or TransparentPath is not None and isinstance(activation, TransparentPath):
-            activation = self._read(activation, out=False)
+            if lasy:
+                self.data = activation
+                self.data_format = "file"
+            else:
+                activation = self._read(activation, out=False)
+                self._init_with_any(activation, length, to_file)
+        else:
+            self.loaded = True
+            self._init_with_any(activation, length, to_file)
 
-        self._init_with_any(activation, length, to_file)
-
-    def _init_with_any(self, activation: Union[np.ndarray, bitarray, int, str], length: int, to_file: bool):
+    def _init_with_any(
+            self, activation: Union[np.ndarray, bitarray, int, str], length: Union[int, None], to_file: bool
+    ):
         if isinstance(activation, bitarray):
             self._init_with_bitarray(activation, Activation.DTYPE)
 
@@ -315,6 +329,7 @@ class Activation(ABC):
             np.save(f, value, allow_pickle=False)
         stat = self.data.stat()
         if isinstance(stat, dict):
+            # noinspection PyTypeChecker
             self._sizeof_file = stat["st_size"] / 1e6
         else:
             self._sizeof_file = stat.st_size / 1e6
@@ -587,8 +602,9 @@ class Activation(ABC):
             res = acs[0].raw
         else:
             if 2 * single_act_size > available_memory:
-                raise MemoryError("Will not be able to fit two activation vectors of size"
-                                  f" {acs[0].sizeof_raw} in memory")
+                raise MemoryError(
+                    "Will not be able to fit two activation vectors of size" f" {acs[0].sizeof_raw} in memory"
+                )
             res = []
             for batch in batches:
                 res = np.vstack([a.raw for a in batch]).all(axis=0).astype(np.ubyte)
@@ -623,11 +639,16 @@ class Activation(ABC):
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
 
-        available_memory = psutil.virtual_memory().available / 1e6
-        single_act_size = acs[0].sizeof_raw
+        available_memory = psutil.virtual_memory().available / 1e6  # In MB
+        _ = acs[0].raw
+        single_act_size = available_memory - psutil.virtual_memory().available / 1e6
+        del _
         expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
-        if available_memory == 0:
-            raise MemoryError("No memory left to compute 'multi_logical_or'")
+        if available_memory < 2 * single_act_size:
+            raise MemoryError(
+                f"Not enough memory left to compute 'multi_logical_or'. Need at least 2x{single_act_size} MB,"
+                f" has only {available_memory} MB"
+            )
         nbatches = ceil(expected_size / available_memory)
         if nbatches == 0:
             raise MemoryError(
@@ -639,9 +660,6 @@ class Activation(ABC):
         if len(acs) == 1:
             res = acs[0].raw
         else:
-            if 2 * single_act_size > available_memory:
-                raise MemoryError("Will not be able to fit two activation vectors of size"
-                                  f" {acs[0].sizeof_raw} in memory")
             res = []
             for batch in batches:
                 res.append(np.vstack([a.raw for a in batch]).any(axis=0).astype(np.ubyte))
@@ -732,7 +750,7 @@ class Activation(ABC):
         return True
 
     def get_correlation(self, other: "Activation") -> float:
-        """ Computes the correlation between self and other
+        """Computes the correlation between self and other
         Correlation is the number of points in common between the two vectors divided by their length.
         Both vectors must have the same length.
         """
@@ -790,10 +808,12 @@ class Activation(ABC):
             if isinstance(stat, dict):
                 self._sizeof_file = stat["st_size"] / 1e6
             else:
+                # noinspection PyUnresolvedReferences
                 self._sizeof_file = stat.st_size / 1e6
             self._sizeof_path = sys.getsizeof(self.data) / 1e6
             self._time_read = time() - t0
             self._n_read += 1
+        self.loaded = True
         return value
 
     def _integer_to_raw(self, value: Optional[int] = None, out: bool = True) -> np.ndarray:
@@ -937,6 +957,8 @@ class Activation(ABC):
                         self._nones = 0
                 return np.array([])
         if value[-1] == 0 or value[-1] == 1:  # is already raw
+            if value.dtype != np.ubyte:  # Saves memory
+                value = value.astype(np.ubyte)
             if not out:
                 self._sizeof_raw = value.nbytes / 1e6
                 if self._nones is None:
@@ -1138,11 +1160,13 @@ class Activation(ABC):
                 data = self.data
 
             if fmt == "bitarray":
+                # noinspection PyTypeChecker
                 data = self._bitarray_to_raw(data, out=False)
                 compressed = self._compress(data)
                 self._time_bitarray_to_compressed = time() - t0
                 self._n_bitarray_to_compressed += 1
             elif fmt == "integer":
+                # noinspection PyTypeChecker
                 data = self._integer_to_raw(data, out=False)
                 compressed = self._compress(data)
                 self._time_integer_to_compressed = time() - t0
@@ -1187,7 +1211,11 @@ class Activation(ABC):
     @property
     def raw(self) -> np.ndarray:
         """Returns the raw np.ndarray. Will set relevant profiling attributes."""
+        if not self.loaded:
+            activation = self._read(out=False)
+            self._init_with_any(activation, length=None, to_file=True)
         if self.data_format == "raw":
+            # noinspection PyTypeChecker
             return self.data
         elif self.data_format == "bitarray":
             return self._bitarray_to_raw(out=False)
@@ -1214,6 +1242,7 @@ class Activation(ABC):
             return to_ret
         elif self.data_format == "raw":
             t0 = time()
+            # noinspection PyTypeChecker
             to_ret = self._raw_to_bitarray(self.data)
             self._time_raw_to_bitarray = time() - t0
             self._n_raw_to_bitarray += 1
@@ -1221,9 +1250,11 @@ class Activation(ABC):
                 self._sizeof_bitarray = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif self.data_format == "bitarray":
+            # noinspection PyTypeChecker
             return self.data
         elif self.data_format == "integer":
             t0 = time()
+            # noinspection PyTypeChecker
             s = bin(self.data)[2:]
             if len(s) != self.length:
                 s = "0" * (self.length - len(s)) + s
@@ -1257,6 +1288,7 @@ class Activation(ABC):
             return to_ret
         elif self.data_format == "raw":
             t0 = time()
+            # noinspection PyTypeChecker
             to_ret = self._raw_to_integer(self.data)
             self._time_raw_to_integer = time() - t0
             self._n_raw_to_integer += 1
@@ -1264,6 +1296,7 @@ class Activation(ABC):
                 self._sizeof_integer = sys.getsizeof(to_ret) / 1e6
             return to_ret
         elif self.data_format == "integer":
+            # noinspection PyTypeChecker
             return self.data
         elif self.data_format == "bitarray":
             t0 = time()
@@ -1292,6 +1325,7 @@ class Activation(ABC):
         """Returns the compressed array representation of the vector. Will set relevant profiling attributes."""
         if self.data_format == "raw":
             t0 = time()
+            # noinspection PyTypeChecker
             to_ret = self._compress(self.data, dtype=np.ndarray)
             self._time_raw_to_compressed = time() - t0
             self._n_raw_to_compressed += 1
@@ -1302,6 +1336,7 @@ class Activation(ABC):
             if self._sizeof_compressed_array == -1:
                 self._sizeof_compressed_array = to_ret.nbytes / 1e6
         elif self.data_format == "compressed_str":
+            # noinspection PyTypeChecker
             to_ret = np.array(ast.literal_eval(self.data))
             if self._sizeof_compressed_array == -1:
                 self._sizeof_compressed_array = to_ret.nbytes / 1e6
@@ -1345,6 +1380,7 @@ class Activation(ABC):
         """Returns the compressed str representation of the vector. Will set relevant profiling attributes."""
         if self.data_format == "raw":
             t0 = time()
+            # noinspection PyTypeChecker
             to_ret = self._compress(self.data, dtype=str)
             self._time_raw_to_compressed = time() - t0
             self._n_raw_to_compressed += 1

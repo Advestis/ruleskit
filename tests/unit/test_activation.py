@@ -1,10 +1,14 @@
 import itertools
+from copy import copy
 
 import numpy as np
+import psutil
+
 from ruleskit import Activation
 import pytest
 import pandas as pd
 from pathlib import Path
+from transparentpath import TransparentPath
 from bitarray import bitarray
 
 data_path = Path("tests/unit/data")
@@ -262,3 +266,16 @@ def test_sub(clean, vector1, vector2, add_vector):
 )
 def test_correlation(clean, vector1, vector2, expected):
     assert Activation(vector1, to_file=False).get_correlation(Activation(vector2, to_file=False)) == expected
+
+
+# def test_multiple_logical_or_saturate_ram():
+#     available_vectors = list(TransparentPath("./tmp").glob("*", fast=True))
+#     # available_memory = psutil.virtual_memory().available / 1e9  # In GB
+#     n_vectors = 5
+#     # vector_size = int(1e9 * available_memory / (20 * np.dtype(np.uint).itemsize * n_vectors))
+#     n_vectors *= 40 * np.dtype(np.uint).itemsize / np.dtype(np.ubyte).itemsize
+#     missing_vectors = max(0, n_vectors - len(available_vectors))
+#     vecs = [Activation(p.path) for p in available_vectors]
+#     if missing_vectors == 0:
+#         vecs += [Activation(np.zeros(319879168))]
+#     Activation.multi_logical_or(vecs)

@@ -781,7 +781,7 @@ class RuleSet(ABC):
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
                 return act
             except (MemoryError, np.core._exceptions._ArrayMemoryError):
-                act = Activation(activations[0], optimize=activations[0].optimize, to_file=activations[0].to_file)
+                act = Activation(activations[0].raw, optimize=activations[0].optimize, to_file=activations[0].to_file)
                 for a in activations:
                     act = act or a
                 if return_nones is True:
