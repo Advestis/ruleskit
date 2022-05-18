@@ -1,0 +1,1348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>ruleskit.condition API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ruleskit.condition</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import ast
+from abc import ABC
+from copy import copy
+from typing import List, Union, Tuple
+import numpy as np
+import pandas as pd
+from numbers import Number
+from .activation import Activation
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class DuplicatedFeatures(Exception):
+    pass
+
+
+class Condition(ABC):
+    &#34;&#34;&#34;Abstract class for Condition object. Used by Rule objets.
+    A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
+    variables.
+    A condition can be &#34;imossible&#34; to meet, in that case self.impossible is True. This is set automatically.
+
+    One can add conditions and use logical AND (&amp;) operations on two conditions (same thing as add). In that case, the
+    two conditions are combined into a new one.
+    &#34;&#34;&#34;
+
+    def __init__(self, features_indexes: Union[List[int], None] = None, empty: bool = False):
+        if empty:
+            self._features_indexes = None
+        else:
+            if features_indexes is None:
+                raise ValueError(&#34;Must specify features_indexes&#34;)
+            if any([not np.issubdtype(type(a), np.integer) for a in features_indexes]):
+                raise TypeError(
+                    f&#34;features_indexes must be integers. You gave {[(f, type(f)) for f in features_indexes]}&#34;
+                )
+            self._features_indexes = features_indexes
+            if len(set(self._features_indexes)) != len(self._features_indexes):
+                raise DuplicatedFeatures
+
+        self.impossible = False
+
+    def sort(self):
+        self._features_indexes = sorted(self._features_indexes)
+
+    def __and__(self, other: &#34;Condition&#34;) -&gt; &#34;Condition&#34;:
+        &#34;&#34;&#34;To be implemented in daughter classes&#34;&#34;&#34;
+        pass
+
+    def __add__(self, other: &#34;Condition&#34;) -&gt; &#34;Condition&#34;:
+        return NotImplemented(&#34;Can not add conditions (seen as &#39;logical OR&#39;). You can use logical AND however.&#34;)
+
+    @property
+    def to_hash(self):
+        return (&#34;c&#34;,) + tuple(self._features_indexes)
+
+    def __hash__(self):
+        return hash(frozenset(self.to_hash))
+
+    @property
+    def features_indexes(self) -&gt; List[int]:
+        return self._features_indexes
+
+    @features_indexes.setter
+    def features_indexes(self, value: Union[List[int], str]):
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
+        if len(set(value)) != len(value):
+            raise DuplicatedFeatures
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} indexes&#34;)
+        self._features_indexes = value
+
+    def __len__(self):
+        &#34;&#34;&#34;A Condition&#39;s length is the number of features it talks about&#34;&#34;&#34;
+        return len(self._features_indexes)
+
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        To be implemented in daughter class.
+        Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
+        it is always fullfilled.
+
+        Parameters
+        ----------
+        xs: Union[pd.DataFrame, np.ndarray]
+            shape (n, d), n number of line, d number of features
+
+        Returns
+        -------
+        activation: Activation
+             Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
+        &#34;&#34;&#34;
+        pass
+
+    def normalize_features_indexes(self):
+        &#34;&#34;&#34;In some daughter classes, features indexes are optional. however since the attribute &#39;features_indexes&#39;
+        must be specified, a default value is set automatically&#34;&#34;&#34;
+        self._features_indexes = list(range(len(self.features_indexes)))
+
+
+class HyperrectangleCondition(Condition):
+    &#34;&#34;&#34;Condition class for Hyper Rectangle conditions.
+
+    An Hyper Rectangle condition is a condition where each feature is associated to a min and a max (self.bmins and
+    self.bmaxs). The condition is met when all features are within their respective bmin and bmax.
+
+    For example, if the condition has :
+
+    features_indexes = [0, 1]
+    bminx = [0, 1]
+    mnaxs = [0, 2]
+
+    Then the condition is met when feature 0 is equal to 0 and feature 2 is between 1 and 2.
+
+    In this condition, features indexes are optional if features names are given.
+
+    Such a condition can be sorted either according to features indexes (smaller features first) or by features names in
+    alphabetical order. This is set through the class attribute SORT_ACCORDING_TO that can be either &#34;index&#34; or &#34;name&#34;.
+    &#34;&#34;&#34;
+
+    SORT_ACCORDING_TO = &#34;index&#34;
+
+    def __init__(
+            self,
+            features_indexes: Union[List[int], None] = None,
+            bmins: Union[List[Union[int, float]], None] = None,
+            bmaxs: Union[List[Union[int, float]], None] = None,
+            features_names: Union[List[str], None] = None,
+            empty: bool = False,
+            sort: bool = True,
+    ):
+        if empty:
+            super().__init__(empty=True)
+            self._bmins = None
+            self._bmaxs = None
+            self._features_names = None
+        else:
+            if bmins is None:
+                raise ValueError(&#34;bmins can not be None if &#39;empty&#39; is False&#34;)
+            if bmaxs is None:
+                raise ValueError(&#34;bmaxs can not be None if &#39;empty&#39; is False&#34;)
+            if features_indexes is None:
+                if features_names is None:
+                    raise ValueError(&#34;Must specify at least one of features_indexes and features_names&#34;)
+                features_indexes = list(range(len(features_names)))
+
+            length = len(features_indexes)
+            if len(bmaxs) != length:
+                raise ValueError(f&#34;Specifed {length} features but {len(bmaxs)} bmaxs&#34;)
+            if len(bmins) != length:
+                raise ValueError(f&#34;Specifed {length} features but {len(bmins)} bmins&#34;)
+            if features_names is not None and len(features_names) != length:
+                raise ValueError(f&#34;Specifed {length} features but {len(features_names)} bmaxs&#34;)
+
+            if features_names is not None and any([not isinstance(a, str) for a in features_names]):
+                raise TypeError(f&#34;Names must be strings. You gave {[(f, type(f)) for f in features_names]}&#34;)
+            if any([not isinstance(a, Number) for a in bmins]):
+                raise TypeError(f&#34;bmins must be integers or floats. You gave {[(f, type(f)) for f in bmins]}&#34;)
+            if any([not isinstance(a, Number) for a in bmaxs]):
+                raise TypeError(f&#34;bmaxs must be integers or floats. You gave {[(f, type(f)) for f in bmaxs]}&#34;)
+
+            super().__init__(features_indexes)
+
+            if any([a &gt; b for a, b in zip(bmins, bmaxs)]):
+                # If a bmin is above its associated bmax, then the rule is impossible.
+                self.impossible = True
+            self._bmins = bmins
+            self._bmaxs = bmaxs
+            if features_names is not None:
+                self._features_names = features_names
+            else:
+                self._features_names = [&#34;X_&#34; + str(i) for i in self._features_indexes]
+            if len(set(self._features_names)) != len(self._features_names):
+                raise DuplicatedFeatures
+            if sort:
+                self.sort()
+
+    def __and__(self, other: &#34;HyperrectangleCondition&#34;) -&gt; &#34;HyperrectangleCondition&#34;:
+
+        &#34;&#34;&#34;Logical and (&amp;) or two HyperrectangleCondition objects
+
+        If the two conditions do not talk about the same features, then the AND is obvious. For common features,
+        the bmin of the feature in the new condition is set to be the greatest of bmins in parent conditions, and the
+        bmax the smallest of bmaxs.
+        This can give impossible conditions : if in condition 1 feature A must be between 0 and 10 and in condition 2 it
+        must be between 20 and 30, then in the new condition it must be between 20 and 10, assumin 20 being the minimum.
+        In that case, the new condition, upon creation, will have self.impossible = True. This does not corrupt the
+        object nor the code : the condition&#39;s method &#34;evaluate&#34;, which returns the activation vector, will return a
+        vector with only zeros since the condition will never be met.
+        &#34;&#34;&#34;
+
+        self_clone = HyperrectangleCondition(
+            features_indexes=copy(self.features_indexes),
+            bmins=copy(self.bmins),
+            bmaxs=copy(self.bmaxs),
+            features_names=copy(self.features_names),
+        )
+
+        common_features = [f for f in self_clone.features_names if f in other.features_names]
+
+        if len(common_features) &gt; 0:
+
+            # If the two conditions have features in common, the new conditons will have as range the intersection of
+            # each condition&#39;s range for those features. The new condition can possibly never be met.
+
+            common_features_positions_in_self = [self_clone.features_names.index(f) for f in common_features]
+            common_features_positions_in_other = [other.features_names.index(f) for f in common_features]
+
+            (common_features_indexes_in_self, common_features_bmins_in_self, common_features_bmaxs_in_self) = list(zip(
+                *[
+                    (
+                        self_clone.features_indexes[i],
+                        self_clone.bmins[i],
+                        self_clone.bmaxs[i]
+                    )
+                    for i in common_features_positions_in_self
+                ]
+            ))
+
+            (common_features_indexes_in_other, common_features_bmins_in_other, common_features_bmaxs_in_other) = list(
+                zip(
+                    *[
+                        (
+                            other.features_indexes[i],
+                            other.bmins[i],
+                            other.bmaxs[i]
+                        )
+                        for i in common_features_positions_in_other
+                    ]
+                )
+            )
+
+            if common_features_indexes_in_self != common_features_indexes_in_other:
+                raise IndexError(&#34;Some features present in both conditions in __and__ have different indexes : \n &#34;
+                                 f&#34;{common_features_indexes_in_self}\n &#34;
+                                 f&#34;{common_features_indexes_in_other}&#34;)
+
+            common_features_bmins = [
+                max(bmin0, bmin1) for bmin0, bmin1 in zip(common_features_bmins_in_self, common_features_bmins_in_other)
+            ]
+            common_features_bmaxs = [
+                min(bmax0, bmax1) for bmax0, bmax1 in zip(common_features_bmaxs_in_self, common_features_bmaxs_in_other)
+            ]
+
+            features_indexes = [
+                other.features_indexes[i]
+                for i in range(len(other.features_indexes))
+                if i not in common_features_positions_in_other
+            ]
+            features_names = [f for f in other.features_names if f not in common_features]
+            bmins = [
+                other.bmins[i]
+                for i in range(len(other.bmins))
+                if i not in common_features_positions_in_other
+            ]
+            bmaxs = [
+                other.bmaxs[i]
+                for i in range(len(other.bmaxs))
+                if i not in common_features_positions_in_other
+            ]
+
+            other_clone = HyperrectangleCondition(
+                features_indexes=features_indexes,
+                bmins=bmins,
+                bmaxs=bmaxs,
+                features_names=features_names,
+            )
+
+            for i, index in enumerate(common_features_positions_in_self):
+                self_clone.bmins[index] = common_features_bmins[i]
+                self_clone.bmaxs[index] = common_features_bmaxs[i]
+        else:
+            other_clone = other
+
+        args = [i + j for i, j in zip(self_clone.getattr, other_clone.getattr)]
+        if len(set(args[0])) != len(args[0]):
+            raise IndexError(&#34;Some features with different names had same index in both conditions in __and__:\n &#34;
+                             f&#34;{args}&#34;)
+
+        to_ret = HyperrectangleCondition(
+            features_indexes=args[0],
+            bmins=args[1],
+            bmaxs=args[2],
+            features_names=args[3],
+            empty=False,
+        )
+        return to_ret
+
+    @property
+    def getattr(self) -&gt; List[list]:
+        return [self.features_indexes, self.bmins, self.bmaxs, self.features_names]
+
+    @property
+    def features_names(self) -&gt; List[str]:
+        return self._features_names
+
+    @property
+    def bmins(self) -&gt; List[Union[int, float]]:
+        return self._bmins
+
+    @property
+    def bmaxs(self) -&gt; List[Union[int, float]]:
+        return self._bmaxs
+
+    @features_names.setter
+    def features_names(self, value: Union[List[str], str]):
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
+        if len(set(value)) != len(value):
+            raise DuplicatedFeatures
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} names&#34;)
+        self._features_names = value
+
+    @bmins.setter
+    def bmins(self, value: Union[List[Union[int, float]], str]):
+        if isinstance(value, str):
+            value = [int(v) for v in ast.literal_eval(value)]
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} bmins&#34;)
+        self._bmins = value
+        if any([a &gt; b for a, b in zip(self.bmins, self.bmaxs)]):
+            # If a bmin is above its associated bmax, then the rule is impossible.
+            self.impossible = True
+
+    @bmaxs.setter
+    def bmaxs(self, value: Union[List[Union[int, float]], str]):
+        if isinstance(value, str):
+            value = [int(v) for v in ast.literal_eval(value)]
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} bmaxs&#34;)
+        self._bmaxs = value
+        if any([a &gt; b for a, b in zip(self.bmins, self.bmaxs)]):
+            # If a bmin is above its associated bmax, then the rule is impossible.
+            self.impossible = True
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        if self._features_names is None:
+            return &#34;empty condition&#34;
+        str_output = f&#34;{self._features_names[0]} in [{self._bmins[0]}, {self._bmaxs[0]}]&#34;
+        if len(self) &gt; 1:
+            for i in range(1, len(self)):
+                str_output += &#34; AND &#34;
+                str_output += f&#34;{self._features_names[i]} in [{self._bmins[i]}, {self._bmaxs[i]}]&#34;
+        return str_output
+
+    def __eq__(self, other):
+        &#34;&#34;&#34;Two HyperrectangleConditions are equal if they talk about the same features, and if the bmins and bmaxs
+        are the same from one rule to another. Features indexes can be different.&#34;&#34;&#34;
+        return self.__hash__() == other.__hash__()
+
+    @property
+    def to_hash(self) -&gt; Tuple[str]:
+        return (&#34;c&#34;,) + tuple(
+            (self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))
+        )
+
+    def __hash__(self):
+        return hash(frozenset(self.to_hash))
+
+    def __getitem__(self, item):
+        return (
+            self._features_names[item],
+            self._features_indexes[item],
+            self._bmins[item],
+            self._bmaxs[item],
+        )
+
+    def __len__(self) -&gt; int:
+        &#34;&#34;&#34;A HyperrectangleCondition&#39;s length is the number of features it talks about&#34;&#34;&#34;
+        if self._features_names is not None:
+            return len(self._features_names)
+        if self._features_indexes is not None:
+            return len(self._features_indexes)
+        if self._bmins is not None:
+            return len(self._bmins)
+        if self._bmaxs is not None:
+            return len(self._bmaxs)
+        return 0
+
+    def sort(self):
+        if len(self) &gt; 1:
+            if self.__class__.SORT_ACCORDING_TO == &#34;index&#34;:
+                self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
+                self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
+                self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
+                self._features_indexes = sorted(self._features_indexes)
+            elif self.__class__.SORT_ACCORDING_TO == &#34;name&#34;:
+                self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
+                self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
+                self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
+                self._features_names = sorted(self._features_names)
+            else:
+                raise ValueError(
+                    &#34;HyperrectangleCondition&#39;s SORT_ACCORDING_TO&#34;
+                    f&#34; can be &#39;index&#39; or &#39;name&#39;, not {self.__class__.SORT_ACCORDING_TO}&#34;
+                )
+
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
+
+        Parameters
+        ----------
+        xs: Union[pd.DataFrame, np.ndarray]
+            shape (n, d), n number of line, d number of features. If is a pd.DataFrame, will use self.features_names to
+            select features to use in xs
+
+        Returns
+        -------
+        activation: np.ndarray
+            Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
+
+        Examples
+        --------
+        &gt;&gt;&gt; xs_ = np.array([[1, 3], [3, 4], [2, np.nan]])
+        &gt;&gt;&gt; c1 = HyperrectangleCondition([0], bmins=[1], bmaxs=[2])
+        &gt;&gt;&gt; c1.evaluate(xs_)
+        np.array([1, 0, 1])
+        &gt;&gt;&gt; c2 = HyperrectangleCondition([1], bmins=[3], bmaxs=[5])
+        &gt;&gt;&gt; c2.evaluate(xs_)
+        np.array([1, 1, 0])
+        &gt;&gt;&gt; c3 = HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5])
+        &gt;&gt;&gt; c3.evaluate(xs_)
+        np.array([1, 0, 0])
+        &#34;&#34;&#34;
+        if self.impossible:
+            return np.zeros(xs.shape[0], dtype=np.ubyte)
+
+        if isinstance(xs, np.ndarray):
+            if any([i &gt;= xs.shape[1] for i in self.features_indexes]):
+                raise IndexError(&#34;Some features indexes in self are greater than the size of the given xs array&#34;)
+            geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+            for i, j in enumerate(self._features_indexes):
+                geq_min &amp;= np.greater_equal(xs[:, j], self._bmins[i])
+                leq_min &amp;= np.less_equal(xs[:, j], self._bmaxs[i])
+                not_nan &amp;= np.isfinite(xs[:, j])
+            activation = geq_min &amp; leq_min &amp; not_nan
+        else:
+            if any([i not in xs.columns for i in self.features_names]):
+                raise IndexError(&#34;Some features names in self were not in xs DataFrame columns&#34;)
+            geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+            for i, n in enumerate(self._features_names):
+                geq_min &amp;= np.greater_equal(xs[n], self._bmins[i])
+                leq_min &amp;= np.less_equal(xs[n], self._bmaxs[i])
+                not_nan &amp;= np.isfinite(xs[n])
+            activation = (geq_min &amp; leq_min &amp; not_nan).values
+
+        return activation</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="ruleskit.condition.Condition"><code class="flex name class">
+<span>class <span class="ident">Condition</span></span>
+<span>(</span><span>features_indexes: Optional[List[int]] = None, empty: bool = False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Abstract class for Condition object. Used by Rule objets.
+A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
+variables.
+A condition can be "imossible" to meet, in that case self.impossible is True. This is set automatically.</p>
+<p>One can add conditions and use logical AND (&amp;) operations on two conditions (same thing as add). In that case, the
+two conditions are combined into a new one.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Condition(ABC):
+    &#34;&#34;&#34;Abstract class for Condition object. Used by Rule objets.
+    A condition is a list of variable (here represented by their indexes in an array) and of conditions on those
+    variables.
+    A condition can be &#34;imossible&#34; to meet, in that case self.impossible is True. This is set automatically.
+
+    One can add conditions and use logical AND (&amp;) operations on two conditions (same thing as add). In that case, the
+    two conditions are combined into a new one.
+    &#34;&#34;&#34;
+
+    def __init__(self, features_indexes: Union[List[int], None] = None, empty: bool = False):
+        if empty:
+            self._features_indexes = None
+        else:
+            if features_indexes is None:
+                raise ValueError(&#34;Must specify features_indexes&#34;)
+            if any([not np.issubdtype(type(a), np.integer) for a in features_indexes]):
+                raise TypeError(
+                    f&#34;features_indexes must be integers. You gave {[(f, type(f)) for f in features_indexes]}&#34;
+                )
+            self._features_indexes = features_indexes
+            if len(set(self._features_indexes)) != len(self._features_indexes):
+                raise DuplicatedFeatures
+
+        self.impossible = False
+
+    def sort(self):
+        self._features_indexes = sorted(self._features_indexes)
+
+    def __and__(self, other: &#34;Condition&#34;) -&gt; &#34;Condition&#34;:
+        &#34;&#34;&#34;To be implemented in daughter classes&#34;&#34;&#34;
+        pass
+
+    def __add__(self, other: &#34;Condition&#34;) -&gt; &#34;Condition&#34;:
+        return NotImplemented(&#34;Can not add conditions (seen as &#39;logical OR&#39;). You can use logical AND however.&#34;)
+
+    @property
+    def to_hash(self):
+        return (&#34;c&#34;,) + tuple(self._features_indexes)
+
+    def __hash__(self):
+        return hash(frozenset(self.to_hash))
+
+    @property
+    def features_indexes(self) -&gt; List[int]:
+        return self._features_indexes
+
+    @features_indexes.setter
+    def features_indexes(self, value: Union[List[int], str]):
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
+        if len(set(value)) != len(value):
+            raise DuplicatedFeatures
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} indexes&#34;)
+        self._features_indexes = value
+
+    def __len__(self):
+        &#34;&#34;&#34;A Condition&#39;s length is the number of features it talks about&#34;&#34;&#34;
+        return len(self._features_indexes)
+
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        To be implemented in daughter class.
+        Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
+        it is always fullfilled.
+
+        Parameters
+        ----------
+        xs: Union[pd.DataFrame, np.ndarray]
+            shape (n, d), n number of line, d number of features
+
+        Returns
+        -------
+        activation: Activation
+             Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
+        &#34;&#34;&#34;
+        pass
+
+    def normalize_features_indexes(self):
+        &#34;&#34;&#34;In some daughter classes, features indexes are optional. however since the attribute &#39;features_indexes&#39;
+        must be specified, a default value is set automatically&#34;&#34;&#34;
+        self._features_indexes = list(range(len(self.features_indexes)))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ruleskit.condition.HyperrectangleCondition" href="#ruleskit.condition.HyperrectangleCondition">HyperrectangleCondition</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ruleskit.condition.Condition.features_indexes"><code class="name">var <span class="ident">features_indexes</span> : List[int]</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def features_indexes(self) -&gt; List[int]:
+    return self._features_indexes</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.Condition.to_hash"><code class="name">var <span class="ident">to_hash</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def to_hash(self):
+    return (&#34;c&#34;,) + tuple(self._features_indexes)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ruleskit.condition.Condition.evaluate"><code class="name flex">
+<span>def <span class="ident">evaluate</span></span>(<span>self, xs: Union[pandas.core.frame.DataFrame, numpy.ndarray]) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>To be implemented in daughter class.
+Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
+it is always fullfilled.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>xs</code></strong> :&ensp;<code>Union[pd.DataFrame, np.ndarray]</code></dt>
+<dd>shape (n, d), n number of line, d number of features</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>activation</code></strong> :&ensp;<code>Activation</code></dt>
+<dd>Shape
+(n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    To be implemented in daughter class.
+    Evaluates where a condition if fullfilled. In this abstract class that does not have any acutal condition,
+    it is always fullfilled.
+
+    Parameters
+    ----------
+    xs: Union[pd.DataFrame, np.ndarray]
+        shape (n, d), n number of line, d number of features
+
+    Returns
+    -------
+    activation: Activation
+         Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
+    &#34;&#34;&#34;
+    pass</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.Condition.normalize_features_indexes"><code class="name flex">
+<span>def <span class="ident">normalize_features_indexes</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>In some daughter classes, features indexes are optional. however since the attribute 'features_indexes'
+must be specified, a default value is set automatically</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def normalize_features_indexes(self):
+    &#34;&#34;&#34;In some daughter classes, features indexes are optional. however since the attribute &#39;features_indexes&#39;
+    must be specified, a default value is set automatically&#34;&#34;&#34;
+    self._features_indexes = list(range(len(self.features_indexes)))</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.Condition.sort"><code class="name flex">
+<span>def <span class="ident">sort</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sort(self):
+    self._features_indexes = sorted(self._features_indexes)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ruleskit.condition.DuplicatedFeatures"><code class="flex name class">
+<span>class <span class="ident">DuplicatedFeatures</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Common base class for all non-exit exceptions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DuplicatedFeatures(Exception):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="ruleskit.condition.HyperrectangleCondition"><code class="flex name class">
+<span>class <span class="ident">HyperrectangleCondition</span></span>
+<span>(</span><span>features_indexes: Optional[List[int]] = None, bmins: Optional[List[Union[int, float]]] = None, bmaxs: Optional[List[Union[int, float]]] = None, features_names: Optional[List[str]] = None, empty: bool = False, sort: bool = True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Condition class for Hyper Rectangle conditions.</p>
+<p>An Hyper Rectangle condition is a condition where each feature is associated to a min and a max (self.bmins and
+self.bmaxs). The condition is met when all features are within their respective bmin and bmax.</p>
+<p>For example, if the condition has :</p>
+<p>features_indexes = [0, 1]
+bminx = [0, 1]
+mnaxs = [0, 2]</p>
+<p>Then the condition is met when feature 0 is equal to 0 and feature 2 is between 1 and 2.</p>
+<p>In this condition, features indexes are optional if features names are given.</p>
+<p>Such a condition can be sorted either according to features indexes (smaller features first) or by features names in
+alphabetical order. This is set through the class attribute SORT_ACCORDING_TO that can be either "index" or "name".</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HyperrectangleCondition(Condition):
+    &#34;&#34;&#34;Condition class for Hyper Rectangle conditions.
+
+    An Hyper Rectangle condition is a condition where each feature is associated to a min and a max (self.bmins and
+    self.bmaxs). The condition is met when all features are within their respective bmin and bmax.
+
+    For example, if the condition has :
+
+    features_indexes = [0, 1]
+    bminx = [0, 1]
+    mnaxs = [0, 2]
+
+    Then the condition is met when feature 0 is equal to 0 and feature 2 is between 1 and 2.
+
+    In this condition, features indexes are optional if features names are given.
+
+    Such a condition can be sorted either according to features indexes (smaller features first) or by features names in
+    alphabetical order. This is set through the class attribute SORT_ACCORDING_TO that can be either &#34;index&#34; or &#34;name&#34;.
+    &#34;&#34;&#34;
+
+    SORT_ACCORDING_TO = &#34;index&#34;
+
+    def __init__(
+            self,
+            features_indexes: Union[List[int], None] = None,
+            bmins: Union[List[Union[int, float]], None] = None,
+            bmaxs: Union[List[Union[int, float]], None] = None,
+            features_names: Union[List[str], None] = None,
+            empty: bool = False,
+            sort: bool = True,
+    ):
+        if empty:
+            super().__init__(empty=True)
+            self._bmins = None
+            self._bmaxs = None
+            self._features_names = None
+        else:
+            if bmins is None:
+                raise ValueError(&#34;bmins can not be None if &#39;empty&#39; is False&#34;)
+            if bmaxs is None:
+                raise ValueError(&#34;bmaxs can not be None if &#39;empty&#39; is False&#34;)
+            if features_indexes is None:
+                if features_names is None:
+                    raise ValueError(&#34;Must specify at least one of features_indexes and features_names&#34;)
+                features_indexes = list(range(len(features_names)))
+
+            length = len(features_indexes)
+            if len(bmaxs) != length:
+                raise ValueError(f&#34;Specifed {length} features but {len(bmaxs)} bmaxs&#34;)
+            if len(bmins) != length:
+                raise ValueError(f&#34;Specifed {length} features but {len(bmins)} bmins&#34;)
+            if features_names is not None and len(features_names) != length:
+                raise ValueError(f&#34;Specifed {length} features but {len(features_names)} bmaxs&#34;)
+
+            if features_names is not None and any([not isinstance(a, str) for a in features_names]):
+                raise TypeError(f&#34;Names must be strings. You gave {[(f, type(f)) for f in features_names]}&#34;)
+            if any([not isinstance(a, Number) for a in bmins]):
+                raise TypeError(f&#34;bmins must be integers or floats. You gave {[(f, type(f)) for f in bmins]}&#34;)
+            if any([not isinstance(a, Number) for a in bmaxs]):
+                raise TypeError(f&#34;bmaxs must be integers or floats. You gave {[(f, type(f)) for f in bmaxs]}&#34;)
+
+            super().__init__(features_indexes)
+
+            if any([a &gt; b for a, b in zip(bmins, bmaxs)]):
+                # If a bmin is above its associated bmax, then the rule is impossible.
+                self.impossible = True
+            self._bmins = bmins
+            self._bmaxs = bmaxs
+            if features_names is not None:
+                self._features_names = features_names
+            else:
+                self._features_names = [&#34;X_&#34; + str(i) for i in self._features_indexes]
+            if len(set(self._features_names)) != len(self._features_names):
+                raise DuplicatedFeatures
+            if sort:
+                self.sort()
+
+    def __and__(self, other: &#34;HyperrectangleCondition&#34;) -&gt; &#34;HyperrectangleCondition&#34;:
+
+        &#34;&#34;&#34;Logical and (&amp;) or two HyperrectangleCondition objects
+
+        If the two conditions do not talk about the same features, then the AND is obvious. For common features,
+        the bmin of the feature in the new condition is set to be the greatest of bmins in parent conditions, and the
+        bmax the smallest of bmaxs.
+        This can give impossible conditions : if in condition 1 feature A must be between 0 and 10 and in condition 2 it
+        must be between 20 and 30, then in the new condition it must be between 20 and 10, assumin 20 being the minimum.
+        In that case, the new condition, upon creation, will have self.impossible = True. This does not corrupt the
+        object nor the code : the condition&#39;s method &#34;evaluate&#34;, which returns the activation vector, will return a
+        vector with only zeros since the condition will never be met.
+        &#34;&#34;&#34;
+
+        self_clone = HyperrectangleCondition(
+            features_indexes=copy(self.features_indexes),
+            bmins=copy(self.bmins),
+            bmaxs=copy(self.bmaxs),
+            features_names=copy(self.features_names),
+        )
+
+        common_features = [f for f in self_clone.features_names if f in other.features_names]
+
+        if len(common_features) &gt; 0:
+
+            # If the two conditions have features in common, the new conditons will have as range the intersection of
+            # each condition&#39;s range for those features. The new condition can possibly never be met.
+
+            common_features_positions_in_self = [self_clone.features_names.index(f) for f in common_features]
+            common_features_positions_in_other = [other.features_names.index(f) for f in common_features]
+
+            (common_features_indexes_in_self, common_features_bmins_in_self, common_features_bmaxs_in_self) = list(zip(
+                *[
+                    (
+                        self_clone.features_indexes[i],
+                        self_clone.bmins[i],
+                        self_clone.bmaxs[i]
+                    )
+                    for i in common_features_positions_in_self
+                ]
+            ))
+
+            (common_features_indexes_in_other, common_features_bmins_in_other, common_features_bmaxs_in_other) = list(
+                zip(
+                    *[
+                        (
+                            other.features_indexes[i],
+                            other.bmins[i],
+                            other.bmaxs[i]
+                        )
+                        for i in common_features_positions_in_other
+                    ]
+                )
+            )
+
+            if common_features_indexes_in_self != common_features_indexes_in_other:
+                raise IndexError(&#34;Some features present in both conditions in __and__ have different indexes : \n &#34;
+                                 f&#34;{common_features_indexes_in_self}\n &#34;
+                                 f&#34;{common_features_indexes_in_other}&#34;)
+
+            common_features_bmins = [
+                max(bmin0, bmin1) for bmin0, bmin1 in zip(common_features_bmins_in_self, common_features_bmins_in_other)
+            ]
+            common_features_bmaxs = [
+                min(bmax0, bmax1) for bmax0, bmax1 in zip(common_features_bmaxs_in_self, common_features_bmaxs_in_other)
+            ]
+
+            features_indexes = [
+                other.features_indexes[i]
+                for i in range(len(other.features_indexes))
+                if i not in common_features_positions_in_other
+            ]
+            features_names = [f for f in other.features_names if f not in common_features]
+            bmins = [
+                other.bmins[i]
+                for i in range(len(other.bmins))
+                if i not in common_features_positions_in_other
+            ]
+            bmaxs = [
+                other.bmaxs[i]
+                for i in range(len(other.bmaxs))
+                if i not in common_features_positions_in_other
+            ]
+
+            other_clone = HyperrectangleCondition(
+                features_indexes=features_indexes,
+                bmins=bmins,
+                bmaxs=bmaxs,
+                features_names=features_names,
+            )
+
+            for i, index in enumerate(common_features_positions_in_self):
+                self_clone.bmins[index] = common_features_bmins[i]
+                self_clone.bmaxs[index] = common_features_bmaxs[i]
+        else:
+            other_clone = other
+
+        args = [i + j for i, j in zip(self_clone.getattr, other_clone.getattr)]
+        if len(set(args[0])) != len(args[0]):
+            raise IndexError(&#34;Some features with different names had same index in both conditions in __and__:\n &#34;
+                             f&#34;{args}&#34;)
+
+        to_ret = HyperrectangleCondition(
+            features_indexes=args[0],
+            bmins=args[1],
+            bmaxs=args[2],
+            features_names=args[3],
+            empty=False,
+        )
+        return to_ret
+
+    @property
+    def getattr(self) -&gt; List[list]:
+        return [self.features_indexes, self.bmins, self.bmaxs, self.features_names]
+
+    @property
+    def features_names(self) -&gt; List[str]:
+        return self._features_names
+
+    @property
+    def bmins(self) -&gt; List[Union[int, float]]:
+        return self._bmins
+
+    @property
+    def bmaxs(self) -&gt; List[Union[int, float]]:
+        return self._bmaxs
+
+    @features_names.setter
+    def features_names(self, value: Union[List[str], str]):
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
+        if len(set(value)) != len(value):
+            raise DuplicatedFeatures
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} names&#34;)
+        self._features_names = value
+
+    @bmins.setter
+    def bmins(self, value: Union[List[Union[int, float]], str]):
+        if isinstance(value, str):
+            value = [int(v) for v in ast.literal_eval(value)]
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} bmins&#34;)
+        self._bmins = value
+        if any([a &gt; b for a, b in zip(self.bmins, self.bmaxs)]):
+            # If a bmin is above its associated bmax, then the rule is impossible.
+            self.impossible = True
+
+    @bmaxs.setter
+    def bmaxs(self, value: Union[List[Union[int, float]], str]):
+        if isinstance(value, str):
+            value = [int(v) for v in ast.literal_eval(value)]
+        if len(self) &gt; 0 and len(self) != len(value):
+            raise IndexError(f&#34;Condition has {len(self)} features but you gave {len(value)} bmaxs&#34;)
+        self._bmaxs = value
+        if any([a &gt; b for a, b in zip(self.bmins, self.bmaxs)]):
+            # If a bmin is above its associated bmax, then the rule is impossible.
+            self.impossible = True
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        if self._features_names is None:
+            return &#34;empty condition&#34;
+        str_output = f&#34;{self._features_names[0]} in [{self._bmins[0]}, {self._bmaxs[0]}]&#34;
+        if len(self) &gt; 1:
+            for i in range(1, len(self)):
+                str_output += &#34; AND &#34;
+                str_output += f&#34;{self._features_names[i]} in [{self._bmins[i]}, {self._bmaxs[i]}]&#34;
+        return str_output
+
+    def __eq__(self, other):
+        &#34;&#34;&#34;Two HyperrectangleConditions are equal if they talk about the same features, and if the bmins and bmaxs
+        are the same from one rule to another. Features indexes can be different.&#34;&#34;&#34;
+        return self.__hash__() == other.__hash__()
+
+    @property
+    def to_hash(self) -&gt; Tuple[str]:
+        return (&#34;c&#34;,) + tuple(
+            (self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))
+        )
+
+    def __hash__(self):
+        return hash(frozenset(self.to_hash))
+
+    def __getitem__(self, item):
+        return (
+            self._features_names[item],
+            self._features_indexes[item],
+            self._bmins[item],
+            self._bmaxs[item],
+        )
+
+    def __len__(self) -&gt; int:
+        &#34;&#34;&#34;A HyperrectangleCondition&#39;s length is the number of features it talks about&#34;&#34;&#34;
+        if self._features_names is not None:
+            return len(self._features_names)
+        if self._features_indexes is not None:
+            return len(self._features_indexes)
+        if self._bmins is not None:
+            return len(self._bmins)
+        if self._bmaxs is not None:
+            return len(self._bmaxs)
+        return 0
+
+    def sort(self):
+        if len(self) &gt; 1:
+            if self.__class__.SORT_ACCORDING_TO == &#34;index&#34;:
+                self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
+                self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
+                self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
+                self._features_indexes = sorted(self._features_indexes)
+            elif self.__class__.SORT_ACCORDING_TO == &#34;name&#34;:
+                self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
+                self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
+                self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
+                self._features_names = sorted(self._features_names)
+            else:
+                raise ValueError(
+                    &#34;HyperrectangleCondition&#39;s SORT_ACCORDING_TO&#34;
+                    f&#34; can be &#39;index&#39; or &#39;name&#39;, not {self.__class__.SORT_ACCORDING_TO}&#34;
+                )
+
+    def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -&gt; np.ndarray:
+        &#34;&#34;&#34;
+        Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
+
+        Parameters
+        ----------
+        xs: Union[pd.DataFrame, np.ndarray]
+            shape (n, d), n number of line, d number of features. If is a pd.DataFrame, will use self.features_names to
+            select features to use in xs
+
+        Returns
+        -------
+        activation: np.ndarray
+            Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
+
+        Examples
+        --------
+        &gt;&gt;&gt; xs_ = np.array([[1, 3], [3, 4], [2, np.nan]])
+        &gt;&gt;&gt; c1 = HyperrectangleCondition([0], bmins=[1], bmaxs=[2])
+        &gt;&gt;&gt; c1.evaluate(xs_)
+        np.array([1, 0, 1])
+        &gt;&gt;&gt; c2 = HyperrectangleCondition([1], bmins=[3], bmaxs=[5])
+        &gt;&gt;&gt; c2.evaluate(xs_)
+        np.array([1, 1, 0])
+        &gt;&gt;&gt; c3 = HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5])
+        &gt;&gt;&gt; c3.evaluate(xs_)
+        np.array([1, 0, 0])
+        &#34;&#34;&#34;
+        if self.impossible:
+            return np.zeros(xs.shape[0], dtype=np.ubyte)
+
+        if isinstance(xs, np.ndarray):
+            if any([i &gt;= xs.shape[1] for i in self.features_indexes]):
+                raise IndexError(&#34;Some features indexes in self are greater than the size of the given xs array&#34;)
+            geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+            for i, j in enumerate(self._features_indexes):
+                geq_min &amp;= np.greater_equal(xs[:, j], self._bmins[i])
+                leq_min &amp;= np.less_equal(xs[:, j], self._bmaxs[i])
+                not_nan &amp;= np.isfinite(xs[:, j])
+            activation = geq_min &amp; leq_min &amp; not_nan
+        else:
+            if any([i not in xs.columns for i in self.features_names]):
+                raise IndexError(&#34;Some features names in self were not in xs DataFrame columns&#34;)
+            geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+            for i, n in enumerate(self._features_names):
+                geq_min &amp;= np.greater_equal(xs[n], self._bmins[i])
+                leq_min &amp;= np.less_equal(xs[n], self._bmaxs[i])
+                not_nan &amp;= np.isfinite(xs[n])
+            activation = (geq_min &amp; leq_min &amp; not_nan).values
+
+        return activation</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="ruleskit.condition.Condition" href="#ruleskit.condition.Condition">Condition</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="ruleskit.condition.HyperrectangleCondition.SORT_ACCORDING_TO"><code class="name">var <span class="ident">SORT_ACCORDING_TO</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ruleskit.condition.HyperrectangleCondition.bmaxs"><code class="name">var <span class="ident">bmaxs</span> : List[Union[int, float]]</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def bmaxs(self) -&gt; List[Union[int, float]]:
+    return self._bmaxs</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.HyperrectangleCondition.bmins"><code class="name">var <span class="ident">bmins</span> : List[Union[int, float]]</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def bmins(self) -&gt; List[Union[int, float]]:
+    return self._bmins</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.HyperrectangleCondition.features_names"><code class="name">var <span class="ident">features_names</span> : List[str]</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def features_names(self) -&gt; List[str]:
+    return self._features_names</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.HyperrectangleCondition.getattr"><code class="name">var <span class="ident">getattr</span> : List[list]</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def getattr(self) -&gt; List[list]:
+    return [self.features_indexes, self.bmins, self.bmaxs, self.features_names]</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.HyperrectangleCondition.to_hash"><code class="name">var <span class="ident">to_hash</span> : Tuple[str]</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def to_hash(self) -&gt; Tuple[str]:
+    return (&#34;c&#34;,) + tuple(
+        (self._features_names[i], self._bmins[i], self._bmaxs[i]) for i in range(len(self._features_names))
+    )</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ruleskit.condition.HyperrectangleCondition.evaluate"><code class="name flex">
+<span>def <span class="ident">evaluate</span></span>(<span>self, xs: Union[pandas.core.frame.DataFrame, numpy.ndarray]) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, &hellip;]</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>xs</code></strong> :&ensp;<code>Union[pd.DataFrame, np.ndarray]</code></dt>
+<dd>shape (n, d), n number of line, d number of features. If is a pd.DataFrame, will use self.features_names to
+select features to use in xs</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>activation</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>Shape
+(n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; xs_ = np.array([[1, 3], [3, 4], [2, np.nan]])
+&gt;&gt;&gt; c1 = HyperrectangleCondition([0], bmins=[1], bmaxs=[2])
+&gt;&gt;&gt; c1.evaluate(xs_)
+np.array([1, 0, 1])
+&gt;&gt;&gt; c2 = HyperrectangleCondition([1], bmins=[3], bmaxs=[5])
+&gt;&gt;&gt; c2.evaluate(xs_)
+np.array([1, 1, 0])
+&gt;&gt;&gt; c3 = HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5])
+&gt;&gt;&gt; c3.evaluate(xs_)
+np.array([1, 0, 0])
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def evaluate(self, xs: Union[pd.DataFrame, np.ndarray]) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Evaluates where a condition if fullfilled, by returning a vector of the form [0, 1, 0, 0, ...]
+
+    Parameters
+    ----------
+    xs: Union[pd.DataFrame, np.ndarray]
+        shape (n, d), n number of line, d number of features. If is a pd.DataFrame, will use self.features_names to
+        select features to use in xs
+
+    Returns
+    -------
+    activation: np.ndarray
+        Shape  (n, 1). The activation vector, filled with 1 where the condition is met and 0 where it is not.
+
+    Examples
+    --------
+    &gt;&gt;&gt; xs_ = np.array([[1, 3], [3, 4], [2, np.nan]])
+    &gt;&gt;&gt; c1 = HyperrectangleCondition([0], bmins=[1], bmaxs=[2])
+    &gt;&gt;&gt; c1.evaluate(xs_)
+    np.array([1, 0, 1])
+    &gt;&gt;&gt; c2 = HyperrectangleCondition([1], bmins=[3], bmaxs=[5])
+    &gt;&gt;&gt; c2.evaluate(xs_)
+    np.array([1, 1, 0])
+    &gt;&gt;&gt; c3 = HyperrectangleCondition([0, 1], bmins=[1, 3], bmaxs=[2, 5])
+    &gt;&gt;&gt; c3.evaluate(xs_)
+    np.array([1, 0, 0])
+    &#34;&#34;&#34;
+    if self.impossible:
+        return np.zeros(xs.shape[0], dtype=np.ubyte)
+
+    if isinstance(xs, np.ndarray):
+        if any([i &gt;= xs.shape[1] for i in self.features_indexes]):
+            raise IndexError(&#34;Some features indexes in self are greater than the size of the given xs array&#34;)
+        geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+        for i, j in enumerate(self._features_indexes):
+            geq_min &amp;= np.greater_equal(xs[:, j], self._bmins[i])
+            leq_min &amp;= np.less_equal(xs[:, j], self._bmaxs[i])
+            not_nan &amp;= np.isfinite(xs[:, j])
+        activation = geq_min &amp; leq_min &amp; not_nan
+    else:
+        if any([i not in xs.columns for i in self.features_names]):
+            raise IndexError(&#34;Some features names in self were not in xs DataFrame columns&#34;)
+        geq_min = leq_min = not_nan = np.ones(xs.shape[0], dtype=np.ubyte)
+        for i, n in enumerate(self._features_names):
+            geq_min &amp;= np.greater_equal(xs[n], self._bmins[i])
+            leq_min &amp;= np.less_equal(xs[n], self._bmaxs[i])
+            not_nan &amp;= np.isfinite(xs[n])
+        activation = (geq_min &amp; leq_min &amp; not_nan).values
+
+    return activation</code></pre>
+</details>
+</dd>
+<dt id="ruleskit.condition.HyperrectangleCondition.sort"><code class="name flex">
+<span>def <span class="ident">sort</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sort(self):
+    if len(self) &gt; 1:
+        if self.__class__.SORT_ACCORDING_TO == &#34;index&#34;:
+            self._bmins = [x for _, x in sorted(zip(self._features_indexes, self._bmins))]
+            self._bmaxs = [x for _, x in sorted(zip(self._features_indexes, self._bmaxs))]
+            self._features_names = [x for _, x in sorted(zip(self._features_indexes, self._features_names))]
+            self._features_indexes = sorted(self._features_indexes)
+        elif self.__class__.SORT_ACCORDING_TO == &#34;name&#34;:
+            self._bmins = [x for _, x in sorted(zip(self._features_names, self._bmins))]
+            self._bmaxs = [x for _, x in sorted(zip(self._features_names, self._bmaxs))]
+            self._features_indexes = [x for _, x in sorted(zip(self._features_names, self._features_indexes))]
+            self._features_names = sorted(self._features_names)
+        else:
+            raise ValueError(
+                &#34;HyperrectangleCondition&#39;s SORT_ACCORDING_TO&#34;
+                f&#34; can be &#39;index&#39; or &#39;name&#39;, not {self.__class__.SORT_ACCORDING_TO}&#34;
+            )</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="ruleskit.condition.Condition" href="#ruleskit.condition.Condition">Condition</a></b></code>:
+<ul class="hlist">
+<li><code><a title="ruleskit.condition.Condition.normalize_features_indexes" href="#ruleskit.condition.Condition.normalize_features_indexes">normalize_features_indexes</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="ruleskit" href="index.html">ruleskit</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="ruleskit.condition.Condition" href="#ruleskit.condition.Condition">Condition</a></code></h4>
+<ul class="">
+<li><code><a title="ruleskit.condition.Condition.evaluate" href="#ruleskit.condition.Condition.evaluate">evaluate</a></code></li>
+<li><code><a title="ruleskit.condition.Condition.features_indexes" href="#ruleskit.condition.Condition.features_indexes">features_indexes</a></code></li>
+<li><code><a title="ruleskit.condition.Condition.normalize_features_indexes" href="#ruleskit.condition.Condition.normalize_features_indexes">normalize_features_indexes</a></code></li>
+<li><code><a title="ruleskit.condition.Condition.sort" href="#ruleskit.condition.Condition.sort">sort</a></code></li>
+<li><code><a title="ruleskit.condition.Condition.to_hash" href="#ruleskit.condition.Condition.to_hash">to_hash</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ruleskit.condition.DuplicatedFeatures" href="#ruleskit.condition.DuplicatedFeatures">DuplicatedFeatures</a></code></h4>
+</li>
+<li>
+<h4><code><a title="ruleskit.condition.HyperrectangleCondition" href="#ruleskit.condition.HyperrectangleCondition">HyperrectangleCondition</a></code></h4>
+<ul class="two-column">
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.SORT_ACCORDING_TO" href="#ruleskit.condition.HyperrectangleCondition.SORT_ACCORDING_TO">SORT_ACCORDING_TO</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.bmaxs" href="#ruleskit.condition.HyperrectangleCondition.bmaxs">bmaxs</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.bmins" href="#ruleskit.condition.HyperrectangleCondition.bmins">bmins</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.evaluate" href="#ruleskit.condition.HyperrectangleCondition.evaluate">evaluate</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.features_names" href="#ruleskit.condition.HyperrectangleCondition.features_names">features_names</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.getattr" href="#ruleskit.condition.HyperrectangleCondition.getattr">getattr</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.sort" href="#ruleskit.condition.HyperrectangleCondition.sort">sort</a></code></li>
+<li><code><a title="ruleskit.condition.HyperrectangleCondition.to_hash" href="#ruleskit.condition.HyperrectangleCondition.to_hash">to_hash</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
