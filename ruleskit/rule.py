@@ -45,6 +45,9 @@ class Rule(ABC):
     LOCAL_ACTIVATION = True
     THRESHOLDS = None
     """Thresholds that the Rule must meet to be good. See `ruleskit.thresholds.Thresholds` for more details."""
+    COMPUTE_SUBATTRIBUTES = False
+    """If true,when fitting, the rule will call all the attributes of its 'index' to compute them. Can impact 
+    computation time"""
 
     condition_index = ["features_names", "features_indexes", "bmins", "bmaxs"]
     rule_index = ["prediction"]
@@ -379,7 +382,8 @@ class Rule(ABC):
 
         if self.good:
             self.check_thresholds()
-        self.trigger_subattributes_computation()
+        if self.__class__.COMPUTE_SUBATTRIBUTES is True:
+            self.trigger_subattributes_computation()
         self._time_fit = time() - t0
         self._fitted = True
 
