@@ -643,7 +643,7 @@ class Activation(ABC):
             )
 
     @staticmethod
-    def multi_logical_or(acs: List["Activation"], asarray: bool = False) -> Union["Activation", np.ndarray]:
+    def multi_logical_or(acs: List["Activation"], asarray: bool = False, force_pairs: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
 
@@ -659,7 +659,7 @@ class Activation(ABC):
                 f" has only {available_memory} MB"
             )
 
-        if available_memory < expected_size:
+        if available_memory < expected_size or force_pairs:
             logger.warning(
                 "Not enough memory to compute 'multi_logical_or' with all the vectors at once."
                 " Will do it by pairs, taking more time but less memory."

@@ -755,7 +755,7 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember
     def evaluate_self_activation(
-        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False
+        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False, force_pairs: bool = False
     ):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if len(self) == 0:
@@ -776,7 +776,7 @@ class RuleSet(ABC):
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
                 return act
             try:
-                act = Activation.multi_logical_or(activations)
+                act = Activation.multi_logical_or(activations, force_pairs)
                 if return_nones is True:
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
                 return act
@@ -789,10 +789,10 @@ class RuleSet(ABC):
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
                 return act
 
-    def compute_self_activation(self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None):
+    def compute_self_activation(self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, force_pairs: bool = False):
         """Computes the activation vector of self from its rules. If xs is specified, uses it to remake the
         rules' activation vectors, but do not set them as the 'activation' attributes of the rules"""
-        self._activation = self.evaluate_self_activation(xs=xs)
+        self._activation = self.evaluate_self_activation(xs=xs, force_pairs=force_pairs)
 
     def evaluate_stacked_activations(self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None):
         if len(self) == 0:
