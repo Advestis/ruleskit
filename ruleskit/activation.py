@@ -647,17 +647,20 @@ class Activation(ABC):
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
 
+        logger.warning("Computing multi-logical or. Computing memroy available")
         available_memory = psutil.virtual_memory().available / 1e6  # In MB
         _ = acs[0].raw
         single_act_size = available_memory - psutil.virtual_memory().available / 1e6
         del _
         expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
-
+        logger.warning(f"Memory info : single_activation_size={single_act_size}, expected_size={expected_size}, available_memory={available_memory}")
         if available_memory < 2 * single_act_size:
+            logger.warning("Available memory < 2 * single_act_size.")
             raise MemoryError(
                 f"Not enough memory left to compute 'multi_logical_or'. Need at least 2x{single_act_size} MB,"
                 f" has only {available_memory} MB"
             )
+        logger.warning("Available memory > 2 * single_act_size.")
 
         if available_memory < expected_size or force_pairs:
             logger.warning(
@@ -669,6 +672,7 @@ class Activation(ABC):
                 res = np.vstack([res, a.raw]).any(axis=0).astype(np.ubyte)
 
         else:
+            logger.warning("Available memory > expected_size and !force_pairs")
             # noinspection PyProtectedMember
             try:
                 res = np.vstack([a.raw for a in acs]).any(axis=0).astype(np.ubyte)
@@ -677,7 +681,7 @@ class Activation(ABC):
                 res = acs[0].raw
                 for a in acs[1:]:
                     res = np.vstack([res, a.raw]).any(axis=0).astype(np.ubyte)
-
+        logger.warning("Finished activation computations.")
         if asarray:
             return res
         return Activation(
