@@ -802,7 +802,7 @@ class RuleSet(ABC):
             try:
                 if force_pairs:
                     logger.warning("Computing activation")
-                act = Activation.multi_logical_or(activations, force_pairs)
+                act = Activation.multi_logical_or(activations, force_pairs=force_pairs)
                 if force_pairs:
                     logger.warning("Computed activations. Checking if return_nones is True")
                 if return_nones is True:
