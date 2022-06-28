@@ -755,7 +755,7 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember
     def evaluate_self_activation(
-        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False, force_pairs: bool = False
+        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False, force_pairs: bool = False, assume_available: bool = False
     ):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
         if force_pairs:
@@ -778,7 +778,10 @@ class RuleSet(ABC):
             if force_pairs:
                 logger.warning("xs is not None.")
             activations = [r._activation for r in self]
-            activations_available = all([r.activation_available for r in self])
+            if assume_available is False:
+                activations_available = all([r.activation_available for r in self])
+            else:
+                activations_available = True
         if force_pairs:
             logger.warning("Checking if activations_available.")
         if activations_available:
