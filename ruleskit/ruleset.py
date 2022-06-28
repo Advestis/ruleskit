@@ -758,43 +758,59 @@ class RuleSet(ABC):
         self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False, force_pairs: bool = False
     ):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
-        logger.warning("Starting self activation evaluation.")
+        if force_pairs:
+            logger.warning("Starting self activation evaluation.")
         if len(self) == 0:
-            logger.warning("Length == 0.")
+            if force_pairs:
+                logger.warning("Length == 0.")
             act = Activation(np.array([]))
             if return_nones is True:
                 return act, pd.Series(dtype=int)
             return act
-        logger.warning("Checking if xs is not None.")
+        if force_pairs:
+            logger.warning("Checking if xs is not None.")
         if xs is not None:
-            logger.warning("xs is None.")
+            if force_pairs:
+                logger.warning("xs is None.")
             activations = [r.evaluate_activation(xs) for r in self]
             activations_available = True
         else:
-            logger.warning("xs is not None.")
+            if force_pairs:
+                logger.warning("xs is not None.")
             activations = [r._activation for r in self]
             activations_available = all([r.activation_available for r in self])
-        logger.warning("Checking if activations_available.")
+        if force_pairs:
+            logger.warning("Checking if activations_available.")
         if activations_available:
-            logger.warning("Checking if len == 1.")
+            if force_pairs:
+                logger.warning("Checking if len == 1.")
             if len(self) == 1:
-                logger.warning("len == 1.")
+                if force_pairs:
+                    logger.warning("len == 1.")
                 act = Activation(activations[0].raw, optimize=activations[0].optimize, to_file=activations[0].to_file)
-                logger.warning("Checking if return_nones is True.")
+                if force_pairs:
+                    logger.warning("Checking if return_nones is True.")
                 if return_nones is True:
-                    logger.warning("return_nones is True.")
+                    if force_pairs:
+                        logger.warning("return_nones is True.")
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
-                logger.warning("return_nones is not True.")
+                if force_pairs:
+                    logger.warning("return_nones is not True.")
                 return act
-            logger.warning("Entering try statement...")
+            if force_pairs:
+                logger.warning("Entering try statement...")
             try:
-                logger.warning("Computing activation")
+                if force_pairs:
+                    logger.warning("Computing activation")
                 act = Activation.multi_logical_or(activations, force_pairs)
-                logger.warning("Computed activations. Checking if return_nones is True")
+                if force_pairs:
+                    logger.warning("Computed activations. Checking if return_nones is True")
                 if return_nones is True:
-                    logger.warning("return_nones is True.")
+                    if force_pairs:
+                        logger.warning("return_nones is True.")
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
-                logger.warning("return_nones is not True.")
+                if force_pairs:
+                    logger.warning("return_nones is not True.")
                 return act
             except (MemoryError, np.core._exceptions._ArrayMemoryError) as e:
                 logger.warning(str(e))
