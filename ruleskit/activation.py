@@ -650,20 +650,22 @@ class Activation(ABC):
             logger.warning("Computing multi-logical or. Computing memroy available")
         available_memory = psutil.virtual_memory().available / 1e6  # In MB
         _ = acs[0].raw
-        single_act_size = available_memory - psutil.virtual_memory().available / 1e6
+        single_act_size1 = available_memory - psutil.virtual_memory().available / 1e6
         del _
-        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1  # factor 1.1 is just for safety
+        single_act_size2 = sys.getsizeof(acs[0].raw) / 1e6
+        single_act_size = max(single_act_size1, single_act_size2)
+        expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1 * 2 # factor 1.1 is just for safety, fator 2 is for affectation of memory
         if force_pairs:
             logger.warning(f"Memory info : single_activation_size={single_act_size}, expected_size={expected_size}, available_memory={available_memory}")
-        if available_memory < 2 * single_act_size:
+        if available_memory < 6 * single_act_size:
             if force_pairs:
-                logger.warning("Available memory < 2 * single_act_size.")
+                logger.warning("Available memory < 6 * single_act_size.")
             raise MemoryError(
-                f"Not enough memory left to compute 'multi_logical_or'. Need at least 2x{single_act_size} MB,"
+                f"Not enough memory left to compute 'multi_logical_or'. Need at least 6x{single_act_size} MB,"
                 f" has only {available_memory} MB"
             )
         if force_pairs:
-            logger.warning("Available memory > 2 * single_act_size.")
+            logger.warning("Available memory > 6 * single_act_size.")
 
         if available_memory < expected_size or force_pairs:
             logger.warning(
