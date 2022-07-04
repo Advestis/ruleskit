@@ -643,10 +643,10 @@ class Activation(ABC):
             )
 
     @staticmethod
-    def multi_logical_or(acs: List["Activation"], asarray: bool = False, force_pairs: bool = False) -> Union["Activation", np.ndarray]:
+    def multi_logical_or(acs: List["Activation"], asarray: bool = False, force_pairs: bool = False, print_logs: bool = False) -> Union["Activation", np.ndarray]:
         """Do LOGICAL OR on many activation vectors at once. Uses raw np.ndarrays to gain time.
         If asarray is True, does not cast the result into an Activation object but returns the raw np.ndarray."""
-        if force_pairs:
+        if print_logs:
             logger.warning("Computing multi-logical or. Computing memroy available")
         available_memory = psutil.virtual_memory().available / 1e6  # In MB
         _ = acs[0].raw
@@ -655,16 +655,16 @@ class Activation(ABC):
         single_act_size2 = sys.getsizeof(acs[0].raw) / 1e6
         single_act_size = max(single_act_size1, single_act_size2)
         expected_size = single_act_size * len(acs) * Activation.NCPUS * 1.1 * 2 # factor 1.1 is just for safety, fator 2 is for affectation of memory
-        if force_pairs:
+        if print_logs:
             logger.warning(f"Memory info : single_activation_size={single_act_size}, expected_size={expected_size}, available_memory={available_memory}")
         if available_memory < 6 * single_act_size:
-            if force_pairs:
+            if print_logs:
                 logger.warning("Available memory < 6 * single_act_size.")
             raise MemoryError(
                 f"Not enough memory left to compute 'multi_logical_or'. Need at least 6x{single_act_size} MB,"
                 f" has only {available_memory} MB"
             )
-        if force_pairs:
+        if print_logs:
             logger.warning("Available memory > 6 * single_act_size.")
 
         if available_memory < expected_size or force_pairs:
@@ -677,7 +677,7 @@ class Activation(ABC):
                 res = np.vstack([res, a.raw]).any(axis=0).astype(np.ubyte)
 
         else:
-            if force_pairs:
+            if print_logs:
                 logger.warning("Available memory > expected_size and !force_pairs")
             # noinspection PyProtectedMember
             try:
@@ -687,7 +687,7 @@ class Activation(ABC):
                 res = acs[0].raw
                 for a in acs[1:]:
                     res = np.vstack([res, a.raw]).any(axis=0).astype(np.ubyte)
-        if force_pairs:
+        if print_logs:
             logger.warning("Finished activation computations.")
         if asarray:
             return res

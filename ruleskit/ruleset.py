@@ -755,64 +755,61 @@ class RuleSet(ABC):
 
     # noinspection PyProtectedMember
     def evaluate_self_activation(
-        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False, force_pairs: bool = False, assume_available: bool = False
+        self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, return_nones: bool = False, force_pairs: bool = False, print_logs: bool = False
     ):
         """Computes the activation vector of self from its rules, using time-efficient Activation.multi_logical_or."""
-        if force_pairs:
+        if print_logs:
             logger.warning("Starting self activation evaluation.")
         if len(self) == 0:
-            if force_pairs:
+            if print_logs:
                 logger.warning("Length == 0.")
             act = Activation(np.array([]))
-            if return_nones is True:
+            if print_logs is True:
                 return act, pd.Series(dtype=int)
             return act
-        if force_pairs:
+        if print_logs:
             logger.warning("Checking if xs is not None.")
         if xs is not None:
-            if force_pairs:
+            if print_logs:
                 logger.warning("xs is None.")
             activations = [r.evaluate_activation(xs) for r in self]
             activations_available = True
         else:
-            if force_pairs:
+            if print_logs:
                 logger.warning("xs is not None.")
             activations = [r._activation for r in self]
-            if assume_available is False:
-                activations_available = all([r.activation_available for r in self])
-            else:
-                activations_available = True
-        if force_pairs:
+            activations_available = all([r.activation_available for r in self])
+        if print_logs:
             logger.warning("Checking if activations_available.")
         if activations_available:
-            if force_pairs:
+            if print_logs:
                 logger.warning("Checking if len == 1.")
             if len(self) == 1:
-                if force_pairs:
+                if print_logs:
                     logger.warning("len == 1.")
                 act = Activation(activations[0].raw, optimize=activations[0].optimize, to_file=activations[0].to_file)
-                if force_pairs:
+                if print_logs:
                     logger.warning("Checking if return_nones is True.")
                 if return_nones is True:
-                    if force_pairs:
+                    if print_logs:
                         logger.warning("return_nones is True.")
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
-                if force_pairs:
+                if print_logs:
                     logger.warning("return_nones is not True.")
                 return act
-            if force_pairs:
+            if print_logs:
                 logger.warning("Entering try statement...")
             try:
-                if force_pairs:
+                if print_logs:
                     logger.warning("Computing activation")
-                act = Activation.multi_logical_or(activations, force_pairs=force_pairs)
-                if force_pairs:
+                act = Activation.multi_logical_or(activations, force_pairs=force_pairs, print_logs=print_logs)
+                if print_logs:
                     logger.warning("Computed activations. Checking if return_nones is True")
                 if return_nones is True:
-                    if force_pairs:
+                    if print_logs:
                         logger.warning("return_nones is True.")
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
-                if force_pairs:
+                if print_logs:
                     logger.warning("return_nones is not True.")
                 return act
             except (MemoryError, np.core._exceptions._ArrayMemoryError) as e:
@@ -824,10 +821,10 @@ class RuleSet(ABC):
                     return act, pd.Series({str(self[i].condition): activations[i].nones for i in range(len(self))})
                 return act
 
-    def compute_self_activation(self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, force_pairs: bool = False):
+    def compute_self_activation(self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None, force_pairs: bool = False, print_logs: bool = True):
         """Computes the activation vector of self from its rules. If xs is specified, uses it to remake the
         rules' activation vectors, but do not set them as the 'activation' attributes of the rules"""
-        self._activation = self.evaluate_self_activation(xs=xs, force_pairs=force_pairs)
+        self._activation = self.evaluate_self_activation(xs=xs, force_pairs=force_pairs, print_logs=print_logs)
 
     def evaluate_stacked_activations(self, xs: Optional[Union[np.ndarray, pd.DataFrame]] = None):
         if len(self) == 0:
